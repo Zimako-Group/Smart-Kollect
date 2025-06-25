@@ -1,0 +1,9 @@
+This is a placeholder for the incoming-call.mp3 file.
+
+To complete the implementation, you'll need to add an actual MP3 file named "incoming-call.mp3" to this directory.
+
+You can use any standard ringtone sound file (typically 2-5 seconds long) that would be appropriate for an incoming call notification.
+
+Free ringtones can be found on various websites, or you can create your own using audio editing software.
+
+Once you've added the MP3 file, the SIP service will automatically use it to play a sound when there's an incoming call.

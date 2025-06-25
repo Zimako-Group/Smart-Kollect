@@ -1,0 +1,361 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    
+    /* New color palette */
+    --primary: 265 89% 78%; /* Vibrant purple */
+    --primary-accent: 265 89% 88%;
+    --secondary: 187 85% 43%; /* Teal */
+    --tertiary: 291 91% 65%; /* Magenta */
+    
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: hsl(var(--primary));
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    background: radial-gradient(
+      circle at top center,
+      hsl(var(--primary) / 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      hsl(var(--secondary) / 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      hsl(var(--tertiary) / 0.1),
+      transparent 40%
+    );
+    background-color: hsl(var(--background));
+  }
+}
+
+/* Admin Dashboard Dark Theme */
+.admin-dashboard {
+  @apply bg-black text-white;
+  background: linear-gradient(
+    to bottom,
+    hsl(222.2 84% 4.9%),
+    hsl(224 71% 4%)
+  );
+}
+
+.admin-dashboard .sidebar {
+  @apply bg-black/40 backdrop-blur-lg border-r border-white/5;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.admin-dashboard .card {
+  @apply bg-black/30 backdrop-blur-md border border-white/10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.06),
+              0 0 10px -2px hsl(var(--primary) / 0.1);
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard .card:hover {
+  @apply border-primary/30;
+  box-shadow: 0 0 15px -5px hsl(var(--primary) / 0.3);
+}
+
+.admin-dashboard .stat-card {
+  @apply bg-gradient-to-br from-black/40 to-black/60 backdrop-blur-lg;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-dashboard .table {
+  @apply bg-black/20 backdrop-blur-sm rounded-lg border border-white/5;
+}
+
+.admin-dashboard .table th {
+  @apply bg-black/30 text-white/80 font-medium;
+}
+
+.admin-dashboard .table tr {
+  @apply border-b border-white/5;
+}
+
+.admin-dashboard .table tr:hover {
+  @apply bg-primary/5;
+}
+
+.admin-dashboard .input,
+.admin-dashboard .select,
+.admin-dashboard .textarea {
+  @apply bg-black/30 border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/30;
+}
+
+.admin-dashboard .btn-primary {
+  @apply bg-primary hover:bg-primary/80 text-white;
+}
+
+.admin-dashboard .btn-secondary {
+  @apply bg-secondary hover:bg-secondary/80 text-white;
+}
+
+.admin-dashboard .nav-link {
+  @apply text-white/70 hover:text-white hover:bg-white/5 transition-all;
+}
+
+.admin-dashboard .nav-link.active {
+  @apply text-white bg-primary/20 border-l-2 border-primary;
+}
+
+/* Enhanced gradients */
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--tertiary)) 100%
+  );
+}
+
+.hero-gradient {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    hsl(var(--primary) / 0.2) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Enhanced card effects */
+.card-hover {
+  @apply transition-all duration-500;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-hover:hover {
+  @apply scale-[1.02];
+  transform: translateY(-5px);
+  box-shadow: 
+    0 0 20px -5px hsl(var(--primary) / 0.2),
+    0 0 30px -10px hsl(var(--secondary) / 0.2),
+    0 0 40px -15px hsl(var(--tertiary) / 0.2);
+}
+
+.glass-effect {
+  @apply backdrop-blur-xl bg-black/20 border border-white/10;
+  box-shadow: inset 0 0 20px hsl(var(--primary) / 0.1);
+}
+
+/* Custom Scrollbar for Dark Theme */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 15, 20, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Apply scrollbar to all overflow elements in admin */
+.admin-dashboard .overflow-auto,
+.admin-dashboard .overflow-y-auto,
+.admin-dashboard .overflow-x-auto {
+  @apply custom-scrollbar;
+}
+
+/* Animated background */
+.animated-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--primary) / 0.1),
+    hsl(var(--secondary) / 0.1),
+    hsl(var(--tertiary) / 0.1),
+    hsl(var(--primary) / 0.1)
+  );
+  animation: rotate 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button animations */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--primary) / 0.2),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.btn-glow:hover::before {
+  transform: translateX(100%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full;
+  border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/50;
+}
+
+/* Typography enhancements */
+.heading-xl {
+  @apply text-4xl md:text-6xl font-bold tracking-tight;
+  text-shadow: 0 0 30px hsl(var(--primary) / 0.3);
+}
+
+.heading-lg {
+  @apply text-3xl font-bold mb-4;
+  text-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+}
+
+/* Section transitions */
+.section-fade-up {
+  @apply opacity-0 translate-y-8 transition-all duration-700;
+}
+
+.section-fade-up.in-view {
+  @apply opacity-100 translate-y-0;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Custom scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.7);
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(51, 65, 85, 0.5) rgba(15, 23, 42, 0.3);
+}
+
+/* Chat scrollbar styling */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3) !important;
+  border-radius: 10px !important;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.5) !important;
+  border-radius: 10px !important;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.7) !important;
+}
+
+/* Firefox scrollbar */
+.chat-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(51, 65, 85, 0.5) rgba(15, 23, 42, 0.3) !important;
+}
