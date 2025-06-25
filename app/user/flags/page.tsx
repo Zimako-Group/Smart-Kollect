@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/store";
@@ -34,11 +35,14 @@ import {
   Percent,
   Search,
   CalendarDays,
+  Info,
+  ChevronsLeft,
+  ChevronsRight,
+  Calendar,
   User,
   UserCheck,
   UserX,
   Phone,
-  Calendar,
   MoreHorizontal,
   ExternalLink,
   Eye,
@@ -627,379 +631,384 @@ export default function FlagsPage() {
       {/* Flagged Accounts Table */}
       <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
         <div className="h-1 bg-gradient-to-r from-rose-600 to-rose-400"></div>
-        <CardHeader>
+        <CardHeader className="pb-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle className="text-lg font-semibold">Flagged Accounts</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl font-semibold text-slate-100">Flagged Accounts</CardTitle>
+              <CardDescription className="text-slate-400">
                 Accounts requiring special attention
               </CardDescription>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                <Input
-                  type="search"
-                  placeholder="Search accounts..."
-                  className="pl-9 bg-slate-950/50 border-slate-800"
-                />
-              </div>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-slate-800 hover:bg-slate-800/50"
+                className="border-slate-800 hover:bg-slate-800/50 text-slate-300 hover:text-slate-100"
               >
-                <Filter className="h-4 w-4 mr-1" />
-                Filters
+                <Calendar className="h-4 w-4 mr-1.5" />
+                This Month
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                <Flag className="h-4 w-4 mr-1.5" />
+                Add Flag
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Search and Filter Bar */}
+          <div className="mb-6 mt-2 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Input
+                type="search"
+                placeholder="Search by account name, number or flag type..."
+                className="pl-10 bg-slate-950/50 border-slate-800 h-10 w-full"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-800 hover:bg-slate-800/50 h-10 px-3"
+              >
+                <Filter className="h-4 w-4 mr-1.5" />
+                <span>Filters</span>
+              </Button>
+              <select 
+                className="h-10 px-3 rounded-md bg-slate-950/50 border border-slate-800 text-slate-300 text-sm focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="priority">Priority (High-Low)</option>
+              </select>
+            </div>
+          </div>
+          
           {/* Filter Tabs */}
-          <div className="mb-4">
+          <div className="mb-6">
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value)}
               className="w-full"
             >
-              <TabsList className="h-9 bg-slate-950/50 border border-slate-800 p-0.5 w-full sm:w-auto grid grid-cols-4 sm:flex">
+              <TabsList className="h-10 bg-slate-950/50 border border-slate-800/70 p-1 w-full sm:w-auto grid grid-cols-4 sm:flex gap-1 rounded-md">
                 <TabsTrigger
                   value="all"
-                  className="h-7 px-3 data-[state=active]:bg-rose-600 data-[state=active]:text-white"
+                  className="h-8 px-4 rounded-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-150"
                 >
-                  All ({flagsData.totalFlags})
+                  <span className="flex items-center gap-2">
+                    <Flag className="h-3.5 w-3.5" />
+                    <span>All <span className="font-semibold ml-1">({flagsData.totalFlags})</span></span>
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="high"
-                  className="h-7 px-3 data-[state=active]:bg-red-600 data-[state=active]:text-white"
+                  className="h-8 px-4 rounded-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-150"
                 >
-                  High ({flagsData.highPriority})
+                  <span className="flex items-center gap-2">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    <span>High <span className="font-semibold ml-1">({flagsData.highPriority})</span></span>
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="medium"
-                  className="h-7 px-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+                  className="h-8 px-4 rounded-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-150"
                 >
-                  Medium ({flagsData.mediumPriority})
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span>Medium <span className="font-semibold ml-1">({flagsData.mediumPriority})</span></span>
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="low"
-                  className="h-7 px-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                  className="h-8 px-4 rounded-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-150"
                 >
-                  Low ({flagsData.lowPriority})
+                  <span className="flex items-center gap-2">
+                    <Info className="h-3.5 w-3.5" />
+                    <span>Low <span className="font-semibold ml-1">({flagsData.lowPriority})</span></span>
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
                     {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Account</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Flag Type</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Date Added</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Priority</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Added By</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading || flagsLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-rose-600"></div>
-                        <h3 className="text-lg font-medium text-slate-300">Loading flags...</h3>
-                      </div>
-                    </td>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Account</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Flag Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Date Added</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Priority</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Notes</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-400">Added By</th>
+                    <th className="text-right py-3 px-4 font-medium text-slate-400">Actions</th>
                   </tr>
-                ) : flagsError ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <AlertTriangle className="h-12 w-12 text-amber-500" />
-                        <h3 className="text-lg font-medium text-slate-300">Error loading flags</h3>
-                        <p className="text-sm text-slate-400 max-w-md">
-                          {flagsError}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : flags.filter(flag => !flag.isResolved).length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Flag className="h-12 w-12 text-slate-600" />
-                        <h3 className="text-lg font-medium text-slate-300">No flagged accounts found</h3>
-                        <p className="text-sm text-slate-400 max-w-md">
-                          When accounts require special attention, they will appear here.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  flags.filter(flag => {
-                    if (flag.isResolved) return false;
-                    if (activeTab === "all") return true;
-                    if (activeTab === "high" && flag.priority === "high") return true;
-                    if (activeTab === "medium" && flag.priority === "medium") return true;
-                    if (activeTab === "low" && flag.priority === "low") return true;
-                    return false;
-                  }).map(flag => (
-                    <tr key={flag.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-200">{flag.accountName}</span>
-                          <span className="text-xs text-slate-400">{flag.accountNumber}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-700">
-                          {flag.type}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-slate-300">{new Date(flag.dateAdded).toLocaleDateString()}</span>
-                          <span className="text-xs text-slate-400">{new Date(flag.dateAdded).toLocaleTimeString()}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {flag.priority === "high" && (
-                          <Badge className="bg-red-900/30 text-red-400 border-red-800/50">
-                            High
-                          </Badge>
-                        )}
-                        {flag.priority === "medium" && (
-                          <Badge className="bg-amber-900/30 text-amber-400 border-amber-800/50">
-                            Medium
-                          </Badge>
-                        )}
-                        {flag.priority === "low" && (
-                          <Badge className="bg-blue-900/30 text-blue-400 border-blue-800/50">
-                            Low
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-300">
-                            {flag.addedBy.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <span className="text-slate-300">{flag.addedBy}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Eye className="h-4 w-4 text-slate-400" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Trash2 className="h-4 w-4 text-slate-400" />
-                          </Button>
+                </thead>
+                <tbody>
+                  {loading || flagsLoading ? (
+                    <tr>
+                      <td colSpan={8} className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-rose-600"></div>
+                          <h3 className="text-lg font-medium text-slate-300">Loading flags...</h3>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : flagsError ? (
+                    <tr>
+                      <td colSpan={8} className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <AlertTriangle className="h-12 w-12 text-amber-500" />
+                          <h3 className="text-lg font-medium text-slate-300">Error loading flags</h3>
+                          <p className="text-sm text-slate-400 max-w-md">
+                            {flagsError}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : flags.filter(flag => !flag.isResolved).length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Flag className="h-12 w-12 text-slate-600" />
+                          <h3 className="text-lg font-medium text-slate-300">No flagged accounts found</h3>
+                          <p className="text-sm text-slate-400 max-w-md">
+                            When accounts require special attention, they will appear here.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    flags.filter(flag => {
+                      if (flag.isResolved) return false;
+                      if (activeTab === "all") return true;
+                      if (activeTab === "high" && flag.priority === "high") return true;
+                      if (activeTab === "medium" && flag.priority === "medium") return true;
+                      if (activeTab === "low" && flag.priority === "low") return true;
+                      return false;
+                    }).map(flag => {
+                      // Format date and calculate days ago
+                      const flagDate = new Date(flag.dateAdded);
+                      const formattedDate = flagDate.toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      });
+                      
+                      const today = new Date();
+                      const diffTime = Math.abs(today.getTime() - flagDate.getTime());
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      
+                      // Determine flag type display and styling
+                      let flagTypeDisplay = flag.type;
+                      let flagTypeClass = "bg-slate-800/50 text-slate-300 border-slate-700";
+                      
+                      if (flag.type === "Special Handling") {
+                        flagTypeDisplay = "Special Handling";
+                        flagTypeClass = "bg-purple-900/30 text-purple-400 border-purple-800/50";
+                      } else if (flag.type === "Payment Issue") {
+                        flagTypeDisplay = "Payment Issue";
+                        flagTypeClass = "bg-rose-900/30 text-rose-400 border-rose-800/50";
+                      } else if (flag.type === "Legal") {
+                        flagTypeDisplay = "Legal";
+                        flagTypeClass = "bg-cyan-900/30 text-cyan-400 border-cyan-800/50";
+                      } else if (flag.type === "Dispute") {
+                        flagTypeDisplay = "Dispute";
+                        flagTypeClass = "bg-amber-900/30 text-amber-400 border-amber-800/50";
+                      }
+                      
+                      return (
+                        <tr 
+                          key={flag.id} 
+                          className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors duration-150"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-slate-200">{flag.accountName}</span>
+                              <span className="text-xs text-slate-400">{flag.accountNumber}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge 
+                              variant="outline" 
+                              className={`${flagTypeClass} whitespace-nowrap`}
+                            >
+                              {flagTypeDisplay}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <span className="text-slate-300">{formattedDate}</span>
+                              <span className="text-xs text-slate-500">{diffDays} days ago</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge 
+                              className={
+                                flag.priority === 'high' ? 'bg-red-900/30 text-red-400 border-red-800/50' :
+                                flag.priority === 'medium' ? 'bg-amber-900/30 text-amber-400 border-amber-800/50' :
+                                'bg-blue-900/30 text-blue-400 border-blue-800/50'
+                              }
+                            >
+                              {flag.priority.charAt(0).toUpperCase() + flag.priority.slice(1)}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge 
+                              className={
+                                flag.isResolved ? 
+                                  'bg-green-900/30 text-green-400 border-green-800/50' : 
+                                  'bg-slate-800/80 text-slate-300 border-slate-700/50'
+                              }
+                            >
+                              {flag.isResolved ? 'Resolved' : 'Active'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="max-w-xs truncate text-slate-300 text-sm">
+                              {flag.notes || 'No notes'}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-300">
+                                {flag.addedBy.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              <span className="text-slate-300 text-sm">{flag.addedBy}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-100 hover:bg-slate-800/70"
+                                title="View details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {!flag.isResolved && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 text-green-400 hover:text-green-300 hover:bg-green-900/30"
+                                  title="Mark as resolved"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                                title="Delete flag"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
           </div>
           
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-slate-400">
-              Showing <span className="font-medium text-slate-300">0</span> of <span className="font-medium text-slate-300">{flagsData.totalFlags}</span> flags
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-3 order-2 sm:order-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Rows per page:</span>
+                <select 
+                  className="h-8 px-2 rounded-md bg-slate-950/50 border border-slate-800 text-slate-300 text-sm focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div className="text-sm text-slate-400">
+                Showing <span className="font-medium text-slate-200">1-10</span> of <span className="font-medium text-slate-200">{flagsData.totalFlags}</span> flags
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="flex items-center gap-1 order-1 sm:order-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-8 w-8 p-0 border-slate-800 hover:bg-slate-800/50"
-                disabled
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                title="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                title="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              
+              <div className="flex items-center gap-1 mx-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 w-9 p-0 border-slate-800 bg-rose-600/20 border-rose-600/50 text-rose-100 font-medium"
+                >
+                  1
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
+                >
+                  2
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
+                >
+                  3
+                </Button>
+                <span className="text-slate-600 px-1">...</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
+                >
+                  10
+                </Button>
+              </div>
+              
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-8 w-8 p-0 border-slate-800 bg-slate-800/30 text-slate-500"
-                disabled
-              >
-                1
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 p-0 border-slate-800 hover:bg-slate-800/50"
-                disabled
-              >
-                2
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 p-0 border-slate-800 hover:bg-slate-800/50"
-                disabled
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                title="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                title="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      
-      {/* All Flags Table */}
-      <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90 mt-6">
-        <div className="h-1 bg-gradient-to-r from-rose-600 to-rose-400"></div>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">All Flags</CardTitle>
-          <CardDescription>
-            Complete list of all account flags in the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-            </div>
-          ) : flags.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="bg-slate-800/50 rounded-full p-4 mb-3">
-                <Flag className="h-8 w-8 text-slate-400" />
-              </div>
-              <h3 className="text-lg font-medium text-slate-300 mb-1">No Flags Found</h3>
-              <p className="text-sm text-slate-500 max-w-md">
-                There are no flags in the system yet. Create a flag to highlight important information about an account.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Account</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Flag Type</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Date Added</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Priority</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Notes</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Added By</th>
-                    <th className="py-3 px-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {flags.map((flag) => {
-                    // Format flag type for display
-                    const flagTypeDisplay = {
-                      'dispute': 'Payment Dispute',
-                      'legal': 'Legal Action',
-                      'deceased': 'Deceased',
-                      'fraud': 'Fraud Alert',
-                      'trace': 'Trace Alert',
-                      'special': 'Special Handling',
-                      'custom': flag.type // For custom flags, use the raw type
-                    }[flag.type] || flag.type;
-                    
-                    // Format date
-                    const dateAdded = new Date(flag.dateAdded);
-                    const formattedDate = dateAdded.toLocaleDateString('en-ZA', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    });
-                    
-                    // Calculate days ago
-                    const now = new Date();
-                    const diffTime = Math.abs(now.getTime() - dateAdded.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    return (
-                      <tr key={flag.id} className="hover:bg-slate-800/50">
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-slate-300">{flag.accountName}</span>
-                            <span className="text-xs text-slate-500">{flag.accountNumber}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge 
-                            className={
-                              flag.type === 'dispute' ? 'bg-red-900/30 text-red-400 border-red-800/50' :
-                              flag.type === 'legal' ? 'bg-amber-900/30 text-amber-400 border-amber-800/50' :
-                              flag.type === 'deceased' ? 'bg-blue-900/30 text-blue-400 border-blue-800/50' :
-                              flag.type === 'fraud' ? 'bg-purple-900/30 text-purple-400 border-purple-800/50' :
-                              flag.type === 'trace' ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800/50' :
-                              'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'
-                            }
-                          >
-                            {flagTypeDisplay}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col">
-                            <span className="text-slate-300">{formattedDate}</span>
-                            <span className="text-xs text-slate-500">{diffDays} days ago</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge 
-                            className={
-                              flag.priority === 'high' ? 'bg-red-900/30 text-red-400 border-red-800/50' :
-                              flag.priority === 'medium' ? 'bg-amber-900/30 text-amber-400 border-amber-800/50' :
-                              'bg-blue-900/30 text-blue-400 border-blue-800/50'
-                            }
-                          >
-                            {flag.priority.charAt(0).toUpperCase() + flag.priority.slice(1)}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge 
-                            className={
-                              flag.isResolved ? 
-                                'bg-green-900/30 text-green-400 border-green-800/50' : 
-                                'bg-slate-800/80 text-slate-300 border-slate-700/50'
-                            }
-                          >
-                            {flag.isResolved ? 'Resolved' : 'Active'}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="max-w-xs truncate text-slate-300 text-sm">
-                            {flag.notes || 'No notes'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-300">
-                              {flag.addedBy.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <span className="text-slate-300 text-sm">{flag.addedBy}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4 text-slate-400" />
-                            </Button>
-                            {!flag.isResolved && (
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <CheckCircle className="h-4 w-4 text-green-400" />
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Trash2 className="h-4 w-4 text-red-400" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
         </CardContent>
       </Card>
       
