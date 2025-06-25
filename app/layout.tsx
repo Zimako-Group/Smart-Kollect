@@ -8,7 +8,8 @@ import { MinimizedDialer } from "@/components/MinimizedDialer";
 import { Toaster } from 'sonner';
 import { ReduxProvider } from '@/lib/redux/provider';
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
+import QueryProvider from "@/providers/QueryProvider";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,16 +26,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ReduxProvider>
-          <AuthProvider>
-            <DialerProvider>
-              <FloatingButtonProvider>
-                {children}
-                <MinimizedDialer />
-              </FloatingButtonProvider>
-            </DialerProvider>
-          </AuthProvider>
-        </ReduxProvider>
+        <QueryProvider>
+          <ReduxProvider>
+            <AuthProvider>
+              <DialerProvider>
+                <FloatingButtonProvider>
+                  {children}
+                  <MinimizedDialer />
+                </FloatingButtonProvider>
+              </DialerProvider>
+            </AuthProvider>
+          </ReduxProvider>
+        </QueryProvider>
         <SpeedInsights />
         <Analytics />
         <Toaster 

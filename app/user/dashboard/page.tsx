@@ -76,11 +76,9 @@ import ViewSchedule from "@/components/ViewSchedule";
 import PaymentsDue from "@/components/PaymentsDue";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchAgentDashboardMetrics, AgentMetrics, defaultAgentMetrics } from "@/lib/agent-dashboard";
-import { getAgentAllocationMetrics, getAgentTopOverdueAccounts, getAgentAllocatedAccounts, AllocatedAccount } from "@/lib/allocation-service";
-import { supabase } from "@/lib/supabase/client";
-import { reminderService } from "@/lib/reminder-service";
+import { defaultAgentMetrics } from "@/lib/agent-dashboard";
 import { useAgentPerformance } from "@/hooks/useAgentPerformance";
+import { useDashboardCache } from "@/hooks/useDashboardCache";
 
 // Dynamically import chart components with no SSR to avoid hydration issues
 
@@ -101,135 +99,41 @@ export default function DashboardPage() {
   console.log("[DASHBOARD] User state:", user ? { id: user.id, role: user.role } : "No user");
   console.log("[DASHBOARD] Auth loading state:", authLoading);
 
-  // Agent metrics state
+  // Use the new caching system
+  const {
+    data: dashboardData,
+    isLoading: cacheLoading,
+    isRefreshing,
+    error: cacheError,
+    refreshAll,
+    refreshMetrics,
+    refreshCounts
+  } = useDashboardCache(user?.id || null, user?.name || null);
+
+  // Agent performance metrics (keep existing hook for compatibility)
   const { metrics: agentPerformanceMetrics, loading: performanceLoading } = useAgentPerformance(user?.id || null);
-  const [combinedAgentMetrics, setCombinedAgentMetrics] = useState<AgentMetrics>(defaultAgentMetrics);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // State for pending settlements count
-  const [pendingSettlementsCount, setPendingSettlementsCount] = useState<number>(0);
-  
-  // State for top overdue accounts
-  const [topOverdueAccounts, setTopOverdueAccounts] = useState<AllocatedAccount[]>([]);
-  
-  // State for pending and missed callbacks count
-  const [callbacksCount, setCallbacksCount] = useState<number>(0);
-  
-  // State for broken PTPs count
-  const [brokenPTPsCount, setBrokenPTPsCount] = useState<number>(0);
-  
-  // Fetch pending settlements count directly from Supabase
-  useEffect(() => {
-    const fetchPendingSettlements = async () => {
-      if (!user?.name) return;
-      
-      try {
-        console.log(`[DASHBOARD] Fetching pending settlements for agent: ${user.name}`);
-        
-        // Get all settlements for this agent
-        const { data: agentSettlements, error: agentError } = await supabase
-          .from('Settlements')
-          .select('*')
-          .eq('agent_name', user.name);
-        
-        if (agentError) {
-          console.error('Error fetching agent settlements:', agentError);
-          return;
-        }
-        
-        // Filter for pending settlements with case insensitivity
-        const pendingSettlements = agentSettlements?.filter(settlement => 
-          settlement.status?.toLowerCase() === 'pending');
-        
-        const count = pendingSettlements?.length || 0;
-        console.log(`[DASHBOARD] Found ${count} pending settlements for agent ${user.name}`);
-        
-        // Update the state with the count
-        setPendingSettlementsCount(count);
-      } catch (error) {
-        console.error('Error fetching pending settlements count:', error);
-      }
-    };
-    
-    fetchPendingSettlements();
-  }, [user?.name]);
 
-  // Fetch agent data when user is loaded or performance metrics update
-  useEffect(() => {
-    if (user && !authLoading) {
-      fetchAgentData(user.id);
-    }
-  }, [user, authLoading, agentPerformanceMetrics]);
+  // Combine cached data with performance metrics
+  const combinedAgentMetrics = dashboardData ? {
+    ...dashboardData.combinedMetrics,
+    // Override with real performance metrics if available
+    collectionRate: agentPerformanceMetrics?.collectionRate || dashboardData.combinedMetrics.collectionRate,
+    promiseToPayConversion: agentPerformanceMetrics?.promiseToPayConversion || dashboardData.combinedMetrics.promiseToPayConversion,
+    collectionSummary: agentPerformanceMetrics?.collectionSummary || dashboardData.combinedMetrics.collectionSummary,
+    ranking: agentPerformanceMetrics?.ranking || dashboardData.combinedMetrics.ranking
+  } : defaultAgentMetrics;
 
-  // Function to fetch agent data
-  const fetchAgentData = async (agentId: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log(`[DASHBOARD] Fetching agent data for ${agentId}`);
-      
-      // Fetch agent dashboard metrics (for non-performance metrics)
-      const metrics = await fetchAgentDashboardMetrics(agentId);
-      console.log('[DASHBOARD] Agent metrics:', metrics);
-      
-      // Fetch allocation metrics
-      const allocationMetrics = await getAgentAllocationMetrics(agentId);
-      console.log('[DASHBOARD] Allocation metrics:', allocationMetrics);
-      
-      // Fetch overdue accounts
-      const overdueAccounts = await getAgentTopOverdueAccounts(agentId, 5);
-      setTopOverdueAccounts(overdueAccounts);
-      console.log(`[DASHBOARD] Fetched ${overdueAccounts.length} overdue accounts`);
-      
-      // Fetch callbacks
-      const callbacks = await reminderService.getPendingMissedCallbacksCount(agentId, { useAdmin: true });
-      setCallbacksCount(callbacks);
-      
-      // Fetch broken PTPs
-      const brokenPtps = await reminderService.getBrokenPTPsCount(agentId, { useAdmin: true });
-      setBrokenPTPsCount(brokenPtps);
-      
-      // Fetch allocated accounts
-      const allocatedAccounts = await getAgentAllocatedAccounts(agentId);
-      
-      // Calculate unworked accounts
-      const unworkedCount = allocatedAccounts.filter(account => 
-        !account.lastInteractionDate
-      ).length;
-      console.log(`[DASHBOARD] Unworked accounts: ${unworkedCount}`);
-      
-      // Combine metrics - use real performance metrics from our hook if available
-      const combinedMetrics = {
-        ...metrics,
-        allocatedAccounts: {
-          total: unworkedCount, // Only show unworked accounts in the total
-          remaining: unworkedCount,
-          value: allocationMetrics.totalValue,
-          contactRate: allocationMetrics.contactRate,
-          overdueCount: allocationMetrics.overdueAccounts,
-          overdueValue: allocationMetrics.overdueValue,
-          highPriorityCount: allocationMetrics.highPriorityAccounts,
-        },
-        // Use the real performance metrics from our hook if available
-        collectionRate: agentPerformanceMetrics?.collectionRate || metrics.collectionRate,
-        promiseToPayConversion: agentPerformanceMetrics?.promiseToPayConversion || metrics.promiseToPayConversion,
-        collectionSummary: agentPerformanceMetrics?.collectionSummary || metrics.collectionSummary,
-        ranking: agentPerformanceMetrics?.ranking || metrics.ranking
-      };
-      
-      setCombinedAgentMetrics(combinedMetrics);
-      setIsLoading(false);
-    } catch (err: any) {
-      console.error('[DASHBOARD] Error fetching agent data:', err);
-      setError(err.message || 'Failed to fetch agent data');
-      setIsLoading(false);
-    }
-  };
+  const topOverdueAccounts = dashboardData?.topOverdueAccounts || [];
+  const pendingSettlementsCount = dashboardData?.pendingSettlementsCount || 0;
+  const callbacksCount = dashboardData?.callbacksCount || 0;
+  const brokenPTPsCount = dashboardData?.brokenPTPsCount || 0;
+
+  // Loading state
+  const isLoading = authLoading || cacheLoading || performanceLoading;
+  const error = cacheError;
 
   // If still in initial auth loading state, show loading spinner
-  if (authLoading || isLoading || performanceLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -402,9 +306,21 @@ export default function DashboardPage() {
 
       {/* Performance Summary */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-200">
-          Performance Summary
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-200">
+            Performance Summary
+          </h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-100 hover:bg-slate-800/70"
+            onClick={refreshAll}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh all data</span>
+          </Button>
+        </div>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
           {/* Allocated Accounts Card */}
           <div 
@@ -1154,11 +1070,12 @@ export default function DashboardPage() {
                   className="h-8 w-8 p-0 text-slate-400 hover:text-slate-100 hover:bg-slate-800/70"
                   onClick={() => {
                     if (user?.id) {
-                      fetchAgentData(user.id);
+                      refreshMetrics();
                     }
                   }}
+                  disabled={isRefreshing}
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   <span className="sr-only">Refresh metrics</span>
                 </Button>
               </div>

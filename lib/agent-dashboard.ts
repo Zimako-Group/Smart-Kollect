@@ -11,6 +11,9 @@ export interface AgentMetrics {
     remaining: number;
     contactRate: number;
     value: number;
+    overdueCount: number;
+    overdueValue: number;
+    highPriorityCount: number;
   };
   debiChecks: {
     total: number;
@@ -91,7 +94,7 @@ export interface AgentMetrics {
 
 // Default metrics
 export const defaultAgentMetrics: AgentMetrics = {
-  allocatedAccounts: { total: 0, remaining: 0, contactRate: 0, value: 0 },
+  allocatedAccounts: { total: 0, remaining: 0, contactRate: 0, value: 0, overdueCount: 0, overdueValue: 0, highPriorityCount: 0 },
   debiChecks: { total: 0, target: 60, percentOfTarget: 0, changeVsLastMonth: 0 },
   yeboPay: { total: 0, successRate: 0, value: 0, changeVsLastMonth: 0 },
   settlements: { total: 0, adherenceRate: 0, value: 0, changeVsLastMonth: 0 },
@@ -225,7 +228,10 @@ export async function fetchAgentDashboardMetrics(agentId: string): Promise<Agent
         total: allocatedAccounts.total,
         remaining: allocatedAccounts.total, // Initially set remaining to total, will be updated by agent-accounts.ts
         contactRate: allocatedAccounts.contactRate,
-        value: allocatedAccounts.value
+        value: allocatedAccounts.value,
+        overdueCount: 0,
+        overdueValue: 0,
+        highPriorityCount: 0
       },
       debiChecks: {
         total: 0,
