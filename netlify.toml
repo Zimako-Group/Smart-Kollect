@@ -1,5 +1,6 @@
 [build]
-  publish = "dist"  # Adjust this to your build output directory if needed
+  command = "npm run build"
+  # Remove publish directory to let Netlify auto-detect Next.js
 
 [build.environment]
   NODE_VERSION = "18"  # Adjust to your preferred Node.js version
