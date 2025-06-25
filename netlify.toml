@@ -5,10 +5,6 @@
   NODE_VERSION = "18"  # Adjust to your preferred Node.js version
   NETLIFY_DISABLE_SECRETS_DETECTION = "true"  # Explicitly disable secrets scanning
 
-# Define plugins
-[[plugins]]
-  package = "@netlify/plugin-functions-core"
-
 [build.processing]
   skip_processing = false
 
