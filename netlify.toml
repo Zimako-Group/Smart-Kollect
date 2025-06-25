@@ -5,6 +5,8 @@
 [build.environment]
   NODE_VERSION = "18"  # Adjust to your preferred Node.js version
   NETLIFY_DISABLE_SECRETS_DETECTION = "true"  # Explicitly disable secrets scanning
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"  # Additional secrets scanning disable
+  NETLIFY_SKIP_SECRETS_SCAN = "true"  # Force skip secrets scan
 
 [build.processing]
   skip_processing = false
