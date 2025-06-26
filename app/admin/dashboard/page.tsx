@@ -927,9 +927,9 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-white/60 text-sm">Collection Rate</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">100%</h3>
-              <div className="flex items-center mt-3 text-green-400 bg-green-400/10 px-2 py-1 rounded-full text-xs w-fit">
-                <ArrowUp size={14} className="mr-1" />
+              <h3 className="text-2xl font-bold mt-1 text-white">66%</h3>
+              <div className="flex items-center mt-3 text-red-400 bg-red-400/10 px-2 py-1 rounded-full text-xs w-fit">
+                <ArrowDown size={14} className="mr-1" />
                 <span>5.3% from last month</span>
               </div>
             </div>

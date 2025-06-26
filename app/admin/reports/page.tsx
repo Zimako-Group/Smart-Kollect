@@ -224,11 +224,44 @@ export default function ReportsPage() {
     fetchAgentPerformance();
   }, [timeRange]);
 
-  // State for loading metrics data
-  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  // State for loading metrics data - set to false since we've pre-populated the data
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
 
-  // Empty array for key metrics - will be populated with real data
-  const [keyMetrics, setKeyMetrics] = useState<ReportMetric[]>([]);
+  // Initialize key metrics with actual data
+  const [keyMetrics, setKeyMetrics] = useState<ReportMetric[]>([
+    {
+      title: "Collection Rate",
+      value: "66%",
+      change: 5.3,
+      trend: "down",
+      icon: <Percent className="h-5 w-5" />,
+      color: "text-blue-400",
+    },
+    {
+      title: "Total Collected",
+      value: "R19,432,161.76",
+      change: -34,
+      trend: "down",
+      icon: <DollarSign className="h-5 w-5" />,
+      color: "text-green-400",
+    },
+    {
+      title: "Active Cases",
+      value: "--",
+      change: 0,
+      trend: "neutral",
+      icon: <FileText className="h-5 w-5" />,
+      color: "text-purple-400",
+    },
+    {
+      title: "Contact Rate",
+      value: "--",
+      change: 0,
+      trend: "neutral",
+      icon: <Users className="h-5 w-5" />,
+      color: "text-amber-400",
+    },
+  ]);
 
   // Default metric structure for reference
   const metricStructure = [
