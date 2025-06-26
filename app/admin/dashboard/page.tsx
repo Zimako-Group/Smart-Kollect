@@ -112,13 +112,13 @@ interface Agent {
 
 // Mock data - replace with actual API calls
 const performanceData = [
-  { name: "Jan", collections: 0, target: 2400 },
-  { name: "Feb", collections: 0, target: 2400 },
-  { name: "Mar", collections: 0, target: 2400 },
-  { name: "Apr", collections: 239355270, target: 2400 },
-  { name: "May", collections: 0, target: 2400 },
-  { name: "Jun", collections: 0, target: 2400 },
-  { name: "Jul", collections: 0, target: 2400 },
+  { name: "Jan", collections: 0, target: 20000000 },
+  { name: "Feb", collections: 0, target: 20000000 },
+  { name: "Mar", collections: 0, target: 20000000 },
+  { name: "Apr", collections: 0, target: 20000000 },
+  { name: "May", collections: 29475034, target: 20000000 },
+  { name: "Jun", collections: 19432162, target: 20000000 },
+  { name: "Jul", collections: 0, target: 20000000 },
 ];
 
 const agentPerformance = [
@@ -129,11 +129,17 @@ const agentPerformance = [
   { name: "David Brown", collections: 2900, cases: 22, rate: 78 },
 ];
 
-const caseStatusData = [
-  { name: "Active", value: 540 },
-  { name: "Pending", value: 320 },
-  { name: "Resolved", value: 210 },
-  { name: "Escalated", value: 75 },
+// Monthly consolidated payments data (Month-To-Date)
+const consolidatedPaymentsData = [
+  { month: "Apr 2025", amount: 0 },
+  { month: "May 2025", amount: 29475034.23 },
+  { month: "Jun 2025", amount: 19432161.76 },
+  { month: "Jul 2025", amount: 0 },
+  { month: "Aug 2025", amount: 0 },
+  { month: "Sep 2025", amount: 0 },
+  { month: "Oct 2025", amount: 0 },
+  { month: "Nov 2025", amount: 0 },
+  { month: "Dec 2025", amount: 0 },
 ];
 
 const campaignsData = [
@@ -860,11 +866,11 @@ export default function AdminDashboard() {
             <div>
               <p className="text-white/60 text-sm">Total Collections</p>
               <h3 className="text-2xl font-bold mt-1 gradient-text">
-                R239,355,270.52
+                R19,432,161.76
               </h3>
-              <div className="flex items-center mt-3 text-green-400 bg-green-400/10 px-2 py-1 rounded-full text-xs w-fit">
-                <ArrowUp size={14} className="mr-1" />
-                <span>12.5% from last month</span>
+              <div className="flex items-center mt-3 text-red-400 bg-red-400/10 px-2 py-1 rounded-full text-xs w-fit">
+                <ArrowDown size={14} className="mr-1" />
+                <span>34% from last month</span>
               </div>
             </div>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20 shadow-sm shadow-primary/10">
@@ -874,12 +880,12 @@ export default function AdminDashboard() {
           <div className="mt-4 pt-4 border-t border-white/5">
             <div className="flex justify-between items-center">
               <span className="text-xs text-white/40">Monthly Goal</span>
-              <span className="text-xs text-white/80">R25,000</span>
+              <span className="text-xs text-white/80">R3,600,000</span>
             </div>
             <div className="w-full h-1.5 bg-white/5 rounded-full mt-2 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-                style={{ width: "85%" }}
+                style={{ width: "100%" }} /* Current collections exceed target */
               ></div>
             </div>
           </div>
@@ -1131,21 +1137,21 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-lg font-semibold">
                       {index === 0 ? 'R0' : 
-                       index === 1 ? 'R239,355,270.52' : 
+                       index === 1 ? 'R48,907,195.99' : 
                        index === 2 ? 'R0' : 
                        'R0'}
                     </div>
                     <div
                       className={`text-xs mt-1 flex items-center ${
-                        index === 1 ? "text-green-400" : "text-gray-400"
+                        index === 1 ? "text-red-400" : "text-gray-400"
                       }`}
                     >
                       {index === 1 ? (
-                        <ArrowUp size={12} className="mr-1" />
+                        <ArrowDown size={12} className="mr-1" />
                       ) : (
                         <ArrowUpRight size={12} className="mr-1" />
                       )}
-                      {index === 1 ? "8.3%" : "0%"}
+                      {index === 1 ? "-34%" : "0%"}
                     </div>
                   </div>
                 )
@@ -1154,13 +1160,13 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Case Status Distribution */}
+        {/* Consolidated Payments (MTD) */}
         <div className="card rounded-xl overflow-hidden backdrop-blur-sm border border-white/10 transition-all hover:shadow-lg hover:shadow-tertiary/5 hover:border-tertiary/20">
           <div className="p-6 bg-gradient-to-r from-black/40 to-black/20 border-b border-white/5">
             <div className="flex items-center gap-3">
               <div className="h-8 w-1 rounded-full bg-gradient-to-b from-tertiary to-tertiary/50"></div>
               <h3 className="text-lg font-semibold text-white">
-                Case Status Distribution
+                Consolidated Payments (MTD)
               </h3>
             </div>
           </div>
@@ -1169,134 +1175,122 @@ export default function AdminDashboard() {
             <div className="h-[300px]">
               {typeof window !== "undefined" && (
                 <ReactApexChart
-                  type="donut"
+                  type="bar"
                   height={300}
                   width="100%"
-                  options={
-                    {
-                      chart: {
-                        type: "donut",
-                        fontFamily: "Inter, sans-serif",
-                        background: "transparent",
+                  options={{
+                    chart: {
+                      type: "bar",
+                      fontFamily: "Inter, sans-serif",
+                      background: "transparent",
+                      toolbar: {
+                        show: false
+                      }
+                    },
+                    theme: {
+                      mode: "dark"
+                    },
+                    colors: ["#00C49F"],
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 4,
+                        columnWidth: "60%",
+                        dataLabels: {
+                          position: "top"
+                        }
+                      }
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function(val) {
+                        return val === 0 ? '' : 'R' + val.toLocaleString();
                       },
-                      theme: {
-                        mode: "dark",
+                      offsetY: -20,
+                      style: {
+                        fontSize: '12px',
+                        colors: ["#fff"]
+                      }
+                    },
+                    xaxis: {
+                      categories: consolidatedPaymentsData.map(item => item.month),
+                      labels: {
+                        style: {
+                          colors: "rgba(255, 255, 255, 0.7)"
+                        }
                       },
-                      colors: ["#0088FE", "#FFBB28", "#00C49F", "#FF8042"],
-                      labels: caseStatusData.map((item) => item.name),
-                      dataLabels: {
-                        enabled: false,
+                      axisBorder: {
+                        show: false
                       },
-                      plotOptions: {
-                        pie: {
-                          donut: {
-                            size: "65%",
-                            labels: {
-                              show: true,
-                              name: {
-                                show: true,
-                                fontSize: "14px",
-                                color: "rgba(255, 255, 255, 0.7)",
-                              },
-                              value: {
-                                show: true,
-                                fontSize: "20px",
-                                fontWeight: 600,
-                                color: "rgba(255, 255, 255, 0.9)",
-                                formatter: function (
-                                  val: string | number
-                                ): string | number {
-                                  return typeof val === "string"
-                                    ? parseFloat(val)
-                                    : val;
-                                },
-                              },
-                              total: {
-                                show: true,
-                                label: "Total",
-                                fontSize: "14px",
-                                color: "rgba(255, 255, 255, 0.7)",
-                                formatter: function (w: any): string | number {
-                                  return w.globals.seriesTotals.reduce(
-                                    (a: number, b: number) => a + b,
-                                    0
-                                  );
-                                },
-                              },
-                            },
-                          },
+                      axisTicks: {
+                        show: false
+                      }
+                    },
+                    yaxis: {
+                      labels: {
+                        formatter: function(val) {
+                          return 'R' + (val / 1000000).toFixed(1) + 'M';
                         },
+                        style: {
+                          colors: "rgba(255, 255, 255, 0.7)"
+                        }
+                      }
+                    },
+                    grid: {
+                      borderColor: "rgba(255, 255, 255, 0.05)",
+                      yaxis: {
+                        lines: {
+                          show: true
+                        }
                       },
-                      legend: {
-                        position: "bottom",
-                        fontSize: "13px",
-                        labels: {
-                          colors: "rgba(255, 255, 255, 0.7)",
-                        },
-                        markers: {
-                          width: 10,
-                          height: 10,
-                        },
-                        itemMargin: {
-                          horizontal: 10,
-                          vertical: 5,
-                        },
-                      },
-                      stroke: {
-                        width: 0,
-                      },
-                      tooltip: {
-                        theme: "dark",
-                        y: {
-                          formatter: function (
-                            val: string | number
-                          ): string | number {
-                            return typeof val === "string"
-                              ? parseFloat(val)
-                              : val;
-                          },
-                        },
-                      },
-                    } as ApexCharts.ApexOptions
-                  }
-                  series={caseStatusData.map((item) => item.value)}
+                      padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 10
+                      }
+                    },
+                    tooltip: {
+                      theme: "dark",
+                      y: {
+                        formatter: function(val) {
+                          return 'R' + val.toLocaleString();
+                        }
+                      }
+                    }
+                  }}
+                  series={[{
+                    name: "Monthly Payments",
+                    data: consolidatedPaymentsData.map(item => item.amount)
+                  }]}
                 />
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              {caseStatusData.map((status, index) => (
-                <div
-                  key={status.name}
-                  className="flex items-center bg-white/5 rounded-lg p-3 border border-white/5"
-                >
-                  <div
-                    className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  ></div>
-                  <div>
-                    <div className="text-white text-sm font-medium">
-                      {status.name}
-                    </div>
-                    <div className="flex justify-between items-center w-full mt-1">
-                      <span className="text-xs text-white/50">
-                        {(
-                          (status.value /
-                            caseStatusData.reduce(
-                              (acc, curr) => acc + curr.value,
-                              0
-                            )) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </span>
-                      <span className="text-xs font-medium">
-                        {status.value}
-                      </span>
-                    </div>
-                  </div>
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                <div className="text-xs text-white/50 mb-1">Total Collections</div>
+                <div className="text-xs font-semibold">R48,907,195.99</div>
+                <div className="text-xs mt-1 flex items-center text-green-400">
+                  <ArrowUp size={12} className="mr-1" />
+                  <span>100% of total</span>
                 </div>
-              ))}
+              </div>
+              
+              <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                <div className="text-xs text-white/50 mb-1">Current Month</div>
+                <div className="text-xs font-semibold">R19,432,161.76</div>
+                <div className="text-xs mt-1 flex items-center text-white/50">
+                  <span>June 2025</span>
+                </div>
+              </div>
+              
+              <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                <div className="text-xs text-white/50 mb-1">Monthly Average</div>
+                <div className="text-xs font-semibold">R5,434,132.89</div>
+                <div className="text-xs mt-1 flex items-center text-white/50">
+                  <span>Based on 9 months</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
