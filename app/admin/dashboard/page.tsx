@@ -115,10 +115,11 @@ const performanceData = [
   { name: "Jan", collections: 0, target: 20000000 },
   { name: "Feb", collections: 0, target: 20000000 },
   { name: "Mar", collections: 0, target: 20000000 },
-  { name: "Apr", collections: 0, target: 20000000 },
+  { name: "Apr", collections: 16633251.62, target: 20000000 },
   { name: "May", collections: 29475034, target: 20000000 },
   { name: "Jun", collections: 19432162, target: 20000000 },
-  { name: "Jul", collections: 0, target: 20000000 },
+  { name: "Jul", collections: 25756766.28, target: 20000000 },
+  { name: "Aug", collections: 0, target: 20000000 },
 ];
 
 const agentPerformance = [
@@ -247,95 +248,6 @@ const campaignsData = [
 
 const COLORS = ["#0088FE", "#FFBB28", "#00C49F", "#FF8042"];
 
-const recentActivities = [
-  {
-    id: 1,
-    agent: "Thabo Molefe",
-    message: "Collected R12,500 from Vodacom account #45872",
-    time: "10 minutes ago",
-    status: "success",
-    tags: ["Collection", "Corporate"],
-    avatar: "/avatars/thabo.jpg",
-  },
-  {
-    id: 2,
-    agent: "Lerato Ndlovu",
-    message: "Scheduled follow-up call with MTN for outstanding payment",
-    time: "32 minutes ago",
-    status: "warning",
-    tags: ["Follow-up", "Pending"],
-    avatar: "/avatars/lerato.jpg",
-  },
-  {
-    id: 3,
-    agent: "Sipho Nkosi",
-    message: "Failed to reach Standard Bank representative",
-    time: "1 hour ago",
-    status: "error",
-    tags: ["Unreachable", "Banking"],
-    avatar: "/avatars/sipho.jpg",
-  },
-  {
-    id: 4,
-    agent: "Nomsa Dlamini",
-    message: "Added new client: Shoprite Holdings Ltd",
-    time: "2 hours ago",
-    status: "info",
-    tags: ["New Client", "Retail"],
-    avatar: "/avatars/nomsa.jpg",
-  },
-  {
-    id: 5,
-    agent: "Mandla Khumalo",
-    message: "Updated payment terms for Sasol account",
-    time: "3 hours ago",
-    status: "success",
-    tags: ["Terms Update", "Energy"],
-    avatar: "/avatars/mandla.jpg",
-  },
-  {
-    id: 6,
-    agent: "Zanele Mbeki",
-    message: "Resolved dispute with Telkom regarding invoice #INV-7845",
-    time: "5 hours ago",
-    status: "success",
-    tags: ["Dispute", "Resolved"],
-    avatar: "/avatars/zanele.jpg",
-  },
-];
-
-const campaigns = [
-  {
-    id: 1,
-    name: "Q1 Recovery Drive",
-    target: 150000,
-    collected: 89500,
-    progress: 59,
-    agents: 12,
-    status: "active",
-    endDate: "2025-03-31",
-  },
-  {
-    id: 2,
-    name: "High-Value Accounts",
-    target: 300000,
-    collected: 124000,
-    progress: 41,
-    agents: 8,
-    status: "active",
-    endDate: "2025-04-15",
-  },
-  {
-    id: 3,
-    name: "Aged Receivables",
-    target: 85000,
-    collected: 72250,
-    progress: 85,
-    agents: 6,
-    status: "active",
-    endDate: "2025-03-25",
-  },
-];
 
 const enhancedAgentPerformance = [
   {
@@ -1269,7 +1181,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-3 gap-3 mt-6">
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Total Collections</div>
-                <div className="text-xs font-semibold">R48,907,195.99</div>
+                <div className="text-xs font-semibold">R65,540,447.61</div>
                 <div className="text-xs mt-1 flex items-center text-green-400">
                   <ArrowUp size={12} className="mr-1" />
                   <span>100% of total</span>
@@ -1278,7 +1190,7 @@ export default function AdminDashboard() {
               
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Current Month</div>
-                <div className="text-xs font-semibold">R19,432,161.76</div>
+                <div className="text-xs font-semibold">R25,756,766.28</div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
                   <span>June 2025</span>
                 </div>
