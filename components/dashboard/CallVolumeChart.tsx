@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Dynamically import ApexCharts to avoid SSR issues
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false, loading: () => <div style={{height: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Loading chart...</div> });
 
 interface CallVolumeData {
   date: string;
@@ -162,22 +162,27 @@ export function CallVolumeChart({ data, isDarkMode }: CallVolumeChartProps) {
   }
 
   return (
-    <Card>
+    <Card style={{ zIndex: 20, position: 'relative', opacity: 1, visibility: 'visible' }}>
       <CardHeader>
         <CardTitle>Call Volume Trends</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent style={{ zIndex: 20, position: 'relative', opacity: 1, visibility: 'visible' }}>
         {data.length === 0 ? (
           <div className="h-[350px] flex items-center justify-center text-muted-foreground">
             No call volume data available
           </div>
         ) : (
-          <Chart
-            options={chartOptions}
-            series={chartSeries}
-            type="area"
-            height={350}
-          />
+          <div style={{ zIndex: 999, position: 'relative', opacity: 1, visibility: 'visible', minHeight: '450px', display: 'block' }}>
+            {typeof window !== 'undefined' && (
+              <Chart
+                options={chartOptions}
+                series={chartSeries}
+                type="area"
+                height={450}
+                width="100%"
+              />
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

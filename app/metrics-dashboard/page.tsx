@@ -128,7 +128,17 @@ function MetricsDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300" style={{ zIndex: 100, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible' }}>
+      {/* Force ApexCharts to load properly */}
+      <style jsx global>{`
+        .apexcharts-canvas {
+          position: relative !important;
+          visibility: visible !important;
+          display: block !important;
+          opacity: 1 !important;
+          z-index: 999 !important;
+        }
+      `}</style>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Agent Metrics Dashboard</h1>
@@ -228,7 +238,7 @@ function MetricsDashboard() {
       </div>
       
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible' }}>
         {/* SIP Status Monitor Card */}
         <SipStatusMonitor />
         
@@ -426,7 +436,7 @@ function MetricsDashboard() {
         
         <TabsContent value="overview" className="space-y-6">
           {/* Agent Status Distribution Card - Full Width */}
-          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-indigo-500 overflow-hidden">
+          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-indigo-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
             <CardHeader className="bg-indigo-500/5 pb-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -477,7 +487,7 @@ function MetricsDashboard() {
           </Card>
           
           {/* Call Volume Trend Card - Full Width */}
-          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-blue-500 overflow-hidden">
+          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-blue-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
             <CardHeader className="bg-blue-500/5 pb-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">

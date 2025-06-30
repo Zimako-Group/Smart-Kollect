@@ -15,7 +15,7 @@ export function SipStatusMonitor() {
   const isSipConnected = true;
   
   return (
-    <Card className="transition-all duration-300 hover:shadow-md">
+    <Card className="transition-all duration-300 hover:shadow-md" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           {isSipConnected ? <Wifi className="h-5 w-5 text-green-500" /> : <WifiOff className="h-5 w-5 text-red-500" />}

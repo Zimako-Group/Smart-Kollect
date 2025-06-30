@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Dynamically import ApexCharts to avoid SSR issues
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false, loading: () => <div style={{height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Loading chart...</div> });
 
 interface AgentStatus {
   status: string;
@@ -155,22 +155,27 @@ export function AgentStatusChart({ data, isDarkMode }: AgentStatusChartProps) {
   }
 
   return (
-    <Card>
+    <Card style={{ zIndex: 20, position: 'relative', opacity: 1, visibility: 'visible' }}>
       <CardHeader>
         <CardTitle>Agent Status</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent style={{ zIndex: 20, position: 'relative', opacity: 1, visibility: 'visible' }}>
         {data.length === 0 ? (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             No agent data available
           </div>
         ) : (
-          <Chart
-            options={chartOptions}
-            series={data.map(item => item.count)}
-            type="donut"
-            height={300}
-          />
+          <div style={{ zIndex: 999, position: 'relative', opacity: 1, visibility: 'visible', minHeight: '450px', display: 'block' }}>
+            {typeof window !== 'undefined' && (
+              <Chart
+                options={chartOptions}
+                series={data.map(item => item.count)}
+                type="donut"
+                height={450}
+                width="100%"
+              />
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
