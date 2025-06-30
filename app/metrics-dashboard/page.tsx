@@ -425,194 +425,112 @@ function MetricsDashboard() {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Agent Status Distribution Card */}
-            <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-indigo-500 overflow-hidden">
-              <CardHeader className="bg-indigo-500/5 pb-0 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <div className="p-1 rounded-full bg-indigo-500/10">
-                      <Users className="h-5 w-5 text-indigo-500" />
-                    </div>
-                    Agent Status Distribution
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">Current agent status breakdown</p>
-                </div>
-                <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">
-                  {data.agentMetrics?.totalAgents || 0} Total Agents
-                </Badge>
-              </CardHeader>
-              <CardContent className="h-[300px] pt-6">
-                {isLoading ? (
-                  <div className="h-full w-full flex flex-col items-center justify-center space-y-4">
-                    <Skeleton className="h-[200px] w-[200px] rounded-full" />
-                    <div className="w-full flex justify-around">
-                      <Skeleton className="h-6 w-20 rounded-md" />
-                      <Skeleton className="h-6 w-20 rounded-md" />
-                      <Skeleton className="h-6 w-20 rounded-md" />
-                    </div>
+          {/* Agent Status Distribution Card - Full Width */}
+          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-indigo-500 overflow-hidden">
+            <CardHeader className="bg-indigo-500/5 pb-0 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <div className="p-1 rounded-full bg-indigo-500/10">
+                    <Users className="h-5 w-5 text-indigo-500" />
                   </div>
-                ) : (
-                  <div className="relative">
-                    <AgentStatusChart 
-                      data={data.agentMetrics?.agentStatusDistribution || []} 
-                      isDarkMode={theme === "dark"}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-6 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-medium">Active</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                        <span className="text-xs font-medium">Paused</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                        <span className="text-xs font-medium">Offline</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Call Volume Trend Card */}
-            <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-blue-500 overflow-hidden">
-              <CardHeader className="bg-blue-500/5 pb-0 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <div className="p-1 rounded-full bg-blue-500/10">
-                      <BarChart3 className="h-5 w-5 text-blue-500" />
-                    </div>
-                    Call Volume Trend
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">Hourly call distribution</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex items-center gap-1">
-                    <PhoneIncoming className="h-3 w-3" />
-                    Inbound
-                  </Badge>
-                  <Badge variant="outline" className="bg-violet-500/10 text-violet-500 border-violet-500/20 flex items-center gap-1">
-                    <PhoneOutgoing className="h-3 w-3" />
-                    Outbound
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="h-[300px] pt-6">
-                {isLoading ? (
-                  <div className="h-full w-full flex flex-col items-center justify-center">
-                    <div className="w-full space-y-3">
-                      <Skeleton className="h-[180px] w-full rounded-md" />
-                      <div className="flex justify-between">
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                        <Skeleton className="h-4 w-10 rounded-md" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <CallVolumeChart 
-                      data={data.callMetrics?.callVolumeByHour || []} 
-                      isDarkMode={theme === "dark"}
-                    />
-                    <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-3 py-1.5 border border-border shadow-sm">
-                      <div className="text-xs font-medium">
-                        Total Today: {dashboardData.inboundCalls + dashboardData.outboundCalls} calls
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Additional Overview Section - Performance Summary */}
-          <Card className="transition-all duration-300 hover:shadow-md border border-border overflow-hidden">
-            <CardHeader className="bg-background pb-2">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <div className="p-1 rounded-full bg-primary/10">
-                  <Activity className="h-5 w-5 text-primary" />
-                </div>
-                Performance Summary
-              </CardTitle>
-              <p className="text-xs text-muted-foreground">Key performance indicators for today</p>
-            </CardHeader>
-            <CardContent className="pt-2 px-3 pb-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Service Level KPI */}
-                <div className="flex flex-col">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-medium flex items-center gap-1.5">
-                      <BarChart3 className="h-3.5 w-3.5 text-emerald-500" />
-                      Service Level
-                    </h3>
-                    <Badge variant="outline" className={`${dashboardData.serviceLevel >= 90 ? 'bg-green-500/10 text-green-500 border-green-500/20' : dashboardData.serviceLevel >= 80 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
-                      {dashboardData.serviceLevel}%
-                    </Badge>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
-                    <div 
-                      className={`h-full rounded-full ${dashboardData.serviceLevel >= 90 ? 'bg-green-500' : dashboardData.serviceLevel >= 80 ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${dashboardData.serviceLevel}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Target: 90% of calls answered within SLA
-                  </p>
-                </div>
-                
-                {/* Average Call Duration KPI */}
-                <div className="flex flex-col">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-medium flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-cyan-500" />
-                      Avg Call Duration
-                    </h3>
-                    <Badge variant="outline" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/20">
-                      {formatDuration(dashboardData.avgCallDuration)}
-                    </Badge>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
-                    <div 
-                      className="h-full bg-cyan-500 rounded-full"
-                      style={{ width: `${Math.min(100, Math.round((dashboardData.avgCallDuration / 300) * 100))}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {Math.round((dashboardData.avgCallDuration / 300) * 100)}% of 5-minute target duration
-                  </p>
-                </div>
-                
-                {/* Agent Availability KPI */}
-                <div className="flex flex-col">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-medium flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5 text-indigo-500" />
-                      Agent Availability
-                    </h3>
-                    <Badge variant="outline" className={`${dashboardData.activeAgents / dashboardData.totalAgents >= 0.7 ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
-                      {Math.round((dashboardData.activeAgents / dashboardData.totalAgents) * 100)}%
-                    </Badge>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
-                    <div 
-                      className={`h-full rounded-full ${dashboardData.activeAgents / dashboardData.totalAgents >= 0.7 ? 'bg-green-500' : 'bg-amber-500'}`}
-                      style={{ width: `${Math.round((dashboardData.activeAgents / dashboardData.totalAgents) * 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {dashboardData.activeAgents} of {dashboardData.totalAgents} agents currently active
-                  </p>
-                </div>
+                  Agent Status Distribution
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Current agent status breakdown</p>
               </div>
+              <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">
+                {data.agentMetrics?.totalAgents || 0} Total Agents
+              </Badge>
+            </CardHeader>
+            <CardContent className="h-[300px] pt-6">
+              {isLoading ? (
+                <div className="h-full w-full flex flex-col items-center justify-center space-y-4">
+                  <Skeleton className="h-[200px] w-[200px] rounded-full" />
+                  <div className="w-full flex justify-around">
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                  </div>
+                </div>
+              ) : (
+                <div className="relative">
+                  <AgentStatusChart 
+                    data={data.agentMetrics?.agentStatusDistribution || []} 
+                    isDarkMode={theme === "dark"}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-6 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                      <span className="text-xs font-medium">Active</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                      <span className="text-xs font-medium">Paused</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                      <span className="text-xs font-medium">Offline</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
+          
+          {/* Call Volume Trend Card - Full Width */}
+          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-blue-500 overflow-hidden">
+            <CardHeader className="bg-blue-500/5 pb-0 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <div className="p-1 rounded-full bg-blue-500/10">
+                    <BarChart3 className="h-5 w-5 text-blue-500" />
+                  </div>
+                  Call Volume Trend
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Hourly call distribution</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex items-center gap-1">
+                  <PhoneIncoming className="h-3 w-3" />
+                  Inbound
+                </Badge>
+                <Badge variant="outline" className="bg-violet-500/10 text-violet-500 border-violet-500/20 flex items-center gap-1">
+                  <PhoneOutgoing className="h-3 w-3" />
+                  Outbound
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="h-[300px] pt-6">
+              {isLoading ? (
+                <div className="h-full w-full flex flex-col items-center justify-center">
+                  <div className="w-full space-y-3">
+                    <Skeleton className="h-[180px] w-full rounded-md" />
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                      <Skeleton className="h-4 w-10 rounded-md" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative">
+                  <CallVolumeChart 
+                    data={data.callMetrics?.callVolumeByHour || []} 
+                    isDarkMode={theme === "dark"}
+                  />
+                  <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-3 py-1.5 border border-border shadow-sm">
+                    <div className="text-xs font-medium">
+                      Total Today: {dashboardData.inboundCalls + dashboardData.outboundCalls} calls
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Performance Summary section removed */}
         </TabsContent>
         
         <TabsContent value="agents">
@@ -676,94 +594,7 @@ function MetricsDashboard() {
         </TabsContent>
       </Tabs>
       
-      {/* Recent Activity Section */}
-      <div className="mt-8">
-        <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-purple-500 overflow-hidden">
-          <CardHeader className="pb-1 pt-2 px-3 bg-purple-500/5">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <div className="p-1 rounded-full bg-purple-500/10">
-                <Activity className="h-3.5 w-3.5 text-purple-500" />
-              </div>
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2 px-3 pb-3">
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                  <div className="p-1 rounded-full bg-blue-500/10">
-                    <PhoneCall className="h-3.5 w-3.5 text-blue-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">New call received from customer</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(new Date().getTime() - 10 * 60000).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                  <div className="p-1 rounded-full bg-emerald-500/10">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">PTP arrangement fulfilled</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(new Date().getTime() - 25 * 60000).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                  <div className="p-1 rounded-full bg-amber-500/10">
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">PTP arrangement defaulted</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(new Date().getTime() - 45 * 60000).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="mt-3 pt-3 border-t flex justify-center">
-              <a 
-                href="/admin/notifications" 
-                className="text-purple-500 hover:text-purple-600 text-sm flex items-center gap-1 transition-all"
-              >
-                View All Activity
-                <ChevronRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Recent Activity section removed */}
     </div>
   );
 }

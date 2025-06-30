@@ -131,10 +131,10 @@ const agentPerformance = [
 
 // Monthly consolidated payments data (Month-To-Date)
 const consolidatedPaymentsData = [
-  { month: "Apr 2025", amount: 0 },
+  { month: "Apr 2025", amount: 16633251.62 },
   { month: "May 2025", amount: 29475034.23 },
   { month: "Jun 2025", amount: 19432161.76 },
-  { month: "Jul 2025", amount: 0 },
+  { month: "Jul 2025", amount: 25756766.28 },
   { month: "Aug 2025", amount: 0 },
   { month: "Sep 2025", amount: 0 },
   { month: "Oct 2025", amount: 0 },
@@ -866,7 +866,7 @@ export default function AdminDashboard() {
             <div>
               <p className="text-white/60 text-sm">Total Collections</p>
               <h3 className="text-2xl font-bold mt-1 gradient-text">
-                R19,432,161.76
+                R25,756,766.28
               </h3>
               <div className="flex items-center mt-3 text-red-400 bg-red-400/10 px-2 py-1 rounded-full text-xs w-fit">
                 <ArrowDown size={14} className="mr-1" />
@@ -880,7 +880,7 @@ export default function AdminDashboard() {
           <div className="mt-4 pt-4 border-t border-white/5">
             <div className="flex justify-between items-center">
               <span className="text-xs text-white/40">Monthly Goal</span>
-              <span className="text-xs text-white/80">R3,600,000</span>
+              <span className="text-xs text-white/80">R6,000,000</span>
             </div>
             <div className="w-full h-1.5 bg-white/5 rounded-full mt-2 overflow-hidden">
               <div
@@ -1137,8 +1137,8 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-lg font-semibold">
                       {index === 0 ? 'R0' : 
-                       index === 1 ? 'R48,907,195.99' : 
-                       index === 2 ? 'R0' : 
+                       index === 1 ? 'R65,540,447.61' : 
+                       index === 2 ? 'R25,756,766.28' : 
                        'R0'}
                     </div>
                     <div

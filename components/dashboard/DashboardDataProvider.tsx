@@ -131,7 +131,7 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [timeRange, setTimeRange] = useState('today');
   const [sipStatus, setSipStatus] = useState({
     connected: false,
