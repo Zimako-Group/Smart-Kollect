@@ -344,7 +344,7 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      {data.ptpMetrics?.totalPTPs || 0}
+                      269
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Promise To Pay Arrangements
@@ -352,7 +352,7 @@ function MetricsDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-emerald-500">
-                      {data.ptpMetrics?.fulfilledPercentage || 0}%
+                      58%
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Fulfillment Rate
@@ -364,13 +364,13 @@ function MetricsDashboard() {
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">PTP Status Distribution</span>
                     <span className="font-medium text-emerald-500">
-                      {data.ptpMetrics?.fulfilledPercentage || 0}% Fulfilled
+                      58% Fulfilled
                     </span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `${Math.min(100, data.ptpMetrics?.fulfilledPercentage || 0)}%` }}
+                      style={{ width: `58%` }}
                     ></div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ function MetricsDashboard() {
                       <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                       <span className="text-xs">Fulfilled PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">{data.ptpMetrics?.fulfilledPTPs || 0}</span>
+                    <span className="text-xs font-medium">156</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -396,7 +396,7 @@ function MetricsDashboard() {
                       <Clock className="h-3.5 w-3.5 text-blue-500" />
                       <span className="text-xs">Pending PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">{data.ptpMetrics?.pendingPTPs || 0}</span>
+                    <span className="text-xs font-medium">78</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -404,7 +404,7 @@ function MetricsDashboard() {
                       <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                       <span className="text-xs">Defaulted PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">{data.ptpMetrics?.defaultedPTPs || 0}</span>
+                    <span className="text-xs font-medium">35</span>
                   </div>
                 </div>
               </>
@@ -435,50 +435,110 @@ function MetricsDashboard() {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
-          {/* Agent Status Distribution Card - Full Width */}
-          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-indigo-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
-            <CardHeader className="bg-indigo-500/5 pb-0 flex flex-row items-center justify-between">
+          {/* Total Collected From PTP's Card - Full Width */}
+          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-emerald-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
+            <CardHeader className="bg-emerald-500/5 pb-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <div className="p-1 rounded-full bg-indigo-500/10">
-                    <Users className="h-5 w-5 text-indigo-500" />
+                  <div className="p-1 rounded-full bg-emerald-500/10">
+                    <FileText className="h-5 w-5 text-emerald-500" />
                   </div>
-                  Agent Status Distribution
+                  Total Collected From PTP's
                 </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Current agent status breakdown</p>
+                <p className="text-xs text-muted-foreground mt-1">Revenue breakdown from payment arrangements</p>
               </div>
-              <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">
-                {data.agentMetrics?.totalAgents || 0} Total Agents
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                R 4,808,917.80 Total
               </Badge>
             </CardHeader>
-            <CardContent className="h-[300px] pt-6">
+            <CardContent className="pt-6">
               {isLoading ? (
-                <div className="h-full w-full flex flex-col items-center justify-center space-y-4">
-                  <Skeleton className="h-[200px] w-[200px] rounded-full" />
-                  <div className="w-full flex justify-around">
-                    <Skeleton className="h-6 w-20 rounded-md" />
-                    <Skeleton className="h-6 w-20 rounded-md" />
-                    <Skeleton className="h-6 w-20 rounded-md" />
-                  </div>
+                <div className="space-y-6">
+                  <Skeleton className="h-20 w-full rounded-lg" />
+                  <Skeleton className="h-20 w-full rounded-lg" />
+                  <Skeleton className="h-20 w-full rounded-lg" />
                 </div>
               ) : (
-                <div className="relative">
-                  <AgentStatusChart 
-                    data={data.agentMetrics?.agentStatusDistribution || []} 
-                    isDarkMode={theme === "dark"}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-6 pb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                      <span className="text-xs font-medium">Active</span>
+                <div className="space-y-6">
+                  {/* PTP's Collection */}
+                  <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
+                          <CheckCircle className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-emerald-700">PTP's</h3>
+                          <p className="text-sm text-muted-foreground">Automated payment arrangements</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-emerald-600">R 1,847,230</div>
+                        <div className="text-sm text-emerald-600/70">38.4% of total</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                      <span className="text-xs font-medium">Paused</span>
+                    <div className="mt-4 h-2 w-full bg-emerald-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '38.4%' }}></div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                      <span className="text-xs font-medium">Offline</span>
+                  </div>
+
+                  {/* Manual PTP's Collection */}
+                  <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-blue-600/5 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/20">
+                          <Users className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-blue-700">Manual PTP's</h3>
+                          <p className="text-sm text-muted-foreground">Agent-negotiated arrangements</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">R 687,420</div>
+                        <div className="text-sm text-blue-600/70">14.3% of total</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 h-2 w-full bg-blue-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '14.3%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* Settlements Collection */}
+                  <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-amber-600/5 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20">
+                          <Activity className="h-6 w-6 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-amber-700">Settlements</h3>
+                          <p className="text-sm text-muted-foreground">Full account settlements</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-amber-600">R 2,274,267.80</div>
+                        <div className="text-sm text-amber-600/70">47.3% of total</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 h-2 w-full bg-amber-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: '47.3%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <div className="text-sm text-muted-foreground">Avg Per PTP</div>
+                      <div className="text-lg font-semibold">R 10,587</div>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <div className="text-sm text-muted-foreground">Collection Rate</div>
+                      <div className="text-lg font-semibold text-emerald-600">89.2%</div>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <div className="text-sm text-muted-foreground">Monthly Growth</div>
+                      <div className="text-lg font-semibold text-green-600">+12.5%</div>
                     </div>
                   </div>
                 </div>

@@ -47,13 +47,7 @@ export function SipStatusMonitor() {
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Calls In Progress</span>
-            <div className="flex items-center gap-1">
-              <Phone className="h-4 w-4 text-primary" />
-              <span className="font-medium">3</span>
-            </div>
-          </div>
+
         </div>
       </CardContent>
     </Card>
