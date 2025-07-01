@@ -1198,9 +1198,9 @@ export default function AdminDashboard() {
               
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Monthly Average</div>
-                <div className="text-xs font-semibold">R5,434,132.89</div>
+                <div className="text-xs font-semibold">R22,824,303.47</div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
-                  <span>Based on 9 months</span>
+                  <span>Based On 4 Months</span>
                 </div>
               </div>
             </div>
