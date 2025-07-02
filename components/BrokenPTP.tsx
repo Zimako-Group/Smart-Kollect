@@ -45,6 +45,7 @@ type BrokenPTPCustomer = {
   status: "high" | "medium" | "low";
   agentId?: string;
   agentName?: string;
+  source?: 'PTP' | 'ManualPTP'; // Source table indicator
 };
 
 type CallOutcome = {
@@ -421,7 +422,7 @@ return (
                         return (
                           <div
                             key={ptp.id}
-                            className="relative overflow-hidden rounded-lg border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/90 p-4 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20 hover:translate-y-[-2px]"
+                            className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm p-5 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/30 hover:translate-y-[-3px] hover:border-slate-600/60"
                           >
                             <div
                               className={`absolute top-0 left-0 w-1 h-full ${
@@ -433,14 +434,24 @@ return (
                               }`}
                             ></div>
                             <div className="flex flex-col sm:flex-row justify-between gap-4">
-                              <div className="flex items-start gap-3">
-                                <div className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-200 font-medium">
-                                  {ptp.name.split(" ").map((n) => n[0]).join("")}
+                              <div className="flex items-start gap-4">
+                                <div className="relative">
+                                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-slate-200 font-semibold text-sm shadow-lg ring-2 ring-slate-600/50 group-hover:ring-slate-500/70 transition-all duration-300">
+                                    {ptp.name.split(" ").map((n) => n[0]).join("")}
+                                  </div>
+                                  {/* Priority indicator dot */}
+                                  <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${
+                                    ptp.status === "high"
+                                      ? "bg-red-500"
+                                      : ptp.status === "medium"
+                                      ? "bg-amber-500"
+                                      : "bg-blue-500"
+                                  }`}></div>
                                 </div>
                                 <div>
                                   <h3 className="font-medium text-slate-200">{ptp.name}</h3>
                                   <p className="text-sm text-slate-400">{ptp.phone}</p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                                     <Badge
                                       className={`${
                                         ptp.status === "high"
@@ -456,7 +467,17 @@ return (
                                         ? "Medium Priority"
                                         : "Low Priority"}
                                     </Badge>
-                                    <span className="text-xs text-slate-500">ID: {ptp.id}</span>
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs ${
+                                        ptp.source === 'ManualPTP'
+                                          ? "bg-purple-900/30 text-purple-300 border-purple-700/50"
+                                          : "bg-indigo-900/30 text-indigo-300 border-indigo-700/50"
+                                      }`}
+                                    >
+                                      {ptp.source === 'ManualPTP' ? '📝 Manual PTP' : '🔄 Auto PTP'}
+                                    </Badge>
+                                    <span className="text-xs text-slate-500">ID: {ptp.id.slice(0, 8)}...</span>
                                   </div>
                                   {latestOutcome && (
                                     <div className="mt-2 text-xs bg-slate-800/50 rounded-md px-2 py-1 border border-slate-700/50">
@@ -506,51 +527,49 @@ return (
                                   </span>
                                 </div>
                               </div>
-                              <div className="flex sm:flex-col gap-2 sm:justify-center">
+                              <div className="flex flex-col gap-2 min-w-[140px]">
                                 <Button
                                   size="sm"
-                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105"
                                   onClick={() => handleCallCustomer(ptp)}
                                 >
                                   <Phone className="h-3.5 w-3.5 mr-1.5" />
-                                  Call
+                                  Call Now
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                                  className="border-slate-600/60 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500 transition-all duration-200"
                                   onClick={() => handleRecordOutcome(ptp)}
                                 >
                                   <History className="h-3.5 w-3.5 mr-1.5" />
-                                  Record Outcome
+                                  Record
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                                  className="border-emerald-600/60 text-emerald-300 hover:bg-emerald-700/20 hover:border-emerald-500 transition-all duration-200"
                                   onClick={() => handleMarkResolved(ptp)}
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                                  Mark Resolved
+                                  Resolve
                                 </Button>
                               </div>
                             </div>
                           </div>
-                        );
-                      })}
+                        )}
+                      )}
                     </CardContent>
                   )}
-                  </Card>
-                ))
-              )}
+                </Card>
+              )))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Outcome Modal */}
+      
       {showOutcomeModal && selectedCustomer && (
-        <BrokenPTPOutcome 
+        <BrokenPTPOutcome
           customer={selectedCustomer}
           onClose={() => setShowOutcomeModal(false)}
           onOutcomeRecorded={handleOutcomeRecorded}
