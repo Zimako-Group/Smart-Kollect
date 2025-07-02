@@ -260,24 +260,40 @@ class ReminderService {
    * Get count of broken PTPs (defaulted status) for a specific agent
    * @param agentId - The agent's ID
    * @param options - Service options
-   * @returns Promise<number> - Count of broken PTPs
+   * @returns Promise<number> - Count of broken PTPs from both PTP and ManualPTP tables
    */
   async getBrokenPTPsCount(agentId: string, options: ReminderServiceOptions = {}): Promise<number> {
     try {
       const client = options.useAdmin ? supabaseAdmin : supabase;
       
-      const { count, error } = await client
+      // Count defaulted PTPs from PTP table
+      const { count: ptpCount, error: ptpError } = await client
         .from('PTP')
         .select('*', { count: 'exact', head: true })
         .eq('created_by', agentId)
         .eq('status', 'defaulted');
 
-      if (error) {
-        console.error('Error fetching broken PTPs count:', error);
-        throw error;
+      if (ptpError) {
+        console.error('Error fetching PTP count:', ptpError);
+        throw ptpError;
       }
 
-      return count || 0;
+      // Count defaulted PTPs from ManualPTP table
+      const { count: manualPtpCount, error: manualPtpError } = await client
+        .from('ManualPTP')
+        .select('*', { count: 'exact', head: true })
+        .eq('created_by', agentId)
+        .eq('status', 'defaulted');
+
+      if (manualPtpError) {
+        console.error('Error fetching ManualPTP count:', manualPtpError);
+        throw manualPtpError;
+      }
+
+      const totalCount = (ptpCount || 0) + (manualPtpCount || 0);
+      console.log(`Broken PTPs count for agent ${agentId}: PTP=${ptpCount}, ManualPTP=${manualPtpCount}, Total=${totalCount}`);
+      
+      return totalCount;
     } catch (error) {
       console.error('Error in getBrokenPTPsCount:', error);
       return 0;
