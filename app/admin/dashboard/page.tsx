@@ -117,8 +117,8 @@ const performanceData = [
   { name: "Mar", collections: 0, target: 20000000 },
   { name: "Apr", collections: 16633251.62, target: 20000000 },
   { name: "May", collections: 29475034, target: 20000000 },
-  { name: "Jun", collections: 19432162, target: 20000000 },
-  { name: "Jul", collections: 25756766.28, target: 20000000 },
+  { name: "Jun", collections: 25756766.28, target: 20000000 },
+  { name: "Jul", collections: 0, target: 20000000 },
   { name: "Aug", collections: 0, target: 20000000 },
 ];
 
@@ -134,8 +134,8 @@ const agentPerformance = [
 const consolidatedPaymentsData = [
   { month: "Apr 2025", amount: 16633251.62 },
   { month: "May 2025", amount: 29475034.23 },
-  { month: "Jun 2025", amount: 19432161.76 },
-  { month: "Jul 2025", amount: 25756766.28 },
+  { month: "Jun 2025", amount: 25756766.28 },
+  { month: "Jul 2025", amount: 0 },
   { month: "Aug 2025", amount: 0 },
   { month: "Sep 2025", amount: 0 },
   { month: "Oct 2025", amount: 0 },
