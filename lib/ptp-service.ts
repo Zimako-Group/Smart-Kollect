@@ -13,6 +13,7 @@ export interface PTP {
   created_by: string;
   created_at: string;
   updated_at: string;
+  source?: 'PTP' | 'ManualPTP'; // Optional field to distinguish table source
 }
 
 export interface CreatePTPParams {
@@ -358,185 +359,146 @@ export const getAgentPTPCount = async (agentId: string): Promise<number> => {
 };
 
 /**
- * Delete a PTP by its ID
- * @param ptpId ID of the PTP to delete
- * @param ptpType Type of PTP ('manual' or default)
- * @returns Promise that resolves when the PTP is deleted
- */
-/**
- * Get defaulted PTPs grouped by agent
+ * Get defaulted PTPs grouped by agent from both PTP and ManualPTP tables
  * @returns Promise with defaulted PTPs grouped by agent
  */
-export const getDefaultedPTPsByAgent = async (): Promise<{[agentId: string]: {agent: any, ptps: (PTP & {debtor_name?: string, debtor_phone?: string})[]}}> => {
+export const getDefaultedPTPsByAgent = async (): Promise<{[agentId: string]: {agent: any, ptps: (PTP & {debtor_name?: string, debtor_phone?: string, source?: string})[]}}> => {
   try {
-    console.log('Fetching defaulted PTPs...');
+    console.log('Fetching defaulted PTPs by agent from both PTP and ManualPTP tables...');
     
-    // Fetch all defaulted PTPs with pagination to handle large datasets
-    let allDefaultedPTPs: PTP[] = [];
-    let hasMorePTPs = true;
-    let page = 0;
-    const pageSize = 1000; // Fetch in larger chunks to reduce API calls
-    
-    while (hasMorePTPs) {
-      const from = page * pageSize;
-      const to = from + pageSize - 1;
-      
-      console.log(`Fetching PTPs page ${page + 1}, range ${from}-${to}`);
-      
-      const { data: ptpsPage, error: ptpsError, count } = await supabaseAdmin
+    // Fetch defaulted PTPs from both tables in parallel
+    const [ptpResult, manualPtpResult] = await Promise.all([
+      // Fetch from PTP table
+      supabaseAdmin
         .from('PTP')
-        .select('*', { count: 'exact' })
+        .select('*')
         .eq('status', 'defaulted')
-        .range(from, to);
-
-      if (ptpsError) {
-        console.error('Error fetching defaulted PTPs:', ptpsError);
-        throw new Error(ptpsError.message);
-      }
+        .order('date', { ascending: false }),
       
-      if (!ptpsPage || ptpsPage.length === 0) {
-        hasMorePTPs = false;
-      } else {
-        allDefaultedPTPs = [...allDefaultedPTPs, ...ptpsPage];
-        
-        // Check if we've fetched all records
-        if (count !== null && allDefaultedPTPs.length >= count) {
-          hasMorePTPs = false;
-        } else {
-          page++;
-        }
-      }
+      // Fetch from ManualPTP table
+      supabaseAdmin
+        .from('ManualPTP')
+        .select('*')
+        .eq('status', 'defaulted')
+        .order('date', { ascending: false })
+    ]);
+
+    if (ptpResult.error) {
+      console.error('Error fetching defaulted PTPs from PTP table:', ptpResult.error);
+      throw new Error(ptpResult.error.message);
     }
+
+    if (manualPtpResult.error) {
+      console.error('Error fetching defaulted PTPs from ManualPTP table:', manualPtpResult.error);
+      throw new Error(manualPtpResult.error.message);
+    }
+
+    // Combine PTPs from both tables
+    const ptpTableData = ptpResult.data || [];
+    const manualPtpTableData = manualPtpResult.data || [];
     
-    console.log(`Total defaulted PTPs fetched: ${allDefaultedPTPs.length}`);
-    
+    // Add a source field to distinguish between tables and ensure consistent structure
+    const allDefaultedPTPs = [
+      ...ptpTableData.map(ptp => ({ ...ptp, source: 'PTP' as const })),
+      ...manualPtpTableData.map(ptp => ({ 
+        ...ptp, 
+        source: 'ManualPTP' as const,
+        // Ensure ManualPTP has the same structure as PTP
+        payment_method: ptp.payment_method || 'Cash',
+        notes: ptp.notes || ''
+      }))
+    ];
+
     if (allDefaultedPTPs.length === 0) {
-      console.log('No defaulted PTPs found');
+      console.log('No defaulted PTPs found in either table');
       return {};
     }
 
-    // Get unique debtor IDs to fetch their information
-    const debtorIds = [...new Set(allDefaultedPTPs.map(ptp => ptp.debtor_id).filter(Boolean))];
-    console.log(`Found ${debtorIds.length} unique debtors`);
-    
-    // Fetch debtor information in batches to avoid query size limits
-    const debtorInfo: Record<string, { name: string, phone: string }> = {};
-    
-    if (debtorIds.length > 0) {
-      // Process in batches of 100 to avoid query parameter limits
-      const batchSize = 100;
-      for (let i = 0; i < debtorIds.length; i += batchSize) {
-        const batchIds = debtorIds.slice(i, i + batchSize);
-        console.log(`Fetching debtor batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(debtorIds.length/batchSize)}, size: ${batchIds.length}`);
-        
-        const { data: debtors, error: debtorsError } = await supabaseAdmin
-          .from('Debtors')
-          .select('id, acc_holder, surname_company_trust, name, cellphone_1, cell_number')
-          .in('id', batchIds);
+    console.log(`Found ${ptpTableData.length} defaulted PTPs from PTP table and ${manualPtpTableData.length} from ManualPTP table`);
+    console.log(`Total: ${allDefaultedPTPs.length} defaulted PTPs`);
 
-        if (debtorsError) {
-          console.error('Error fetching debtor details batch:', debtorsError);
-          // Continue with the data we have rather than failing completely
-        } else if (debtors) {
-          console.log(`Retrieved ${debtors.length} debtors for batch ${Math.floor(i/batchSize) + 1}`);
+    // Get unique debtor IDs to fetch debtor information
+    const debtorIds = [...new Set(allDefaultedPTPs.map(ptp => ptp.debtor_id))];
+    console.log(`Fetching debtor information for ${debtorIds.length} unique debtors`);
+
+    // Fetch debtor information in batches to avoid query limits
+    const batchSize = 100;
+    const debtorInfo: {[debtorId: string]: {name: string, phone: string}} = {};
+    
+    for (let i = 0; i < debtorIds.length; i += batchSize) {
+      const batch = debtorIds.slice(i, i + batchSize);
+      
+      const { data: debtors, error: debtorError } = await supabaseAdmin
+        .from('Debtors')
+        .select('id, name, surname_company_trust, cellphone_1, cellphone_2')
+        .in('id', batch);
+
+      if (debtorError) {
+        console.error('Error fetching debtor details batch:', debtorError);
+        // Continue with the data we have rather than failing completely
+      } else if (debtors) {
+        console.log(`Retrieved ${debtors.length} debtors for batch ${Math.floor(i/batchSize) + 1}`);
+        
+        for (const debtor of debtors) {
+          const fullName = debtor.surname_company_trust 
+            ? `${debtor.name || ''} ${debtor.surname_company_trust}`.trim()
+            : debtor.name || 'Unknown Customer';
           
-          debtors.forEach(debtor => {
-            // Format the debtor name based on available fields
-            let fullName = '';
-            if (debtor.acc_holder) {
-              fullName = debtor.acc_holder;
-            } else {
-              if (debtor.surname_company_trust) {
-                fullName = debtor.surname_company_trust;
-              }
-              if (debtor.name) {
-                fullName = fullName ? `${fullName}, ${debtor.name}` : debtor.name;
-              }
-            }
-            
-            // Use the first available phone number
-            const phone = debtor.cellphone_1 || debtor.cell_number || '';
-            
-            debtorInfo[debtor.id] = {
-              name: fullName || 'Unknown Customer',
-              phone: phone || 'No Phone'
-            };
-          });
+          const phone = debtor.cellphone_1 || debtor.cellphone_2 || 'No Phone';
+          
+          debtorInfo[debtor.id] = {
+            name: fullName,
+            phone: phone
+          };
         }
       }
     }
-    
-    console.log(`Retrieved information for ${Object.keys(debtorInfo).length} debtors`);
 
-    // Get unique agent IDs
+    // Get unique agent IDs to fetch agent information
     const agentIds = [...new Set(allDefaultedPTPs.map(ptp => ptp.created_by).filter(Boolean))];
-    console.log(`Found ${agentIds.length} unique agents with defaulted PTPs`);
+    console.log(`Fetching agent information for ${agentIds.length} unique agents`);
+
+    const ptpsByAgent: {[agentId: string]: {agent: any, ptps: (PTP & {debtor_name?: string, debtor_phone?: string, source?: string})[]}} = {};
     
-    // Create a map to store PTPs by agent
-    const ptpsByAgent: {[agentId: string]: {agent: any, ptps: (PTP & {debtor_name?: string, debtor_phone?: string})[]}} = {};
-
-    // Handle PTPs without an agent separately
-    const unassignedPTPs = allDefaultedPTPs.filter(ptp => !ptp.created_by);
-    if (unassignedPTPs.length > 0) {
-      console.log(`Found ${unassignedPTPs.length} unassigned PTPs`);
-      
-      // Add debtor information to each PTP
-      const ptpsWithDebtorInfo = unassignedPTPs.map(ptp => ({
-        ...ptp,
-        debtor_name: debtorInfo[ptp.debtor_id]?.name || 'Unknown Customer',
-        debtor_phone: debtorInfo[ptp.debtor_id]?.phone || 'No Phone'
-      }));
-      
-      ptpsByAgent['unassigned'] = {
-        agent: { id: 'unassigned', full_name: 'Unassigned' },
-        ptps: ptpsWithDebtorInfo
-      };
-    }
-
-    // Fetch agent details for all agents with defaulted PTPs
-    if (agentIds.length > 0) {
-      // Process agents in batches to avoid query parameter limits
-      const batchSize = 100;
-      for (let i = 0; i < agentIds.length; i += batchSize) {
-        const batchIds = agentIds.slice(i, i + batchSize);
-        console.log(`Fetching agent batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(agentIds.length/batchSize)}, size: ${batchIds.length}`);
+    // Fetch agent information in batches
+    for (let i = 0; i < agentIds.length; i += batchSize) {
+      const batchIds = agentIds.slice(i, i + batchSize);
         
-        const { data: agents, error: agentsError } = await supabaseAdmin
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', batchIds);
+      const { data: agents, error: agentsError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', batchIds);
 
-        if (agentsError) {
-          console.error('Error fetching agent details batch:', agentsError);
-          // Continue with the data we have rather than failing completely
-        } else if (agents) {
-          console.log(`Retrieved ${agents.length} agents for batch ${Math.floor(i/batchSize) + 1}`);
-          
-          // Group PTPs by agent
-          for (const agent of agents) {
-            const agentPTPs = allDefaultedPTPs.filter(ptp => ptp.created_by === agent.id);
-            if (agentPTPs.length > 0) {
-              console.log(`Agent ${agent.full_name} has ${agentPTPs.length} defaulted PTPs`);
-              
-              // Add debtor information to each PTP
-              const ptpsWithDebtorInfo = agentPTPs.map(ptp => ({
-                ...ptp,
-                debtor_name: debtorInfo[ptp.debtor_id]?.name || 'Unknown Customer',
-                debtor_phone: debtorInfo[ptp.debtor_id]?.phone || 'No Phone'
-              }));
-              
-              // Check if we already have PTPs for this agent and append instead of overwriting
-              if (ptpsByAgent[agent.id]) {
-                ptpsByAgent[agent.id] = {
-                  agent,
-                  ptps: [...ptpsByAgent[agent.id].ptps, ...ptpsWithDebtorInfo]
-                };
-              } else {
-                ptpsByAgent[agent.id] = {
-                  agent,
-                  ptps: ptpsWithDebtorInfo
-                };
-              }
+      if (agentsError) {
+        console.error('Error fetching agent details batch:', agentsError);
+        // Continue with the data we have rather than failing completely
+      } else if (agents) {
+        console.log(`Retrieved ${agents.length} agents for batch ${Math.floor(i/batchSize) + 1}`);
+        
+        // Group PTPs by agent
+        for (const agent of agents) {
+          const agentPTPs = allDefaultedPTPs.filter(ptp => ptp.created_by === agent.id);
+          if (agentPTPs.length > 0) {
+            console.log(`Agent ${agent.full_name} has ${agentPTPs.length} defaulted PTPs (${agentPTPs.filter(p => p.source === 'PTP').length} from PTP, ${agentPTPs.filter(p => p.source === 'ManualPTP').length} from ManualPTP)`);
+            
+            // Add debtor information to each PTP
+            const ptpsWithDebtorInfo = agentPTPs.map(ptp => ({
+              ...ptp,
+              debtor_name: debtorInfo[ptp.debtor_id]?.name || 'Unknown Customer',
+              debtor_phone: debtorInfo[ptp.debtor_id]?.phone || 'No Phone'
+            }));
+            
+            // Check if we already have PTPs for this agent and append instead of overwriting
+            if (ptpsByAgent[agent.id]) {
+              ptpsByAgent[agent.id] = {
+                agent,
+                ptps: [...ptpsByAgent[agent.id].ptps, ...ptpsWithDebtorInfo]
+              };
+            } else {
+              ptpsByAgent[agent.id] = {
+                agent,
+                ptps: ptpsWithDebtorInfo
+              };
             }
           }
         }
