@@ -30,6 +30,7 @@ import {
 import { useDialer } from "@/contexts/DialerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import BrokenPTPOutcome from "./BrokenPTPOutcome";
 import { getDefaultedPTPsByAgent } from "@/lib/ptp-service";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -37,6 +38,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 type BrokenPTPCustomer = {
   id: string;
+  debtorId: string; // Add debtor ID for navigation
   name: string;
   phone: string;
   amount: number;
@@ -88,6 +90,7 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
   const [expandedAgents, setExpandedAgents] = useState<string[]>([]);
   const { setIsDialerOpen, setCurrentCustomer } = useDialer();
   const { user } = useAuth(); // Get the current logged-in user
+  const router = useRouter(); // Add router hook for navigation
 
   // Load defaulted PTPs grouped by agent
   useEffect(() => {
@@ -108,6 +111,7 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
             // Format each PTP with additional fields and calculate days late
             const formattedPtps = ptps.map(ptp => ({
               id: ptp.id,
+              debtorId: ptp.debtor_id, // Add debtor ID for navigation
               name: ptp.debtor_name || 'Unknown Customer', // Use the debtor name we fetched
               phone: ptp.debtor_phone || 'No Phone', // Use the debtor phone we fetched
               amount: ptp.amount,
@@ -115,7 +119,8 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
               daysLate: Math.ceil((new Date().getTime() - new Date(ptp.date).getTime()) / (1000 * 3600 * 24)),
               status: determinePTPStatus(Math.ceil((new Date().getTime() - new Date(ptp.date).getTime()) / (1000 * 3600 * 24))),
               agentId: agent.id,
-              agentName: agent.full_name
+              agentName: agent.full_name,
+              source: ptp.source // Add source field
             }));
             
             formattedPTPs[user.id] = {
@@ -211,22 +216,10 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
     filterPTPs();
   };
 
-  // Handle calling a customer
+  // Handle calling a customer - navigate to customer profile
   const handleCallCustomer = (customer: BrokenPTPCustomer) => {
-    // Set the current customer in the dialer context
-    setCurrentCustomer({
-      id: customer.id,
-      name: customer.name,
-      phone: customer.phone,
-      balance: customer.amount,
-      status: customer.status === "high" ? "overdue" : customer.status === "medium" ? "current" : "pending"
-    });
-    
-    // Set the selected customer for outcome tracking
-    setSelectedCustomer(customer);
-    
-    // Open the dialer
-    setIsDialerOpen(true);
+    // Navigate to the customer profile page
+    router.push(`/user/customers/${customer.debtorId}`);
     
     // Close the BrokenPTP modal
     onClose();
