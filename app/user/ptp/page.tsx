@@ -31,7 +31,8 @@ import {
   Phone,
   ClipboardCheck,
   MessageSquare,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -435,7 +436,7 @@ export default function PTPPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {/* Total PTPs Card */}
         <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
           <div className="h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
@@ -538,6 +539,42 @@ export default function PTPPage() {
                 <div
                   className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full shadow-[0_0_6px_rgba(245,158,11,0.3)]"
                   style={{ width: `0%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Defaulted PTPs Card */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-red-600 to-red-400"></div>
+          <CardHeader className="pb-2">
+            <CardDescription className="text-slate-400">
+              Defaulted PTPs
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-slate-200">
+              {defaultedPTPs}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-xs text-red-400">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Requires attention</span>
+              </div>
+              <Badge variant="outline" className="bg-red-950/40 text-red-400 border-red-800/50">
+                {totalPTPs > 0 ? Math.round((defaultedPTPs / totalPTPs) * 100) : 0}% of total
+              </Badge>
+            </div>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-slate-400">Default rate</span>
+                <span className="font-medium text-slate-300">{totalPTPs > 0 ? Math.round((defaultedPTPs / totalPTPs) * 100) : 0}%</span>
+              </div>
+              <div className="h-2.5 w-full bg-slate-800/80 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full shadow-[0_0_6px_rgba(239,68,68,0.3)]"
+                  style={{ width: `${totalPTPs > 0 ? Math.round((defaultedPTPs / totalPTPs) * 100) : 0}%` }}
                 ></div>
               </div>
             </div>
