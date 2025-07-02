@@ -31,11 +31,13 @@ import { format, isToday, differenceInMinutes } from "date-fns";
 import { useDialer } from "@/contexts/DialerContext";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import { callbackService, Callback } from "@/lib/callback-service";
 
 // Define the callback type for UI display
 type ScheduledCallback = {
   id: string;
+  debtorId: string; // Add debtor ID for navigation
   customerName: string;
   customerPhone: string;
   scheduledTime: Date;
@@ -49,6 +51,7 @@ type ScheduledCallback = {
 const convertCallbackToScheduled = (callback: Callback): ScheduledCallback => {
   return {
     id: callback.id || '',
+    debtorId: callback.debtor_id, // Add debtor ID for navigation
     customerName: callback.debtor_name || 'Unknown Customer',
     customerPhone: callback.phone_number,
     scheduledTime: new Date(callback.callback_date),
@@ -65,6 +68,7 @@ interface ViewScheduleProps {
 
 const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
   const { user } = useAuth();
+  const router = useRouter(); // Add router hook for navigation
   const [searchTerm, setSearchTerm] = useState("");
   const [callbacks, setCallbacks] = useState<ScheduledCallback[]>([]);
   const [filteredCallbacks, setFilteredCallbacks] = useState<ScheduledCallback[]>([]);
@@ -152,18 +156,10 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
     }
   };
   
-  // Handle calling a customer
+  // Handle calling a customer - navigate to customer profile
   const handleCallCustomer = (callback: ScheduledCallback) => {
-    // Set the current customer in the dialer context
-    setCurrentCustomer({
-      id: callback.id,
-      name: callback.customerName,
-      phone: callback.customerPhone,
-      balance: callback.amount,
-      status: "callback"
-    });
-    // Open the dialer
-    setIsDialerOpen(true);
+    // Navigate to the customer profile page
+    router.push(`/user/customers/${callback.debtorId}`);
     // Close the ViewSchedule modal
     onClose();
   };
