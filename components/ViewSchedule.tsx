@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { callbackService, Callback } from "@/lib/callback-service";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Define the callback type for UI display
 type ScheduledCallback = {
@@ -266,12 +267,12 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
             {format(new Date(), 'EEEE, MMMM d, yyyy')} - Manage your personal scheduled callbacks
           </CardDescription>
           
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
               <Input
                 placeholder="Search by name, phone or reason..."
-                className="pl-9 bg-slate-800 border-slate-700 text-slate-200"
+                className="pl-9 bg-slate-800/60 border-slate-600/50 text-slate-200 placeholder:text-slate-500 focus:border-slate-500 focus:ring-slate-500/20 transition-all duration-200"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
@@ -280,7 +281,7 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
               <Button 
                 variant={statusFilter === "all" ? "default" : "outline"} 
                 size="sm"
-                className={statusFilter === "all" ? "bg-slate-700" : "border-slate-700 text-slate-400"}
+                className={statusFilter === "all" ? "bg-slate-700 hover:bg-slate-600" : "border-slate-600/50 text-slate-400 hover:bg-slate-800/50 hover:border-slate-500"}
                 onClick={() => handleStatusFilterChange("all")}
               >
                 All
@@ -288,7 +289,7 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
               <Button 
                 variant={statusFilter === "pending" ? "default" : "outline"} 
                 size="sm"
-                className={statusFilter === "pending" ? "bg-blue-600" : "border-blue-800/40 text-blue-400"}
+                className={statusFilter === "pending" ? "bg-blue-600 hover:bg-blue-700" : "border-blue-700/50 text-blue-400 hover:bg-blue-900/20 hover:border-blue-600"}
                 onClick={() => handleStatusFilterChange("pending")}
               >
                 <Clock className="h-3.5 w-3.5 mr-1.5" />
@@ -297,7 +298,7 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
               <Button 
                 variant={statusFilter === "completed" ? "default" : "outline"} 
                 size="sm"
-                className={statusFilter === "completed" ? "bg-green-600" : "border-green-800/40 text-green-400"}
+                className={statusFilter === "completed" ? "bg-green-600 hover:bg-green-700" : "border-green-700/50 text-green-400 hover:bg-green-900/20 hover:border-green-600"}
                 onClick={() => handleStatusFilterChange("completed")}
               >
                 <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
@@ -306,7 +307,7 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
               <Button 
                 variant={statusFilter === "missed" ? "default" : "outline"} 
                 size="sm"
-                className={statusFilter === "missed" ? "bg-red-600" : "border-red-800/40 text-red-400"}
+                className={statusFilter === "missed" ? "bg-red-600 hover:bg-red-700" : "border-red-700/50 text-red-400 hover:bg-red-900/20 hover:border-red-600"}
                 onClick={() => handleStatusFilterChange("missed")}
               >
                 <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
@@ -316,37 +317,37 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
           </div>
           
           {/* Summary stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-            <div className="bg-blue-900/20 border border-blue-800/30 rounded-lg p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-blue-900/50 rounded-full p-2">
-                  <Clock4 className="h-4 w-4 text-blue-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+            <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-700/40 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm hover:border-blue-600/50 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-full p-2.5 shadow-lg">
+                  <Clock4 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-sm text-blue-400">Upcoming</div>
-                  <div className="text-xl font-bold text-blue-300">{countByStatus("upcoming")}</div>
+                  <div className="text-sm font-medium text-blue-400">📅 Upcoming</div>
+                  <div className="text-2xl font-bold text-blue-300">{countByStatus("upcoming")}</div>
                 </div>
               </div>
             </div>
-            <div className="bg-amber-900/20 border border-amber-800/30 rounded-lg p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-amber-900/50 rounded-full p-2">
-                  <Clock className="h-4 w-4 text-amber-400" />
+            <div className="bg-gradient-to-br from-amber-900/30 to-amber-800/20 border border-amber-700/40 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm hover:border-amber-600/50 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-full p-2.5 shadow-lg animate-pulse">
+                  <Clock className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-sm text-amber-400">Now</div>
-                  <div className="text-xl font-bold text-amber-300">{countByStatus("now")}</div>
+                  <div className="text-sm font-medium text-amber-400">📞 Call Now</div>
+                  <div className="text-2xl font-bold text-amber-300">{countByStatus("now")}</div>
                 </div>
               </div>
             </div>
-            <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-red-900/50 rounded-full p-2">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
+            <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 border border-red-700/40 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm hover:border-red-600/50 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-full p-2.5 shadow-lg">
+                  <AlertCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-sm text-red-400">Missed</div>
-                  <div className="text-xl font-bold text-red-300">{countByStatus("past")}</div>
+                  <div className="text-sm font-medium text-red-400">⏰ Overdue</div>
+                  <div className="text-2xl font-bold text-red-300">{countByStatus("past")}</div>
                 </div>
               </div>
             </div>
@@ -388,11 +389,11 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
                 return (
                   <div 
                     key={callback.id} 
-                    className={`relative overflow-hidden rounded-lg border ${
-                      timeStatus === "now" ? "border-amber-500/50 bg-gradient-to-br from-slate-900 to-amber-950/30" : 
-                      timeStatus === "past" ? "border-red-500/30 bg-gradient-to-br from-slate-900 to-red-950/20" : 
-                      "border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/90"
-                    } p-4 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20 hover:translate-y-[-2px]`}
+                    className={`group relative overflow-hidden rounded-xl border ${
+                      timeStatus === "now" ? "border-amber-500/60 bg-gradient-to-br from-slate-900/90 to-amber-950/40" : 
+                      timeStatus === "past" ? "border-red-500/50 bg-gradient-to-br from-slate-900/90 to-red-950/30" : 
+                      "border-slate-700/50 bg-gradient-to-br from-slate-900/80 to-slate-800/60"
+                    } backdrop-blur-sm p-5 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/30 hover:translate-y-[-3px] hover:border-slate-600/60`}
                   >
                     <div className={`absolute top-0 left-0 w-1 h-full ${
                       timeStatus === "now" ? "bg-amber-500" : 
@@ -401,40 +402,49 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
                     }`}></div>
                     
                     {timeStatus === "now" && (
-                      <div className="absolute top-2 right-2">
-                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping opacity-75"></span>
-                        <span className="absolute inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                      <div className="absolute top-3 right-3">
+                        <span className="inline-flex h-3 w-3 rounded-full bg-amber-500 animate-ping opacity-75"></span>
+                        <span className="absolute inline-flex rounded-full h-3 w-3 bg-amber-500 top-0 left-0"></span>
                       </div>
                     )}
                     
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-slate-200 font-medium ${
-                          timeStatus === "now" ? "bg-amber-900/50 text-amber-200" : 
-                          timeStatus === "past" ? "bg-red-900/50 text-red-200" : 
-                          "bg-blue-900/50 text-blue-200"
-                        }`}>
-                          {callback.customerName.split(" ").map(n => n[0]).join("")}
+                      <div className="flex items-start gap-4">
+                        <div className="relative">
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-slate-200 font-semibold text-sm shadow-lg ring-2 ring-slate-600/50 group-hover:ring-slate-500/70 transition-all duration-300">
+                            {callback.customerName.split(" ").map((n) => n[0]).join("")}
+                          </div>
+                          {/* Status indicator dot */}
+                          <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${
+                            timeStatus === "now" ? "bg-amber-500" : 
+                            timeStatus === "past" ? "bg-red-500" : 
+                            "bg-blue-500"
+                          }`}></div>
                         </div>
                         <div>
                           <h3 className="font-medium text-slate-200">{callback.customerName}</h3>
                           <p className="text-sm text-slate-400">{callback.customerPhone}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={`
-                              ${timeStatus === "now" ? "bg-amber-900/40 text-amber-400 border-amber-800/40" : 
-                                timeStatus === "past" ? "bg-red-900/40 text-red-400 border-red-800/40" : 
-                                "bg-blue-900/40 text-blue-400 border-blue-800/40"}
-                            `}>
-                              {timeStatus === "now" ? "Call Now" : 
-                               timeStatus === "past" ? "Overdue" : 
-                               "Upcoming"}
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge className={`text-xs ${
+                              timeStatus === "now" ? "bg-amber-900/40 text-amber-400 border-amber-800/40" : 
+                              timeStatus === "past" ? "bg-red-900/40 text-red-400 border-red-800/40" : 
+                              "bg-blue-900/40 text-blue-400 border-blue-800/40"
+                            }`}>
+                              {timeStatus === "now" ? "📞 Call Now" : 
+                               timeStatus === "past" ? "⏰ Overdue" : 
+                               "📅 Upcoming"}
                             </Badge>
-                            <span className="text-xs text-slate-500">ID: {callback.id}</span>
+                            <Badge variant="outline" className="text-xs bg-slate-900/30 text-slate-300 border-slate-700/50">
+                              💬 Callback
+                            </Badge>
+                            <span className="text-xs text-slate-500">ID: {callback.id.slice(0, 8)}...</span>
                           </div>
                           
-                          <div className="mt-2 text-xs text-slate-400">
-                            <p>{callback.notes}</p>
-                          </div>
+                          {callback.notes && (
+                            <div className="mt-2 text-xs bg-slate-800/50 rounded-md px-2 py-1 border border-slate-700/50">
+                              <p className="text-slate-300">{callback.notes}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -458,27 +468,27 @@ const ViewSchedule: React.FC<ViewScheduleProps> = ({ onClose }) => {
                         </div>
                       </div>
                       
-                      <div className="flex sm:flex-col gap-2 sm:justify-center">
+                      <div className="flex flex-col gap-2 min-w-[140px]">
                         <Button 
                           size="sm" 
                           className={`${
-                            timeStatus === "now" ? "bg-amber-600 hover:bg-amber-700" : 
-                            timeStatus === "past" ? "bg-red-600 hover:bg-red-700" : 
-                            "bg-blue-600 hover:bg-blue-700"
-                          } text-white`}
+                            timeStatus === "now" ? "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800" : 
+                            timeStatus === "past" ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800" : 
+                            "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                          } text-white shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105`}
                           onClick={() => handleCallCustomer(callback)}
                         >
                           <Phone className="h-3.5 w-3.5 mr-1.5" />
-                          Call
+                          Call Now
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                          className="border-slate-600/60 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500 transition-all duration-200"
                           onClick={() => handleMarkComplete(callback)}
                         >
-                          <Check className="h-3.5 w-3.5 mr-1.5" />
-                          Mark Complete
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                          Complete
                         </Button>
                       </div>
                     </div>
