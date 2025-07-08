@@ -111,7 +111,11 @@ export default function DashboardPage() {
   } = useDashboardCache(user?.id || null, user?.name || null);
 
   // Agent performance metrics (keep existing hook for compatibility)
-  const { metrics: agentPerformanceMetrics, loading: performanceLoading } = useAgentPerformance(user?.id || null);
+  const { metrics: agentPerformanceMetrics, loading: performanceLoading } = useAgentPerformance(
+    user?.id || null,
+    user?.name || null,
+    user?.email || null
+  );
 
   // Combine cached data with performance metrics
   const combinedAgentMetrics = dashboardData ? {

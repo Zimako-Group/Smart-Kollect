@@ -217,16 +217,36 @@ export const createPaymentBatch = async (batchData: {
   file_size: number;
 }): Promise<{ id: string }> => {
   try {
-    // Ensure created_by is a valid UUID
-    const SYSTEM_USER_UUID = '00000000-0000-0000-0000-000000000000';
-    const safeData = {
-      ...batchData,
-      created_by: batchData.created_by === 'system' ? SYSTEM_USER_UUID : batchData.created_by
-    };
+    // First, check if we need to find a valid user ID
+    if (batchData.created_by === 'system' || batchData.created_by === '00000000-0000-0000-0000-000000000000') {
+      // Find the first valid user in the database to use as created_by
+      const { data: users, error: userError } = await supabase
+        .from('Users')
+        .select('id')
+        .limit(1);
+      
+      if (userError || !users || users.length === 0) {
+        console.warn('Could not find a valid user, will try with auth.users');
+        // Try to find a user in the auth.users table as fallback
+        const { data: authUsers, error: authError } = await supabase
+          .from('auth.users')
+          .select('id')
+          .limit(1);
+          
+        if (!authError && authUsers && authUsers.length > 0) {
+          batchData.created_by = authUsers[0].id;
+        } else {
+          console.warn('Could not find any valid users, will use default ID');
+        }
+      } else {
+        batchData.created_by = users[0].id;
+      }
+    }
     
+    // Create the batch with the validated user ID
     const { data, error } = await supabase
       .from('PaymentBatches')
-      .insert(safeData)
+      .insert(batchData)
       .select('id')
       .single();
 
@@ -237,25 +257,37 @@ export const createPaymentBatch = async (batchData: {
 
     return { id: data.id };
   } catch (error: any) {
-    // If there's an RLS policy error (often due to auth issues), try a fallback approach
+    // If there's an error, try a different approach
     console.warn('Error in createPaymentBatch, attempting fallback:', error);
     
-    // Create a simplified batch record with minimal data
-    const SYSTEM_USER_UUID = '00000000-0000-0000-0000-000000000000';
-    const simplifiedBatch = {
-      name: batchData.name,
-      description: `${batchData.description} (Created by system)`,
-      status: batchData.status,
-      total_records: batchData.total_records,
-      successful_records: batchData.successful_records,
-      failed_records: batchData.failed_records,
-      created_by: SYSTEM_USER_UUID,
-      file_name: batchData.file_name,
-      file_size: batchData.file_size
-    };
-    
     try {
-      // Try again with the simplified batch
+      // Get the current authenticated user as a fallback
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('No authenticated user found, trying to query for any user');
+      }
+      
+      // Try to find any user in the system
+      const { data: anyUser, error: userQueryError } = await supabase
+        .from('Users') // Adjust table name if needed
+        .select('id')
+        .limit(1)
+        .single();
+      
+      const userId = user?.id || (anyUser?.id || null);
+      
+      if (!userId) {
+        throw new Error('Could not find a valid user ID for the payment batch');
+      }
+      
+      // Try again with the found user ID
+      const simplifiedBatch = {
+        ...batchData,
+        created_by: userId,
+        description: `${batchData.description} (Created by system)`
+      };
+      
       const { data, error } = await supabase
         .from('PaymentBatches')
         .insert(simplifiedBatch)

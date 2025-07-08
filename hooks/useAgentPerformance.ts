@@ -29,7 +29,7 @@ export interface AgentMetrics {
   };
 }
 
-export function useAgentPerformance(agentId: string | null) {
+export function useAgentPerformance(agentId: string | null, agentName?: string | null, agentEmail?: string | null) {
   const [metrics, setMetrics] = useState<AgentMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,18 @@ export function useAgentPerformance(agentId: string | null) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/agent-performance/${agentId}`);
+      // Build URL with query parameters for name and email if available
+      let url = `/api/agent-performance/${agentId}`;
+      const params = new URLSearchParams();
+      
+      if (agentName) params.append('name', agentName);
+      if (agentEmail) params.append('email', agentEmail);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch agent metrics: ${response.statusText}`);
