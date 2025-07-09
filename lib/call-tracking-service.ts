@@ -294,31 +294,59 @@ class CallTrackingService {
   // Update queue wait times
   async updateQueueWaitTimes(): Promise<void> {
     try {
-      const { data: queueItems, error } = await supabase
+      const { data: queuedCalls, error } = await supabase
         .from('call_queue')
         .select('*');
 
-      if (error || !queueItems) {
-        console.error('Error fetching queue items:', error);
+      if (error) {
+        console.error('Error fetching queued calls:', error);
         return;
       }
 
-      const updates = queueItems.map(item => {
-        const waitTime = Math.floor((new Date().getTime() - new Date(item.created_at).getTime()) / 1000);
-        return {
-          id: item.id,
-          wait_time: waitTime
-        };
-      });
-
-      for (const update of updates) {
+      // Update wait times for each queued call
+      for (const call of queuedCalls) {
+        const waitTime = Math.floor((Date.now() - new Date(call.created_at).getTime()) / 1000);
+        
         await supabase
           .from('call_queue')
-          .update({ wait_time: update.wait_time })
-          .eq('id', update.id);
+          .update({ 
+            wait_time: waitTime,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', call.id);
       }
     } catch (error) {
       console.error('Error updating queue wait times:', error);
+    }
+  }
+
+  // Update call durations for active calls
+  async updateCallDurations(): Promise<void> {
+    try {
+      const { data: activeCalls, error } = await supabase
+        .from('active_calls')
+        .select('*')
+        .neq('status', 'ended');
+
+      if (error) {
+        console.error('Error fetching active calls:', error);
+        return;
+      }
+
+      // Update durations for each active call
+      for (const call of activeCalls) {
+        const duration = Math.floor((Date.now() - new Date(call.start_time).getTime()) / 1000);
+        
+        await supabase
+          .from('active_calls')
+          .update({ 
+            duration: duration,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', call.id);
+      }
+    } catch (error) {
+      console.error('Error updating call durations:', error);
     }
   }
 }

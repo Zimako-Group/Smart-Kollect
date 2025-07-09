@@ -251,21 +251,43 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
   // Set up automatic call duration timer when connected
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
+    let dbUpdateTimer: NodeJS.Timeout | null = null;
 
     if (callStatus === 'connected') {
       // Start a timer to update call duration every second
       timer = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
+      
+      // Update database every 10 seconds with current duration
+      dbUpdateTimer = setInterval(async () => {
+        if (activeCallRecord) {
+          try {
+            await callTrackingService.updateCallStatus(activeCallRecord.id, 'connected', callDuration);
+          } catch (error) {
+            console.error('Error updating call duration in database:', error);
+          }
+        }
+      }, 10000); // Update database every 10 seconds
     }
 
     // Auto-detect call as connected after a delay when in 'calling' state
     if (callStatus === 'calling' && !isAutoConnectActive) {
       setIsAutoConnectActive(true); // Mark that we've started the auto-connect process
-      const autoConnectTimer = setTimeout(() => {
+      const autoConnectTimer = setTimeout(async () => {
         console.log('Auto-detecting call as connected after delay');
         setCallStatus('connected');
         setIsAutoConnectActive(false); // Reset the flag after connecting
+        
+        // Update call status in database
+        if (activeCallRecord) {
+          try {
+            await callTrackingService.updateCallStatus(activeCallRecord.id, 'connected', callDuration);
+            console.log('Call status updated to connected in database');
+          } catch (error) {
+            console.error('Error updating call status:', error);
+          }
+        }
       }, 5000); // Assume call connects after 5 seconds
 
       // Clean up the timer
@@ -274,10 +296,13 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
       };
     }
 
-    // Clean up timer when component unmounts or call ends
+    // Clean up timers when component unmounts or call ends
     return () => {
       if (timer) {
         clearInterval(timer);
+      }
+      if (dbUpdateTimer) {
+        clearInterval(dbUpdateTimer);
       }
     };
   }, [callStatus]); // Depend on callStatus to restart timer when status changes
@@ -294,13 +319,24 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
   }, [isOpen, phoneNumber, initialCallMade, handleCall]);
 
   // Handle hanging up
-  const handleHangup = () => {
+  const handleHangup = async () => {
     // End the call through BuzzBox service
     buzzBoxService.hangup();
 
     // Update call status
     setCallStatus('ended');
     console.log('Call ended manually');
+
+    // End call tracking if we have an active call record
+    if (activeCallRecord) {
+      try {
+        await callTrackingService.endCall(activeCallRecord.id, callDuration);
+        console.log('Call tracking ended:', activeCallRecord.id);
+        setActiveCallRecord(null);
+      } catch (error) {
+        console.error('Error ending call tracking:', error);
+      }
+    }
 
     // Show wrap-up dialog immediately
     setShowWrapUpDialog(true);

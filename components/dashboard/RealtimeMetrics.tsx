@@ -101,15 +101,34 @@ export function RealtimeMetrics({ activeCalls: propActiveCalls = [], queuedCalls
       }
     });
 
-    // Update queue wait times periodically
+    // Update queue wait times and call durations periodically
     const waitTimeInterval = setInterval(() => {
       callTrackingService.updateQueueWaitTimes();
+      callTrackingService.updateCallDurations();
     }, 30000); // Update every 30 seconds
+
+    // Update call durations every second
+    const durationInterval = setInterval(() => {
+      setActiveCalls(prevCalls => 
+        prevCalls.map(call => ({
+          ...call,
+          duration: Math.floor((Date.now() - new Date(call.start_time).getTime()) / 1000)
+        }))
+      );
+      
+      setQueuedCalls(prevCalls => 
+        prevCalls.map(call => ({
+          ...call,
+          wait_time: Math.floor((Date.now() - new Date(call.created_at).getTime()) / 1000)
+        }))
+      );
+    }, 1000); // Update every second
 
     return () => {
       mounted = false;
       callTrackingService.unsubscribeFromCallUpdates();
       clearInterval(waitTimeInterval);
+      clearInterval(durationInterval);
     };
   }, []);
 
