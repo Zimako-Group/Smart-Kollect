@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { buzzBoxService } from "@/lib/buzzBoxService";
 import { callbackService } from "@/lib/callback-service";
+import { callTrackingService, ActiveCall } from "@/lib/call-tracking-service";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
@@ -53,6 +54,10 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
   const [agentId, setAgentId] = useState<string>("");
   const [agentName, setAgentName] = useState<string>("");
   const [isSubmittingCallback, setIsSubmittingCallback] = useState(false);
+  
+  // Call tracking state
+  const [activeCallRecord, setActiveCallRecord] = useState<ActiveCall | null>(null);
+  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
 
   // Format duration as MM:SS
   const formatDuration = (seconds: number): string => {
@@ -156,14 +161,24 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
   useEffect(() => {
     // Register callbacks for call state changes
     buzzBoxService.registerCallbacks(
-      (state) => {
+      async (state) => {
         console.log(`Call state changed: ${state}`);
         setCallStatus(state);
 
-        if (state === 'connected') {
-          setCallDuration(0);
-        } else if (state === 'ended' || state === 'idle') {
-          setCallDuration(0);
+        // Update call tracking status
+        if (activeCallRecord) {
+          if (state === 'connected') {
+            setCallDuration(0);
+            await callTrackingService.updateCallStatus(activeCallRecord.id, 'connected');
+          } else if (state === 'ended' || state === 'idle') {
+            const finalDuration = callDuration;
+            setCallDuration(0);
+            await callTrackingService.endCall(activeCallRecord.id, finalDuration);
+            setActiveCallRecord(null);
+            setCallStartTime(null);
+          } else if (state === 'calling') {
+            await callTrackingService.updateCallStatus(activeCallRecord.id, 'dialing');
+          }
         }
       },
       () => setCallDuration(prev => prev + 1)
@@ -199,6 +214,24 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
 
     try {
       setCallStatus('calling');
+      setCallStartTime(new Date());
+
+      // Start tracking the call in the database
+      if (agentId && agentName) {
+        const callRecord = await callTrackingService.startCall({
+          agent_id: agentId,
+          agent_name: agentName,
+          customer_name: customerName || 'Unknown Customer',
+          customer_phone: phoneNumber,
+          customer_id: debtorId || undefined,
+          call_type: 'outbound'
+        });
+        
+        if (callRecord) {
+          setActiveCallRecord(callRecord);
+          console.log('Call tracking started:', callRecord);
+        }
+      }
 
       // Make the call using BuzzBox service's public call method
       // This will use MicroSIP because we initialized with useMicroSip: true
@@ -206,8 +239,14 @@ export default function FloatingDialer({ phoneNumber, customerName, onClose, isO
     } catch (error) {
       console.error('Error making call:', error);
       setCallStatus('failed');
+      
+      // End call tracking if it was started
+      if (activeCallRecord) {
+        await callTrackingService.endCall(activeCallRecord.id, 0);
+        setActiveCallRecord(null);
+      }
     }
-  }, [phoneNumber]); // Add phoneNumber as a dependency
+  }, [phoneNumber, agentId, agentName, customerName, debtorId, activeCallRecord]); // Add dependencies
 
   // Set up automatic call duration timer when connected
   useEffect(() => {
