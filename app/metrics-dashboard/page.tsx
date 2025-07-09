@@ -239,9 +239,6 @@ function MetricsDashboard() {
       
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible' }}>
-        {/* SIP Status Monitor Card */}
-        <SipStatusMonitor />
-        
         {/* Agent Status Card */}
         <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-primary overflow-hidden">
           <CardHeader className="pb-1 pt-2 px-3 bg-primary/5">
@@ -344,7 +341,7 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      269
+                      0
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Promise To Pay Arrangements
@@ -352,7 +349,7 @@ function MetricsDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-emerald-500">
-                      58%
+                      0%
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Fulfillment Rate
@@ -364,13 +361,13 @@ function MetricsDashboard() {
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">PTP Status Distribution</span>
                     <span className="font-medium text-emerald-500">
-                      58% Fulfilled
+                      0% Fulfilled
                     </span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `58%` }}
+                      style={{ width: `0%` }}
                     ></div>
                   </div>
                 </div>
@@ -388,7 +385,7 @@ function MetricsDashboard() {
                       <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                       <span className="text-xs">Fulfilled PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">156</span>
+                    <span className="text-xs font-medium">0</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -396,7 +393,7 @@ function MetricsDashboard() {
                       <Clock className="h-3.5 w-3.5 text-blue-500" />
                       <span className="text-xs">Pending PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">78</span>
+                    <span className="text-xs font-medium">0</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -404,7 +401,82 @@ function MetricsDashboard() {
                       <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                       <span className="text-xs">Defaulted PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">35</span>
+                    <span className="text-xs font-medium">0</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Total Collected From PTP's Card */}
+        <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-emerald-500 overflow-hidden">
+          <CardHeader className="pb-1 pt-2 px-3 bg-emerald-500/5">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <div className="p-1 rounded-full bg-emerald-500/10">
+                <FileText className="h-3.5 w-3.5 text-emerald-500" />
+              </div>
+              Total Collected From PTP's
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2 px-3 pb-3">
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end justify-between mb-3">
+                  <div>
+                    <div className="text-2xl font-bold">
+                      R 4.8M
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Total Revenue
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-emerald-500">
+                      89.2%
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Collection Rate
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-2 mb-3">
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">Revenue Sources</span>
+                    <span className="font-medium text-emerald-500">
+                      3 Categories
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 rounded-full"
+                      style={{ width: `89%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">PTPs</span>
+                    <span className="text-base font-semibold text-emerald-500">R1.8M</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <Users className="h-3.5 w-3.5 text-blue-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">Manual</span>
+                    <span className="text-base font-semibold text-blue-500">R687K</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <Activity className="h-3.5 w-3.5 text-amber-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">Settlements</span>
+                    <span className="text-base font-semibold text-amber-500">R2.3M</span>
                   </div>
                 </div>
               </>
@@ -435,167 +507,24 @@ function MetricsDashboard() {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
-          {/* Total Collected From PTP's Card - Full Width */}
-          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-emerald-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
-            <CardHeader className="bg-emerald-500/5 pb-0 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <div className="p-1 rounded-full bg-emerald-500/10">
-                    <FileText className="h-5 w-5 text-emerald-500" />
-                  </div>
-                  Total Collected From PTP's
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Revenue breakdown from payment arrangements</p>
-              </div>
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                R 4,808,917.80 Total
-              </Badge>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {isLoading ? (
-                <div className="space-y-6">
-                  <Skeleton className="h-20 w-full rounded-lg" />
-                  <Skeleton className="h-20 w-full rounded-lg" />
-                  <Skeleton className="h-20 w-full rounded-lg" />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* PTP's Collection */}
-                  <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 p-6 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
-                          <CheckCircle className="h-6 w-6 text-emerald-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-emerald-700">PTP's</h3>
-                          <p className="text-sm text-muted-foreground">Automated payment arrangements</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-emerald-600">R 1,847,230</div>
-                        <div className="text-sm text-emerald-600/70">38.4% of total</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 h-2 w-full bg-emerald-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '38.4%' }}></div>
-                    </div>
-                  </div>
-
-                  {/* Manual PTP's Collection */}
-                  <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-blue-600/5 p-6 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/20">
-                          <Users className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-blue-700">Manual PTP's</h3>
-                          <p className="text-sm text-muted-foreground">Agent-negotiated arrangements</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">R 687,420</div>
-                        <div className="text-sm text-blue-600/70">14.3% of total</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 h-2 w-full bg-blue-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '14.3%' }}></div>
-                    </div>
-                  </div>
-
-                  {/* Settlements Collection */}
-                  <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-amber-600/5 p-6 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20">
-                          <Activity className="h-6 w-6 text-amber-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-amber-700">Settlements</h3>
-                          <p className="text-sm text-muted-foreground">Full account settlements</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-amber-600">R 2,274,267.80</div>
-                        <div className="text-sm text-amber-600/70">47.3% of total</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 h-2 w-full bg-amber-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-500 rounded-full" style={{ width: '47.3%' }}></div>
-                    </div>
-                  </div>
-
-                  {/* Summary Stats */}
-                  <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
-                    <div className="text-center p-3 rounded-lg bg-muted/50">
-                      <div className="text-sm text-muted-foreground">Avg Per PTP</div>
-                      <div className="text-lg font-semibold">R 10,587</div>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-muted/50">
-                      <div className="text-sm text-muted-foreground">Collection Rate</div>
-                      <div className="text-lg font-semibold text-emerald-600">89.2%</div>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-muted/50">
-                      <div className="text-sm text-muted-foreground">Monthly Growth</div>
-                      <div className="text-lg font-semibold text-green-600">+12.5%</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
           
-          {/* Call Volume Trend Card - Full Width */}
-          <Card className="transition-all duration-300 hover:shadow-md border-t-4 border-t-blue-500" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible', overflow: 'visible', minHeight: '500px', marginBottom: '40px' }}>
-            <CardHeader className="bg-blue-500/5 pb-0 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <div className="p-1 rounded-full bg-blue-500/10">
-                    <BarChart3 className="h-5 w-5 text-blue-500" />
-                  </div>
-                  Call Volume Trend
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Hourly call distribution</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex items-center gap-1">
-                  <PhoneIncoming className="h-3 w-3" />
-                  Inbound
-                </Badge>
-                <Badge variant="outline" className="bg-violet-500/10 text-violet-500 border-violet-500/20 flex items-center gap-1">
-                  <PhoneOutgoing className="h-3 w-3" />
-                  Outbound
-                </Badge>
-              </div>
+          {/* Real-time Call Monitor */}
+          <Card className="transition-all duration-300 hover:shadow-md">
+            <CardHeader>
+              <CardTitle className="text-lg">Real-time Call Monitor</CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px] pt-6">
+            <CardContent>
               {isLoading ? (
-                <div className="h-full w-full flex flex-col items-center justify-center">
-                  <div className="w-full space-y-3">
-                    <Skeleton className="h-[180px] w-full rounded-md" />
-                    <div className="flex justify-between">
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                      <Skeleton className="h-4 w-10 rounded-md" />
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
                 </div>
               ) : (
-                <div className="relative">
-                  <CallVolumeChart 
-                    data={data.callMetrics?.callVolumeByHour || []} 
-                    isDarkMode={theme === "dark"}
-                  />
-                  <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-3 py-1.5 border border-border shadow-sm">
-                    <div className="text-xs font-medium">
-                      Total Today: {dashboardData.inboundCalls + dashboardData.outboundCalls} calls
-                    </div>
-                  </div>
-                </div>
+                <RealtimeMetrics 
+                  activeCalls={data.activeCalls || []} 
+                  queuedCalls={data.queuedCalls || []} 
+                />
               )}
             </CardContent>
           </Card>

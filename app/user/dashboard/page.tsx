@@ -811,7 +811,7 @@ export default function DashboardPage() {
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                     </div>
                     <h3 className="font-medium text-green-800">
-                      PTP&apos;s Due
+                      Settlement&apos;s Due
                     </h3>
                   </div>
                 </div>
