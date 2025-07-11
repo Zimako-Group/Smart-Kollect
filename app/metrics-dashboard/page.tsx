@@ -23,6 +23,7 @@ import {
   CheckCircle,
   AlertCircle,
   ChevronRight,
+  ArrowUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/DashboardDataProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useDialer } from "@/contexts/DialerContext";
+import dynamic from "next/dynamic";
+
+const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center">
+      Loading chart...
+    </div>
+  ),
+});
 
 // Wrapper component that provides the dashboard data context
 export default function MetricsDashboardWrapper() {
@@ -77,6 +88,19 @@ function MetricsDashboard() {
   
   // Hardcode SIP connection status to be connected
   const isSipConnected = true;
+
+  // Consolidated payments data (Month-To-Date)
+  const consolidatedPaymentsData = [
+    { month: "Apr 2025", amount: 16633251.62 },
+    { month: "May 2025", amount: 29475034.23 },
+    { month: "Jun 2025", amount: 25756766.28 },
+    { month: "Jul 2025", amount: 0 },
+    { month: "Aug 2025", amount: 0 },
+    { month: "Sep 2025", amount: 0 },
+    { month: "Oct 2025", amount: 0 },
+    { month: "Nov 2025", amount: 0 },
+    { month: "Dec 2025", amount: 0 },
+  ];
 
   // Format seconds to mm:ss
   const formatDuration = (seconds: number) => {
@@ -238,7 +262,7 @@ function MetricsDashboard() {
       </div>
       
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" style={{ zIndex: 10, position: 'relative', opacity: 1, visibility: 'visible' }}>
         {/* Agent Status Card */}
         <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-primary overflow-hidden">
           <CardHeader className="pb-1 pt-2 px-3 bg-primary/5">
@@ -483,6 +507,82 @@ function MetricsDashboard() {
             )}
           </CardContent>
         </Card>
+        
+        {/* Consolidated Payments (MTD) */}
+        <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-blue-500 overflow-hidden">
+          <CardHeader className="pb-1 pt-2 px-3 bg-blue-500/5">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <div className="p-1 rounded-full bg-blue-500/10">
+                <BarChart3 className="h-3.5 w-3.5 text-blue-500" />
+              </div>
+              Consolidated Payments (MTD)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2 px-3 pb-3">
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end justify-between mb-3">
+                  <div>
+                    <div className="text-2xl font-bold">
+                      R71.9M
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Total Collections
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-blue-500">
+                      +15.2%
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      vs Last Month
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-2 mb-3">
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">Monthly Progress</span>
+                    <span className="font-medium text-blue-500">
+                      3 of 12 months
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `25%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-blue-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">Apr</span>
+                    <span className="text-base font-semibold text-blue-500">R16.6M</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">May</span>
+                    <span className="text-base font-semibold text-emerald-500">R29.5M</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-amber-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">Jun</span>
+                    <span className="text-base font-semibold text-amber-500">R25.8M</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
       
       {/* Tabs for different views */}
