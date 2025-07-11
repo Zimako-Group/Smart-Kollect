@@ -1172,26 +1172,14 @@ export default function DashboardPage() {
                       <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
                         <p className="text-xs text-slate-400 mb-1">Collected</p>
                         <p className="text-lg font-bold text-blue-300">
-                          R{(combinedAgentMetrics.collectionSummary.collected / 1000).toFixed(2)}k
+                          R{combinedAgentMetrics.collectionSummary.collected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
                         <p className="text-xs text-slate-400 mb-1">Target</p>
                         <p className="text-lg font-bold text-slate-300">
-                          R{(combinedAgentMetrics.collectionSummary.target / 1000000).toFixed(1)}M
+                          R{combinedAgentMetrics.collectionSummary.target.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
-                      </div>
-                      <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
-                        <p className="text-xs text-slate-400 mb-1">
-                          Cases Closed
-                        </p>
-                        <p className="text-lg font-bold text-green-300">{combinedAgentMetrics.collectionSummary.casesClosed}</p>
-                      </div>
-                      <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
-                        <p className="text-xs text-slate-400 mb-1">
-                          New Payment Plans
-                        </p>
-                        <p className="text-lg font-bold text-purple-300">{combinedAgentMetrics.collectionSummary.newPaymentPlans}</p>
                       </div>
                     </div>
                   </div>

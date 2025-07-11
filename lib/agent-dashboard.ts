@@ -319,7 +319,7 @@ export async function fetchAgentDashboardMetrics(agentId: string): Promise<Agent
         changeVsTarget: -2
       },
       collectionSummary: {
-        collected: 145231.89,
+        collected: 0,
         target: 200000,
         casesClosed: 37,
         newPaymentPlans: 42
