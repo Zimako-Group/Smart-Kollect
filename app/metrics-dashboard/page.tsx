@@ -341,7 +341,7 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      0
+                      {data.ptpMetrics?.totalPTPs || 0}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Promise To Pay Arrangements
@@ -349,7 +349,7 @@ function MetricsDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-emerald-500">
-                      0%
+                      {data.ptpMetrics?.fulfilledPercentage || 0}%
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Fulfillment Rate
@@ -361,13 +361,13 @@ function MetricsDashboard() {
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">PTP Status Distribution</span>
                     <span className="font-medium text-emerald-500">
-                      0% Fulfilled
+                      {data.ptpMetrics?.fulfilledPercentage || 0}% Fulfilled
                     </span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `0%` }}
+                      style={{ width: `${data.ptpMetrics?.fulfilledPercentage || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -385,7 +385,7 @@ function MetricsDashboard() {
                       <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                       <span className="text-xs">Fulfilled PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">0</span>
+                    <span className="text-xs font-medium">{data.ptpMetrics?.fulfilledPTPs || 0}</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -393,7 +393,7 @@ function MetricsDashboard() {
                       <Clock className="h-3.5 w-3.5 text-blue-500" />
                       <span className="text-xs">Pending PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">0</span>
+                    <span className="text-xs font-medium">{data.ptpMetrics?.pendingPTPs || 0}</span>
                   </div>
                   
                   <div className="flex justify-between items-center mt-1">
@@ -401,7 +401,7 @@ function MetricsDashboard() {
                       <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                       <span className="text-xs">Defaulted PTPs:</span>
                     </div>
-                    <span className="text-xs font-medium">0</span>
+                    <span className="text-xs font-medium">{data.ptpMetrics?.defaultedPTPs || 0}</span>
                   </div>
                 </div>
               </>

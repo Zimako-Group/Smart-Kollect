@@ -513,6 +513,92 @@ export const getDefaultedPTPsByAgent = async (): Promise<{[agentId: string]: {ag
   }
 };
 
+/**
+ * Get monthly PTP statistics from both PTP and ManualPTP tables
+ * @returns Promise with monthly PTP statistics
+ */
+export const getMonthlyPTPStats = async (): Promise<{
+  totalPTPs: number;
+  fulfilledPTPs: number;
+  pendingPTPs: number;
+  defaultedPTPs: number;
+  fulfilledPercentage: number;
+  pendingPercentage: number;
+  defaultedPercentage: number;
+}> => {
+  try {
+    // Get the current month's start and end dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    console.log('Fetching PTP stats for month:', {
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString()
+    });
+
+    // Fetch PTPs from both tables for the current month
+    const [ptpData, manualPtpData] = await Promise.all([
+      supabaseAdmin
+        .from('PTP')
+        .select('status')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString()),
+      supabaseAdmin
+        .from('ManualPTP')
+        .select('status')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString())
+    ]);
+
+    if (ptpData.error) {
+      console.error('Error fetching PTP data:', ptpData.error);
+      throw new Error(ptpData.error.message);
+    }
+
+    if (manualPtpData.error) {
+      console.error('Error fetching ManualPTP data:', manualPtpData.error);
+      throw new Error(manualPtpData.error.message);
+    }
+
+    // Combine data from both tables
+    const allPTPs = [...(ptpData.data || []), ...(manualPtpData.data || [])];
+    
+    console.log('Retrieved PTPs:', {
+      ptpCount: ptpData.data?.length || 0,
+      manualPtpCount: manualPtpData.data?.length || 0,
+      totalCount: allPTPs.length
+    });
+
+    // Calculate statistics
+    const totalPTPs = allPTPs.length;
+    const fulfilledPTPs = allPTPs.filter(ptp => ptp.status === 'paid').length;
+    const pendingPTPs = allPTPs.filter(ptp => ptp.status === 'pending').length;
+    const defaultedPTPs = allPTPs.filter(ptp => ptp.status === 'defaulted').length;
+
+    // Calculate percentages
+    const fulfilledPercentage = totalPTPs > 0 ? Math.round((fulfilledPTPs / totalPTPs) * 100) : 0;
+    const pendingPercentage = totalPTPs > 0 ? Math.round((pendingPTPs / totalPTPs) * 100) : 0;
+    const defaultedPercentage = totalPTPs > 0 ? Math.round((defaultedPTPs / totalPTPs) * 100) : 0;
+
+    const stats = {
+      totalPTPs,
+      fulfilledPTPs,
+      pendingPTPs,
+      defaultedPTPs,
+      fulfilledPercentage,
+      pendingPercentage,
+      defaultedPercentage
+    };
+
+    console.log('Monthly PTP statistics:', stats);
+    return stats;
+  } catch (error: any) {
+    console.error('Error in getMonthlyPTPStats:', error);
+    throw new Error(`Failed to fetch monthly PTP statistics: ${error.message}`);
+  }
+};
+
 export const deletePTP = async (ptpId: string, ptpType: string = 'default'): Promise<void> => {
   try {
     // Determine which table to delete from based on PTP type

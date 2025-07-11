@@ -82,6 +82,8 @@ interface PTPMetrics {
   pendingPTPs: number;
   defaultedPTPs: number;
   fulfilledPercentage: number;
+  pendingPercentage: number;
+  defaultedPercentage: number;
 }
 
 interface DashboardData {
@@ -171,7 +173,7 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
       const callsData = await callsResponse.json();
       
       // Fetch PTP metrics with bypassAuth parameter
-      const ptpResponse = await fetch('/api/metrics/ptp?bypassAuth=true');
+      const ptpResponse = await fetch('/api/ptp-metrics?bypassAuth=true');
       if (!ptpResponse.ok) {
         console.warn(`Failed to fetch PTP metrics: ${ptpResponse.statusText}`);
       }
