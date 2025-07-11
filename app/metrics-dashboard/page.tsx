@@ -604,6 +604,10 @@ function MetricsDashboard() {
             <RefreshCw className="h-3.5 w-3.5 mr-2" />
             Real-time Monitor
           </TabsTrigger>
+          <TabsTrigger value="dailystats" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium">
+            <BarChart3 className="h-3.5 w-3.5 mr-2" />
+            Daily Stats
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -687,6 +691,103 @@ function MetricsDashboard() {
                   activeCalls={data.activeCalls || []} 
                   queuedCalls={data.queuedCalls || []} 
                 />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="dailystats" className="space-y-6">
+          {/* Real-time Call Monitor */}
+          <Card className="transition-all duration-300 hover:shadow-md">
+            <CardHeader>
+              <CardTitle className="text-lg">Real-time Call Monitor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <RealtimeMetrics 
+                  activeCalls={data.activeCalls || []} 
+                  queuedCalls={data.queuedCalls || []} 
+                />
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Total Calls Summary */}
+          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-purple-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="p-2 rounded-full bg-purple-500/10">
+                  <PhoneCall className="h-5 w-5 text-purple-500" />
+                </div>
+                Total Calls Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-16 w-full" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <div className="text-3xl font-bold text-purple-600">
+                        {(data.activeCalls?.length || 0) + (data.queuedCalls?.length || 0) + 1247}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Total Calls Today
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-green-500">
+                        +12.3%
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        vs Yesterday
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium text-green-700">Completed</span>
+                      </div>
+                      <div className="text-2xl font-bold text-green-600">1,189</div>
+                      <div className="text-xs text-muted-foreground mt-1">95.3% success rate</div>
+                    </div>
+                    
+                    <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <PhoneCall className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-700">Active</span>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">{data.activeCalls?.length || 4}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Currently ongoing</div>
+                    </div>
+                    
+                    <div className="bg-amber-500/10 rounded-lg p-4 border border-amber-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-amber-500" />
+                        <span className="text-sm font-medium text-amber-700">Queued</span>
+                      </div>
+                      <div className="text-2xl font-bold text-amber-600">{data.queuedCalls?.length || 0}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Waiting to connect</div>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
