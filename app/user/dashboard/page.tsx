@@ -126,6 +126,14 @@ export default function DashboardPage() {
     collectionSummary: agentPerformanceMetrics?.collectionSummary || dashboardData.combinedMetrics.collectionSummary,
     ranking: agentPerformanceMetrics?.ranking || dashboardData.combinedMetrics.ranking
   } : defaultAgentMetrics;
+  
+  // Debug: Log PTP data being used in the dashboard
+  console.log(`[DASHBOARD-COMPONENT] 🎯 PTP data check:`, {
+    hasDashboardData: !!dashboardData,
+    combinedMetricsPTP: dashboardData?.combinedMetrics?.ptp,
+    finalPTPData: combinedAgentMetrics.ptp,
+    ptpTotal: combinedAgentMetrics.ptp?.total
+  });
 
   const topOverdueAccounts = dashboardData?.topOverdueAccounts || [];
   const pendingSettlementsCount = dashboardData?.pendingSettlementsCount || 0;

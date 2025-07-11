@@ -514,6 +514,67 @@ export const getDefaultedPTPsByAgent = async (): Promise<{[agentId: string]: {ag
 };
 
 /**
+ * Get monthly PTP count for a specific agent from both PTP and ManualPTP tables
+ * @param agentId UUID of the agent
+ * @returns Promise with the count of PTPs created by the agent in the current month
+ */
+export const getAgentMonthlyPTPCount = async (agentId: string): Promise<number> => {
+  try {
+    // Get the current month's start and end dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    console.log('Fetching monthly PTP count for agent:', agentId, {
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString()
+    });
+
+    // Fetch PTPs from both tables for the current month and specific agent
+    const [ptpData, manualPtpData] = await Promise.all([
+      supabaseAdmin
+        .from('PTP')
+        .select('id')
+        .eq('created_by', agentId)
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString()),
+      supabaseAdmin
+        .from('ManualPTP')
+        .select('id')
+        .eq('created_by', agentId)
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString())
+    ]);
+
+    if (ptpData.error) {
+      console.error('Error fetching PTP data for agent:', ptpData.error);
+      throw new Error(ptpData.error.message);
+    }
+
+    if (manualPtpData.error) {
+      console.error('Error fetching ManualPTP data for agent:', manualPtpData.error);
+      throw new Error(manualPtpData.error.message);
+    }
+
+    // Calculate total count
+    const ptpCount = ptpData.data?.length || 0;
+    const manualPtpCount = manualPtpData.data?.length || 0;
+    const totalCount = ptpCount + manualPtpCount;
+    
+    console.log('Monthly PTP count for agent:', agentId, {
+      ptpCount,
+      manualPtpCount,
+      totalCount
+    });
+
+    return totalCount;
+  } catch (error: any) {
+    console.error('Error in getAgentMonthlyPTPCount:', error);
+    throw new Error(`Failed to fetch monthly PTP count for agent: ${error.message}`);
+  }
+};
+
+/**
  * Get monthly PTP statistics from both PTP and ManualPTP tables
  * @returns Promise with monthly PTP statistics
  */

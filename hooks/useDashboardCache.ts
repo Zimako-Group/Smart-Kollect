@@ -39,7 +39,7 @@ export function useDashboardCache(agentId: string | null, agentName: string | nu
     queryKey: CACHE_KEYS.agentMetrics(agentId || ''),
     queryFn: () => fetchAgentDashboardMetrics(agentId!),
     enabled: !!agentId,
-    staleTime: CACHE_TIMES.MEDIUM,
+    staleTime: 0, // Force refresh for testing
     gcTime: CACHE_TIMES.LONG,
   });
 

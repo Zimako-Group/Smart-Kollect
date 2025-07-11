@@ -1,7 +1,7 @@
 // Agent dashboard data fetching utilities
 import { supabase } from './supabaseClient';
 import { getAgentAccountMetrics } from './agent-accounts';
-import { getAgentPTPCount } from './ptp-service';
+import { getAgentPTPCount, getAgentMonthlyPTPCount } from './ptp-service';
 import { getPendingSettlementsCount } from './settlement-service';
 
 // Types for agent metrics
@@ -151,34 +151,49 @@ export async function fetchAgentAllocatedAccounts(agentId: string) {
 // Fetch agent's metrics for dashboard
 export async function fetchAgentDashboardMetrics(agentId: string): Promise<AgentMetrics> {
   try {
+    console.log(`[AGENT-DASHBOARD] Starting fetchAgentDashboardMetrics for agent: ${agentId}`);
+    
     // Fetch agent performance data
     const performance = await fetchAgentPerformance(agentId);
     
     // Fetch allocated accounts
     const allocatedAccounts = await fetchAgentAllocatedAccounts(agentId);
     
-    // Fetch agent's PTP count
-    const ptpCount = await getAgentPTPCount(agentId);
-    console.log(`Fetched PTP count for agent ${agentId}: ${ptpCount}`);
+    // Fetch agent's monthly PTP count (current month only)
+    console.log(`[AGENT-DASHBOARD] About to fetch monthly PTP count for agent: ${agentId}`);
+    const ptpCount = await getAgentMonthlyPTPCount(agentId);
+    console.log(`[AGENT-DASHBOARD] ✅ Fetched monthly PTP count for agent ${agentId}: ${ptpCount}`);
+    console.log(`[AGENT-DASHBOARD] PTP count type: ${typeof ptpCount}`);
+    
+    if (ptpCount === 0) {
+      console.warn(`[AGENT-DASHBOARD] ⚠️  PTP count is 0 for agent ${agentId} - this might be expected if no PTPs this month`);
+    }
     
     // Calculate PTP percentage of target
     const ptpTarget = 35; // Default target
     const ptpPercentOfTarget = ptpTarget > 0 ? (ptpCount / ptpTarget) * 100 : 0;
+    console.log(`[AGENT-DASHBOARD] 📊 PTP calculations:`, {
+      ptpCount,
+      ptpTarget,
+      ptpPercentOfTarget
+    });
     
     // Get the agent's name from the profiles table to use for settlements lookup
+    console.log(`[AGENT-DASHBOARD] 🔍 About to fetch agent name for settlements lookup...`);
     const { data: agentData, error: agentError } = await supabase
       .from('profiles')
-      .select('name')
+      .select('full_name')
       .eq('id', agentId)
       .single();
       
     if (agentError) {
-      console.error("Error fetching agent name:", agentError);
+      console.error("[AGENT-DASHBOARD] ❌ Error fetching agent name:", agentError);
       return defaultAgentMetrics;
     }
     
-    const agentName = agentData?.name;
-    console.log(`[DASHBOARD] Agent name for ID ${agentId}: ${agentName}`);
+    const agentName = agentData?.full_name;
+    console.log(`[AGENT-DASHBOARD] ✅ Agent name for ID ${agentId}: ${agentName}`);
+    console.log(`[AGENT-DASHBOARD] 🏃 Continuing with settlements lookup...`);
     
     // Debug: Query settlements table directly to see what's there
     const { data: allSettlements, error: settlementsError } = await supabase
@@ -223,7 +238,13 @@ export async function fetchAgentDashboardMetrics(agentId: string): Promise<Agent
     
     // In a real implementation, you would fetch all these metrics from your database
     // For now, returning mock data that matches your current UI
-    return {
+    console.log(`[AGENT-DASHBOARD] 🔍 About to return PTP data:`, {
+      ptpCount,
+      ptpTarget,
+      ptpPercentOfTarget: Math.round(ptpPercentOfTarget)
+    });
+    
+    const result = {
       allocatedAccounts: {
         total: allocatedAccounts.total,
         remaining: allocatedAccounts.total, // Initially set remaining to total, will be updated by agent-accounts.ts
@@ -309,6 +330,9 @@ export async function fetchAgentDashboardMetrics(agentId: string): Promise<Agent
         change: 3
       }
     };
+    
+    console.log(`[AGENT-DASHBOARD] 🚀 Returning PTP result:`, result.ptp);
+    return result;
   } catch (error) {
     console.error("Error fetching agent dashboard metrics:", error);
     return defaultAgentMetrics;
