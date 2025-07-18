@@ -594,7 +594,7 @@ function MetricsDashboard() {
           </TabsTrigger>
           <TabsTrigger value="agents" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium">
             <Users className="h-3.5 w-3.5 mr-2" />
-            Agent Performance
+            Agent Performances
           </TabsTrigger>
           <TabsTrigger value="calls" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium">
             <PhoneCall className="h-3.5 w-3.5 mr-2" />
