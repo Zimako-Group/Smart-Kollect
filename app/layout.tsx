@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { DialerProvider } from "@/contexts/DialerContext";
 import { FloatingButtonProvider } from "@/contexts/FloatingButtonContext";
 import { MinimizedDialer } from "@/components/MinimizedDialer";
+import { GlobalDialer } from "@/components/GlobalDialer";
 import { Toaster } from 'sonner';
 import { ReduxProvider } from '@/lib/redux/provider';
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -33,6 +34,7 @@ export default function RootLayout({
                 <FloatingButtonProvider>
                   {children}
                   <MinimizedDialer />
+                  <GlobalDialer />
                 </FloatingButtonProvider>
               </DialerProvider>
             </AuthProvider>

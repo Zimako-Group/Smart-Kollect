@@ -42,6 +42,7 @@ export function RealtimeMetrics({ activeCalls: propActiveCalls = [], queuedCalls
   const [filterCallType, setFilterCallType] = useState<"all" | "inbound" | "outbound">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   // Load initial data and set up real-time subscription
   useEffect(() => {
@@ -132,11 +133,31 @@ export function RealtimeMetrics({ activeCalls: propActiveCalls = [], queuedCalls
     };
   }, []);
 
-  // Format seconds to mm:ss
+  // Format duration in mm:ss format
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // Handle clearing all calls
+  const handleClearAllCalls = async () => {
+    try {
+      setClearing(true);
+      const success = await callTrackingService.clearAllCalls();
+      
+      if (success) {
+        setActiveCalls([]);
+        setQueuedCalls([]);
+      } else {
+        setError('Failed to clear calls. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error clearing calls:', err);
+      setError('An error occurred while clearing calls.');
+    } finally {
+      setClearing(false);
+    }
   };
 
   // Get call status badge
@@ -291,6 +312,22 @@ export function RealtimeMetrics({ activeCalls: propActiveCalls = [], queuedCalls
             </DropdownMenu>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleClearAllCalls}
+              disabled={clearing}
+              className="ml-2"
+            >
+              {clearing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                'Clear All Calls'
+              )}
             </Button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion } from "framer-motion";
 import {
   Bell,
   ChevronLeft,
@@ -143,13 +144,50 @@ export default function DashboardLayout({
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
-                  <item.icon
-                    className={`h-5 w-5 ${
-                      pathname === item.path
-                        ? "text-primary"
-                        : "text-muted-foreground group-hover:text-foreground"
-                    }`}
-                  />
+                  {item.name === "My Dashboard" ? (
+                    <motion.div
+                      whileHover={{
+                        scale: 1.15,
+                        rotate: 15,
+                        y: -2,
+                      }}
+                      whileTap={{
+                        scale: 0.95,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 17,
+                        duration: 0.3,
+                      }}
+                      className="relative"
+                    >
+                      <motion.div
+                        whileHover={{
+                          filter: "drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))",
+                        }}
+                        transition={{
+                          duration: 0.2,
+                        }}
+                      >
+                        <item.icon
+                          className={`h-5 w-5 ${
+                            pathname === item.path
+                              ? "text-primary"
+                              : "text-muted-foreground group-hover:text-blue-400"
+                          }`}
+                        />
+                      </motion.div>
+                    </motion.div>
+                  ) : (
+                    <item.icon
+                      className={`h-5 w-5 transition-colors ${
+                        pathname === item.path
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-foreground"
+                      }`}
+                    />
+                  )}
                   {!collapsed && (
                     <span className="ml-3 font-medium">{item.name}</span>
                   )}
@@ -236,13 +274,50 @@ export default function DashboardLayout({
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
-                <item.icon
-                  className={`h-5 w-5 ${
-                    pathname === item.path
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground"
-                  }`}
-                />
+                {item.name === "My Dashboard" ? (
+                  <motion.div
+                    whileHover={{
+                      scale: 1.15,
+                      rotate: 15,
+                      y: -2,
+                    }}
+                    whileTap={{
+                      scale: 0.95,
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 17,
+                      duration: 0.3,
+                    }}
+                    className="relative"
+                  >
+                    <motion.div
+                      whileHover={{
+                        filter: "drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))",
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                    >
+                      <item.icon
+                        className={`h-5 w-5 ${
+                          pathname === item.path
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-blue-400"
+                        }`}
+                      />
+                    </motion.div>
+                  </motion.div>
+                ) : (
+                  <item.icon
+                    className={`h-5 w-5 transition-colors ${
+                      pathname === item.path
+                        ? "text-primary"
+                        : "text-muted-foreground group-hover:text-foreground"
+                    }`}
+                  />
+                )}
                 <span className="ml-3 font-medium">{item.name}</span>
               </Link>
             ))}

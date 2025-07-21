@@ -70,12 +70,12 @@ import { openRTPInterface } from "@/lib/redux/features/rtp/rtpSlice";
 import { openDialog as openFlagsDialog, fetchCustomerFlags } from "@/lib/redux/features/flags/flagsSlice";
 import { openDialog as openChatDialog } from "@/lib/redux/features/chat/chatSlice";
 import { openDialog as openNotesDialog } from "@/lib/redux/features/notes/notesSlice";
+import { openDialer, startCall } from "@/lib/redux/features/dialer/dialerSlice";
 import PTP from "@/components/PTP";
 import RTP from "@/components/RTP";
 import FlagsInterface from "@/components/FlagsInterface";
 import ChatInterface from "@/components/ChatInterface";
 import NotesInterface from "@/components/NotesInterface";
-import FloatingDialer from "@/components/FloatingDialer";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -125,8 +125,9 @@ export default function CustomerProfilePage() {
   const [settlementDiscount, setSettlementDiscount] = useState<number>(25);
   const [settlementDescription, setSettlementDescription] = useState<string>('');
   const [settlementExpiryDate, setSettlementExpiryDate] = useState<string>('');
-  const [showDialer, setShowDialer] = useState(false);
   const [showManualPTP, setShowManualPTP] = useState(false);
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>('');
+  const [showPhoneNumbersModal, setShowPhoneNumbersModal] = useState(false);
   
   // Function to create PTP notification when Manual PTP is created
   const handleManualPTPCreated = async (ptpData: any) => {
@@ -151,9 +152,20 @@ export default function CustomerProfilePage() {
       console.error('Error creating PTP notification:', error);
     }
   };
-  const [showPhoneNumbersModal, setShowPhoneNumbersModal] = useState(false);
-  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>('');
+  
   const { dispatch } = useRedux();
+  
+  // Function to open the global dialer with Redux
+  const openGlobalDialer = (phoneNumber: string) => {
+    if (customer) {
+      dispatch(startCall({
+        phoneNumber: phoneNumber,
+        customerName: `${customer.name || ''} ${customer.surname_company_trust || ''}`.trim(),
+        customerId: customer.id
+      }));
+      dispatch(openDialer());
+    }
+  };
 
   useEffect(() => {
     const fetchCustomerDetails = async () => {
@@ -995,7 +1007,16 @@ export default function CustomerProfilePage() {
                 </Button>
                 <Button 
                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-none shadow-md shadow-indigo-900/30 transition-all duration-300 px-6"
-                  onClick={() => setShowDialer(true)}
+                  onClick={() => {
+                    if (customer) {
+                      dispatch(startCall({
+                        phoneNumber: customer.cell_number || '',
+                        customerName: `${customer.name || ''} ${customer.surname_company_trust || ''}`.trim(),
+                        customerId: customer.id
+                      }));
+                      dispatch(openDialer());
+                    }
+                  }}
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   Contact Customer
@@ -1009,15 +1030,7 @@ export default function CustomerProfilePage() {
                 </Button>
               </div>
               
-              {/* Floating Dialer */}
-              {customer && (
-                <FloatingDialer 
-                  isOpen={showDialer}
-                  onClose={() => setShowDialer(false)}
-                  phoneNumber={selectedPhoneNumber || customer.cell_number || ''}
-                  customerName={`${customer.name || ''} ${customer.surname_company_trust || ''}`.trim()}
-                />
-              )}
+              {/* We no longer need the local FloatingDialer component here as we're using the global one */}
               
               {/* Phone Numbers Selection Modal */}
               <Dialog open={showPhoneNumbersModal} onOpenChange={setShowPhoneNumbersModal}>
@@ -1081,7 +1094,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid home telephone number');
                         }
@@ -1111,7 +1124,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid work telephone number');
                         }
@@ -1144,7 +1157,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid cellphone number');
                         }
@@ -1175,7 +1188,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid second cellphone number');
                         }
@@ -1205,7 +1218,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid third cellphone number');
                         }
@@ -1235,7 +1248,7 @@ export default function CustomerProfilePage() {
                           }
                           setSelectedPhoneNumber(phoneNumber);
                           setShowPhoneNumbersModal(false);
-                          setShowDialer(true);
+                          openGlobalDialer(phoneNumber);
                         } else {
                           toast.error('No valid fourth cellphone number');
                         }

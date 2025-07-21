@@ -1,26 +1,28 @@
 "use client";
 
-import { useDialer } from "@/contexts/DialerContext";
-import { Dialer } from "@/components/Dialer";
-import { MinimizedDialer } from "@/components/MinimizedDialer";
+import { useEffect } from "react";
+import FloatingDialer from "@/components/FloatingDialer";
+import { useAppSelector, useAppDispatch } from "@/lib/redux/store";
+import { closeDialer } from "@/lib/redux/features/dialer/dialerSlice";
 
 export function GlobalDialer() {
-  const { 
-    isDialerOpen, 
-    setIsDialerOpen, 
-    isMinimized, 
-    callState 
-  } = useDialer();
+  const dispatch = useAppDispatch();
+  const { isOpen, callInfo } = useAppSelector((state) => state.dialer);
 
-  // Only show the dialer if it's open
-  if (!isDialerOpen) return null;
+  // Handle closing the dialer
+  const handleClose = () => {
+    dispatch(closeDialer());
+  };
+
+  // Only show the dialer if it's open and has call info
+  if (!isOpen || !callInfo) return null;
 
   return (
-    <>
-      <Dialer 
-        open={isDialerOpen} 
-        onOpenChange={setIsDialerOpen} 
-      />
-    </>
+    <FloatingDialer 
+      isOpen={isOpen}
+      onClose={handleClose}
+      phoneNumber={callInfo.phoneNumber}
+      customerName={callInfo.customerName || ''}
+    />
   );
 }

@@ -349,6 +349,60 @@ class CallTrackingService {
       console.error('Error updating call durations:', error);
     }
   }
+
+  // Clear all active calls and call queue
+  async clearAllCalls(): Promise<boolean> {
+    try {
+      // Get all active calls first
+      const { data: activeCalls, error: fetchError } = await supabase
+        .from('active_calls')
+        .select('id');
+
+      if (fetchError) {
+        console.error('Error fetching active calls:', fetchError);
+        return false;
+      }
+
+      // Delete each active call individually
+      for (const call of activeCalls || []) {
+        const { error } = await supabase
+          .from('active_calls')
+          .delete()
+          .eq('id', call.id);
+          
+        if (error) {
+          console.error(`Error deleting call ${call.id}:`, error);
+        }
+      }
+
+      // Get all queued calls
+      const { data: queuedCalls, error: queueFetchError } = await supabase
+        .from('call_queue')
+        .select('id');
+
+      if (queueFetchError) {
+        console.error('Error fetching queued calls:', queueFetchError);
+        return false;
+      }
+
+      // Delete each queued call individually
+      for (const call of queuedCalls || []) {
+        const { error } = await supabase
+          .from('call_queue')
+          .delete()
+          .eq('id', call.id);
+          
+        if (error) {
+          console.error(`Error deleting queued call ${call.id}:`, error);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error clearing calls:', error);
+      return false;
+    }
+  }
 }
 
 export const callTrackingService = new CallTrackingService();
