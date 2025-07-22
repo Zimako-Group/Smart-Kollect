@@ -1190,9 +1190,9 @@ export default function AdminDashboard() {
               
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Current Month</div>
-                <div className="text-xs font-semibold">R25,756,766.28</div>
+                <div className="text-xs font-semibold">R18,810,599,71</div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
-                  <span>June 2025</span>
+                  <span>July 2025</span>
                 </div>
               </div>
               
