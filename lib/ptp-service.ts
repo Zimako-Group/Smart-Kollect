@@ -660,6 +660,85 @@ export const getMonthlyPTPStats = async (): Promise<{
   }
 };
 
+/**
+ * Resolve a PTP by marking it as paid (works with both PTP and ManualPTP tables)
+ * @param ptpId PTP ID
+ * @param source Source table ('PTP' or 'ManualPTP')
+ * @returns Promise with the updated PTP
+ */
+export const resolvePTP = async (
+  ptpId: string,
+  source: 'PTP' | 'ManualPTP' = 'PTP'
+): Promise<PTP> => {
+  try {
+    const table = source === 'ManualPTP' ? 'ManualPTP' : 'PTP';
+    
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .update({ status: 'paid' })
+      .eq('id', ptpId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error resolving ${table} PTP:`, error);
+      throw new Error(`Failed to resolve PTP: ${error.message}`);
+    }
+
+    // Create an account activity for this PTP resolution
+    try {
+      // Get user information
+      const { data: { user } } = await supabase.auth.getUser();
+      let createdBy = null;
+      let createdByName = 'System';
+      
+      if (user) {
+        createdBy = user.id;
+        const { data: userData } = await supabaseAdmin
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (userData) {
+          createdByName = userData.full_name;
+        }
+      }
+
+      // Create the activity
+      await createAccountActivity({
+        accountId: data.debtor_id,
+        activityType: 'status_change',
+        activitySubtype: 'ptp_resolved',
+        description: `Promise to Pay marked as resolved/paid`,
+        amount: data.amount,
+        createdBy: createdBy,
+        createdByName: createdByName,
+        metadata: {
+          ptpId: data.id,
+          previousStatus: 'defaulted',
+          newStatus: 'paid',
+          paymentMethod: data.payment_method,
+          paymentDate: data.date,
+          resolvedBy: createdByName,
+          resolvedAt: new Date().toISOString(),
+          source: table
+        }
+      });
+
+      console.log(`Created account activity for PTP resolution from ${table}`);
+    } catch (activityError) {
+      // Log the error but don't fail the resolution
+      console.error('Error creating account activity for PTP resolution:', activityError);
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error('Error in resolvePTP:', error);
+    throw new Error(`Failed to resolve PTP: ${error.message}`);
+  }
+};
+
 export const deletePTP = async (ptpId: string, ptpType: string = 'default'): Promise<void> => {
   try {
     // Determine which table to delete from based on PTP type

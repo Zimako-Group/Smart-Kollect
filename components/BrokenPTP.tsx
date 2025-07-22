@@ -32,7 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import BrokenPTPOutcome from "./BrokenPTPOutcome";
-import { getDefaultedPTPsByAgent } from "@/lib/ptp-service";
+import { getDefaultedPTPsByAgent, resolvePTP } from "@/lib/ptp-service";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -86,6 +86,7 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<BrokenPTPCustomer | null>(null);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
   const [agentPTPs, setAgentPTPs] = useState<Record<string, AgentPTPs>>({});
+  const [originalAgentPTPs, setOriginalAgentPTPs] = useState<Record<string, AgentPTPs>>({});
   const [loading, setLoading] = useState(false);
   const [expandedAgents, setExpandedAgents] = useState<string[]>([]);
   const { setIsDialerOpen, setCurrentCustomer } = useDialer();
@@ -131,6 +132,7 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
           }
         }
         
+        setOriginalAgentPTPs(formattedPTPs);
         setAgentPTPs(formattedPTPs);
         
         // Also set filtered PTPs for backwards compatibility
@@ -148,7 +150,14 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
     };
     
     fetchData();
-  }, [expandedAgents, resolvedPTPs, user]); // Add user as a dependency
+  }, [user]); // Only depend on user to avoid refetching when resolving PTPs
+  
+  // Filter PTPs when search term, status filter, or resolved PTPs change
+  useEffect(() => {
+    if (Object.keys(originalAgentPTPs).length > 0) {
+      filterPTPs();
+    }
+  }, [searchTerm, statusFilter, resolvedPTPs, originalAgentPTPs]);
   
   // Determine PTP status based on days late
   const determinePTPStatus = (daysLate: number): "high" | "medium" | "low" => {
@@ -170,10 +179,10 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
   
   // Filter PTPs based on search term and status filter
   const filterPTPs = () => {
-    // Create a filtered copy of the agent PTPs
+    // Create a filtered copy of the agent PTPs using original data
     const filteredAgentPTPs: Record<string, AgentPTPs> = {};
     
-    Object.entries(agentPTPs).forEach(([agentId, agentData]) => {
+    Object.entries(originalAgentPTPs).forEach(([agentId, agentData]) => {
       let filtered = agentData.ptps.filter(ptp => !resolvedPTPs.includes(ptp.id));
       
       if (searchTerm) {
@@ -197,6 +206,9 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
       }
     });
     
+    // Update the agentPTPs state with filtered results
+    setAgentPTPs(filteredAgentPTPs);
+    
     // Also update the flat list for backward compatibility
     const allFilteredPTPs = Object.values(filteredAgentPTPs)
       .flatMap(agentData => agentData.ptps);
@@ -207,13 +219,11 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    filterPTPs();
   };
 
   // Handle status filter change
   const handleStatusFilterChange = (status: "all" | "high" | "medium" | "low") => {
     setStatusFilter(status);
-    filterPTPs();
   };
 
   // Handle calling a customer - navigate to customer profile
@@ -226,18 +236,48 @@ const BrokenPTP: React.FC<BrokenPTPProps> = ({ onClose }) => {
   };
 
   // Handle marking a PTP as resolved
-  const handleMarkResolved = (customer: BrokenPTPCustomer) => {
-    // Add the customer ID to the resolved list
-    setResolvedPTPs(prev => [...prev, customer.id]);
-    
-    // Show a success toast
-    toast.success(`${customer.name}'s payment has been marked as resolved.`, {
-      description: `PTP ID: ${customer.id}`,
-      duration: 3000,
-    });
-    
-    // Update the filtered list
-    filterPTPs();
+  const handleMarkResolved = async (customer: BrokenPTPCustomer) => {
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Resolving ${customer.name}'s payment...`);
+      
+      // Resolve the PTP in the database
+      await resolvePTP(customer.id, customer.source || 'PTP');
+      
+      // Add the customer ID to the resolved list
+      setResolvedPTPs(prev => [...prev, customer.id]);
+      
+      // Remove the PTP from both original and current agentPTPs state immediately
+      const removePTPFromState = (prev: Record<string, AgentPTPs>) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(agentId => {
+          updated[agentId] = {
+            ...updated[agentId],
+            ptps: updated[agentId].ptps.filter(ptp => ptp.id !== customer.id)
+          };
+        });
+        return updated;
+      };
+      
+      setOriginalAgentPTPs(removePTPFromState);
+      setAgentPTPs(removePTPFromState);
+      
+      // Also update the filtered list for backward compatibility
+      setFilteredPTPs(prev => prev.filter(ptp => ptp.id !== customer.id));
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success(`${customer.name}'s payment has been permanently resolved.`, {
+        description: `PTP ID: ${customer.id} - Status updated to 'paid'`,
+        duration: 4000,
+      });
+    } catch (error) {
+      console.error('Error resolving PTP:', error);
+      toast.error(`Failed to resolve ${customer.name}'s payment.`, {
+        description: 'Please try again or contact support.',
+        duration: 5000,
+      });
+    }
   };
 
   // Handle recording a call outcome
