@@ -455,7 +455,7 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      R 4.8M
+                      R0.0M
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Total Revenue
@@ -463,7 +463,7 @@ function MetricsDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-emerald-500">
-                      89.2%
+                      {data.ptpMetrics?.fulfilledPercentage || 0}%
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Collection Rate
@@ -481,7 +481,7 @@ function MetricsDashboard() {
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `89%` }}
+                      style={{ width: `${data.ptpMetrics?.fulfilledPercentage || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -490,17 +490,23 @@ function MetricsDashboard() {
                   <div className="flex flex-col items-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                     <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mb-1" />
                     <span className="text-xs text-muted-foreground">PTPs</span>
-                    <span className="text-base font-semibold text-emerald-500">R1.8M</span>
+                    <span className="text-base font-semibold text-emerald-500">
+                      {data.ptpMetrics?.fulfilledPTPs || 0}
+                    </span>
                   </div>
                   <div className="flex flex-col items-center p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <Users className="h-3.5 w-3.5 text-blue-500 mb-1" />
-                    <span className="text-xs text-muted-foreground">Manual</span>
-                    <span className="text-base font-semibold text-blue-500">R687K</span>
+                    <span className="text-xs text-muted-foreground">Pending</span>
+                    <span className="text-base font-semibold text-blue-500">
+                      {data.ptpMetrics?.pendingPTPs || 0}
+                    </span>
                   </div>
                   <div className="flex flex-col items-center p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
                     <Activity className="h-3.5 w-3.5 text-amber-500 mb-1" />
-                    <span className="text-xs text-muted-foreground">Settlements</span>
-                    <span className="text-base font-semibold text-amber-500">R2.3M</span>
+                    <span className="text-xs text-muted-foreground">Defaulted</span>
+                    <span className="text-base font-semibold text-amber-500">
+                      {data.ptpMetrics?.defaultedPTPs || 0}
+                    </span>
                   </div>
                 </div>
               </>
