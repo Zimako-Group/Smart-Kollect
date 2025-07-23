@@ -84,6 +84,7 @@ interface PTPMetrics {
   fulfilledPercentage: number;
   pendingPercentage: number;
   defaultedPercentage: number;
+  fulfilledRevenue: number;
 }
 
 interface DashboardData {

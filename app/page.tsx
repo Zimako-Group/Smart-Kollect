@@ -52,9 +52,9 @@ const features = [
 
 const stats = [
   {
-    value: "R2.5B+",
+    value: "R100M+",
     label: "Debt Collected",
-    prefix: "$",
+    prefix: "R",
   },
   {
     value: "95%",

@@ -661,6 +661,66 @@ export const getMonthlyPTPStats = async (): Promise<{
 };
 
 /**
+ * Get the total monetary value of fulfilled PTPs for the current month
+ * @returns Promise with the total amount of fulfilled PTPs
+ */
+export const getMonthlyFulfilledPTPRevenue = async (): Promise<number> => {
+  try {
+    // Get the current month's start and end dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    console.log('Fetching fulfilled PTP revenue for month:', {
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString()
+    });
+
+    // Fetch fulfilled PTPs from both tables for the current month
+    const [ptpData, manualPtpData] = await Promise.all([
+      supabaseAdmin
+        .from('PTP')
+        .select('amount')
+        .eq('status', 'paid')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString()),
+      supabaseAdmin
+        .from('ManualPTP')
+        .select('amount')
+        .eq('status', 'paid')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString())
+    ]);
+
+    if (ptpData.error) {
+      console.error('Error fetching fulfilled PTP data:', ptpData.error);
+      throw new Error(ptpData.error.message);
+    }
+
+    if (manualPtpData.error) {
+      console.error('Error fetching fulfilled ManualPTP data:', manualPtpData.error);
+      throw new Error(manualPtpData.error.message);
+    }
+
+    // Combine data from both tables and calculate total
+    const allFulfilledPTPs = [...(ptpData.data || []), ...(manualPtpData.data || [])];
+    const totalRevenue = allFulfilledPTPs.reduce((sum, ptp) => sum + (ptp.amount || 0), 0);
+    
+    console.log('Fulfilled PTP revenue calculation:', {
+      ptpCount: ptpData.data?.length || 0,
+      manualPtpCount: manualPtpData.data?.length || 0,
+      totalFulfilledPTPs: allFulfilledPTPs.length,
+      totalRevenue
+    });
+
+    return totalRevenue;
+  } catch (error: any) {
+    console.error('Error in getMonthlyFulfilledPTPRevenue:', error);
+    throw new Error(`Failed to fetch monthly fulfilled PTP revenue: ${error.message}`);
+  }
+};
+
+/**
  * Resolve a PTP by marking it as paid (works with both PTP and ManualPTP tables)
  * @param ptpId PTP ID
  * @param source Source table ('PTP' or 'ManualPTP')

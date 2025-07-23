@@ -455,10 +455,17 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      R0.0M
+                      R{data.ptpMetrics?.fulfilledRevenue ? 
+                        data.ptpMetrics.fulfilledRevenue >= 1000000 ? 
+                          (data.ptpMetrics.fulfilledRevenue / 1000000).toFixed(1) + 'M' : 
+                          data.ptpMetrics.fulfilledRevenue >= 1000 ? 
+                            (data.ptpMetrics.fulfilledRevenue / 1000).toFixed(0) + 'K' : 
+                            data.ptpMetrics.fulfilledRevenue.toLocaleString() 
+                        : '0'
+                      }
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      Total Revenue
+                      Monthly Fulfilled Revenue
                     </div>
                   </div>
                   <div className="text-right">

@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMonthlyPTPStats } from '@/lib/ptp-service';
+import { getMonthlyPTPStats, getMonthlyFulfilledPTPRevenue } from '@/lib/ptp-service';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('Fetching PTP metrics...');
     
-    // Get monthly PTP statistics
-    const ptpStats = await getMonthlyPTPStats();
+    // Get monthly PTP statistics and revenue in parallel
+    const [ptpStats, fulfilledRevenue] = await Promise.all([
+      getMonthlyPTPStats(),
+      getMonthlyFulfilledPTPRevenue()
+    ]);
     
-    console.log('PTP metrics fetched successfully:', ptpStats);
+    console.log('PTP metrics fetched successfully:', { ...ptpStats, fulfilledRevenue });
     
     return NextResponse.json({
       success: true,
@@ -20,7 +23,8 @@ export async function GET(request: NextRequest) {
           defaultedPTPs: ptpStats.defaultedPTPs,
           fulfilledPercentage: ptpStats.fulfilledPercentage,
           pendingPercentage: ptpStats.pendingPercentage,
-          defaultedPercentage: ptpStats.defaultedPercentage
+          defaultedPercentage: ptpStats.defaultedPercentage,
+          fulfilledRevenue: fulfilledRevenue
         }
       }
     });
@@ -38,7 +42,8 @@ export async function GET(request: NextRequest) {
           defaultedPTPs: 0,
           fulfilledPercentage: 0,
           pendingPercentage: 0,
-          defaultedPercentage: 0
+          defaultedPercentage: 0,
+          fulfilledRevenue: 0
         }
       }
     }, { status: 500 });
