@@ -144,8 +144,59 @@ export default function ManualPTP({
       toast.dismiss();
       toast.success('Manual PTP arrangement created successfully!');
       
-      // Show additional toast about SMS notification
-      toast.success('SMS notification has been sent to the customer.');
+      // Send SMS notification after successful PTP creation
+      // Note: SMS functionality requires phone number from customer data
+      // For ManualPTP, we'll need to fetch customer data to get phone number
+      try {
+        // Fetch customer data to get phone number
+        const { data: customerData, error: customerError } = await supabase
+          .from('Debtors')
+          .select('cell_number')
+          .eq('id', customerId)
+          .single();
+        
+        const phoneNumber = customerData?.cell_number;
+        
+        if (phoneNumber) {
+          const response = await fetch('/api/send-ptp-sms', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              customerName: customerName,
+              phoneNumber: phoneNumber,
+              amount: parseFloat(formData.amount),
+              paymentDate: format(new Date(formData.date), 'PPP'),
+              paymentMethod: formData.paymentMethod,
+              notes: formData.notes
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            toast.success('SMS confirmation sent to customer', {
+              description: `Message sent to ${phoneNumber}`
+            });
+          } else {
+            console.warn('SMS sending failed:', result.error);
+            toast.warning('PTP created but SMS notification failed', {
+              description: result.error || 'Unable to send SMS'
+            });
+          }
+        } else {
+          console.log('SMS notification skipped - no phone number available for customer');
+          toast.info('Manual PTP created successfully', {
+            description: 'SMS notification skipped - no phone number available'
+          });
+        }
+      } catch (smsError) {
+        console.error('Error sending SMS:', smsError);
+        toast.warning('PTP created but SMS notification failed', {
+          description: 'Network error while sending SMS'
+        });
+      }
       
       // Notify parent component about the created PTP
       if (onPTPCreated && ptpData) {

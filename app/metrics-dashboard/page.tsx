@@ -543,7 +543,7 @@ function MetricsDashboard() {
                 <div className="flex items-end justify-between mb-3">
                   <div>
                     <div className="text-2xl font-bold">
-                      R71.9M
+                      R90.7M
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Total Collections
@@ -563,33 +563,53 @@ function MetricsDashboard() {
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">Monthly Progress</span>
                     <span className="font-medium text-blue-500">
-                      3 of 12 months
+                      4 of 12 months
                     </span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `25%` }}
+                      style={{ width: `33%` }}
                     ></div>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <CheckCircle className="h-3.5 w-3.5 text-blue-500 mb-1" />
-                    <span className="text-xs text-muted-foreground">Apr</span>
-                    <span className="text-base font-semibold text-blue-500">R16.6M</span>
-                  </div>
-                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mb-1" />
-                    <span className="text-xs text-muted-foreground">May</span>
-                    <span className="text-base font-semibold text-emerald-500">R29.5M</span>
-                  </div>
-                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <CheckCircle className="h-3.5 w-3.5 text-amber-500 mb-1" />
-                    <span className="text-xs text-muted-foreground">Jun</span>
-                    <span className="text-base font-semibold text-amber-500">R25.8M</span>
-                  </div>
+                {/* Monthly Bar Graph */}
+                <div className="space-y-3 mt-3">
+                  {/* Month bars with data */}
+                  {[
+                    { month: 'Apr', amount: 16.6, color: 'blue', percentage: 56 },
+                    { month: 'May', amount: 29.5, color: 'emerald', percentage: 100 },
+                    { month: 'Jun', amount: 25.8, color: 'amber', percentage: 87 },
+                    { month: 'Jul', amount: 18.8, color: 'purple', percentage: 64 }
+                  ].map((monthData, index) => (
+                    <div key={monthData.month} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {monthData.month}
+                        </span>
+                        <span className={`text-xs font-semibold ${
+                          monthData.color === 'blue' ? 'text-blue-500' :
+                          monthData.color === 'emerald' ? 'text-emerald-500' :
+                          monthData.color === 'amber' ? 'text-amber-500' :
+                          'text-purple-500'
+                        }`}>
+                          R{monthData.amount}M
+                        </span>
+                      </div>
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            monthData.color === 'blue' ? 'bg-blue-500' :
+                            monthData.color === 'emerald' ? 'bg-emerald-500' :
+                            monthData.color === 'amber' ? 'bg-amber-500' :
+                            'bg-purple-500'
+                          }`}
+                          style={{ width: `${monthData.percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
