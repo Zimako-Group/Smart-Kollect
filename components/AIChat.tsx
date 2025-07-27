@@ -138,16 +138,20 @@ export function AIChat({ onClose }: AIChatProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-[380px] h-[500px] bg-slate-900 border border-slate-800 rounded-lg shadow-xl flex flex-col z-50 overflow-hidden">
-      {/* Chat header */}
-      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+    <div className="fixed bottom-4 right-4 z-50 w-96 h-[500px] bg-slate-900 rounded-lg shadow-2xl flex flex-col border border-slate-800">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg">
         <div className="flex items-center gap-2">
-          <div className="bg-white/20 p-1.5 rounded-full">
-            <Sparkles className="h-4 w-4" />
+          <div className="relative">
+            <Bot className="h-6 w-6 text-white" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
           </div>
-          <h3 className="font-medium">Zimako AI Assistant</h3>
+          <div>
+            <h3 className="font-semibold text-white">Zimako AI</h3>
+            <p className="text-xs text-blue-100">Online</p>
+          </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20 rounded-full" onClick={() => setIsMinimized(true)}>
             <Minimize2 className="h-4 w-4" />
           </Button>
