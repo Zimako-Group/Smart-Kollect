@@ -61,7 +61,6 @@ export default function AdminLayout({
 
   const handleLogout = () => {
     logout();
-    router.push("/"); // Redirect to main landing page
   };
 
   const { isLoading } = useAuth();

@@ -230,8 +230,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear user from state
       setUser(null);
       
-      // Redirect to main landing page
-      router.push('/');
+      // Redirect to main landing page using hard redirect
+      window.location.href = '/';
       
       console.log('[AUTH] Logout successful');
     } catch (error) {
