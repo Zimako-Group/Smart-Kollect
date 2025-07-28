@@ -695,7 +695,7 @@ BUZZBOX_API_KEY=your_buzzbox_key`}</code>
                 </Button>
               </div>
               <p className="text-slate-500 text-sm">
-                © 2024 SmartKollect. All rights reserved. Built with ❤️ for debt collection professionals.
+                © 2025 SmartKollect. All rights reserved. Built with ❤️ for debt collection professionals.
               </p>
             </div>
           </div>

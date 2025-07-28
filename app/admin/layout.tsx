@@ -313,10 +313,22 @@ export default function AdminLayout({
                       <p className="text-xs text-white/60">{user.email}</p>
                     </div>
                     <Link href="/admin/profile" className="block px-4 py-2 text-sm hover:bg-white/5">
-                      Your Profile
+                      <div className="flex items-center">
+                        <UserCircle size={16} className="mr-2" />
+                        <span>Your Profile</span>
+                      </div>
                     </Link>
                     <Link href="/admin/settings" className="block px-4 py-2 text-sm hover:bg-white/5">
-                      Settings
+                      <div className="flex items-center">
+                        <Settings size={16} className="mr-2" />
+                        <span>Settings</span>
+                      </div>
+                    </Link>
+                    <Link href="/documentation" className="block px-4 py-2 text-sm hover:bg-white/5">
+                      <div className="flex items-center">
+                        <FileText size={16} className="mr-2" />
+                        <span>Documentation</span>
+                      </div>
                     </Link>
                     <div className="border-t border-white/5 mt-2 pt-2">
                       <button 
