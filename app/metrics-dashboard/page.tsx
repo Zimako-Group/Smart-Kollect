@@ -24,6 +24,7 @@ import {
   AlertCircle,
   ChevronRight,
   ArrowUp,
+  HandCoins,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -493,7 +494,7 @@ function MetricsDashboard() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
                   <div className="flex flex-col items-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                     <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mb-1" />
                     <span className="text-xs text-muted-foreground">PTPs</span>
@@ -513,6 +514,13 @@ function MetricsDashboard() {
                     <span className="text-xs text-muted-foreground">Defaulted</span>
                     <span className="text-base font-semibold text-amber-500">
                       {data.ptpMetrics?.defaultedPTPs || 0}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <HandCoins className="h-3.5 w-3.5 text-purple-500 mb-1" />
+                    <span className="text-xs text-muted-foreground">Settlements</span>
+                    <span className="text-base font-semibold text-purple-500">
+                      {data.ptpMetrics?.settlements || 0}
                     </span>
                   </div>
                 </div>

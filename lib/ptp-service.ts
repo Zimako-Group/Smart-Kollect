@@ -859,3 +859,34 @@ export const deletePTP = async (ptpId: string, ptpType: string = 'default'): Pro
     throw new Error(`Failed to delete PTP: ${error.message}`);
   }
 };
+
+/**
+ * Get monthly settlements count from Settlements table
+ */
+export const getMonthlySettlementsCount = async (): Promise<number> => {
+  try {
+    console.log('Fetching monthly settlements count...');
+    
+    const currentDate = new Date();
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
+    
+    const { count, error } = await supabase
+      .from('Settlements')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth.toISOString())
+      .lte('created_at', endOfMonth.toISOString());
+    
+    if (error) {
+      console.error('Error fetching settlements count:', error);
+      throw error;
+    }
+    
+    console.log(`Monthly settlements count: ${count || 0}`);
+    return count || 0;
+  } catch (error: any) {
+    console.error('Error in getMonthlySettlementsCount:', error);
+    // Return 0 instead of throwing to prevent dashboard from breaking
+    return 0;
+  }
+};
