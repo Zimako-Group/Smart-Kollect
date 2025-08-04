@@ -1182,7 +1182,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-3 gap-3 mt-6">
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Total Collections</div>
-                <div className="text-xs font-semibold">R65,540,447.61</div>
+                <div className="text-xs font-semibold">R93,153,328.86</div>
                 <div className="text-xs mt-1 flex items-center text-green-400">
                   <ArrowUp size={12} className="mr-1" />
                   <span>100% of total</span>
