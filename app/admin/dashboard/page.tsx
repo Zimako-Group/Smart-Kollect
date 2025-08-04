@@ -119,7 +119,7 @@ const performanceData = [
   { name: "Apr", collections: 16633251.62, target: 20000000 },
   { name: "May", collections: 29475034, target: 20000000 },
   { name: "Jun", collections: 25756766.28, target: 20000000 },
-  { name: "Jul", collections: 18810599.71, target: 20000000 },
+  { name: "Jul", collections: 27612881.25, target: 20000000 },
   { name: "Aug", collections: 0, target: 20000000 },
 ];
 
@@ -136,7 +136,7 @@ const consolidatedPaymentsData = [
   { month: "Apr 2025", amount: 16633251.62 },
   { month: "May 2025", amount: 29475034.23 },
   { month: "Jun 2025", amount: 25756766.28 },
-  { month: "Jul 2025", amount: 18810599.71 },
+  { month: "Jul 2025", amount: 27612881.25 },
   { month: "Aug 2025", amount: 0 },
   { month: "Sep 2025", amount: 0 },
   { month: "Oct 2025", amount: 0 },
@@ -779,7 +779,7 @@ export default function AdminDashboard() {
             <div>
               <p className="text-white/60 text-sm">Total Collections</p>
               <h3 className="text-2xl font-bold mt-1 gradient-text">
-                R18,810,599,71
+                R27,612,881,25
               </h3>
               <div className="flex items-center mt-3 text-red-400 bg-red-400/10 px-2 py-1 rounded-full text-xs w-fit">
                 <ArrowDown size={14} className="mr-1" />
