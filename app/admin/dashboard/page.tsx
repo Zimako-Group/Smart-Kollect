@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import ApexCharts from "apexcharts";
+import { Analytics } from "@vercel/analytics/next";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -1676,6 +1677,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Vercel Analytics */}
+      <Analytics />
     </div>
   );
 }

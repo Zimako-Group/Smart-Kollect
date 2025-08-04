@@ -79,6 +79,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { defaultAgentMetrics } from "@/lib/agent-dashboard";
 import { useAgentPerformance } from "@/hooks/useAgentPerformance";
 import { useDashboardCache } from "@/hooks/useDashboardCache";
+import { Analytics } from "@vercel/analytics/next";
 
 // Dynamically import chart components with no SSR to avoid hydration issues
 
@@ -1325,6 +1326,9 @@ export default function DashboardPage() {
       {showPaymentsDue && (
         <PaymentsDue onClose={() => setShowPaymentsDue(false)} />
       )}
+      
+      {/* Vercel Analytics */}
+      <Analytics />
     </div>
   );
 }
