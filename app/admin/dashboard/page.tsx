@@ -123,13 +123,7 @@ const performanceData = [
   { name: "Aug", collections: 0, target: 20000000 },
 ];
 
-const agentPerformance = [
-  { name: "John Doe", collections: 4200, cases: 32, rate: 92 },
-  { name: "Jane Smith", collections: 3800, cases: 28, rate: 89 },
-  { name: "Mike Johnson", collections: 3600, cases: 30, rate: 85 },
-  { name: "Sarah Williams", collections: 3200, cases: 25, rate: 82 },
-  { name: "David Brown", collections: 2900, cases: 22, rate: 78 },
-];
+
 
 // Monthly consolidated payments data (Month-To-Date)
 const consolidatedPaymentsData = [
@@ -144,244 +138,7 @@ const consolidatedPaymentsData = [
   { month: "Dec 2025", amount: 0 },
 ];
 
-const campaignsData = [
-  {
-    id: 1,
-    name: "WesBank",
-    logo: "/wesbank-logo.png", // Replace with actual logo path or use fallback icon
-    collected: 1250000,
-    target: 2500000,
-    progress: 50,
-    agents: 12,
-    endDate: "2025-05-15",
-    status: "Active",
-    description:
-      "Vehicle finance debt collection campaign targeting overdue accounts.",
-    clientContact: "John Smith",
-    clientEmail: "john.smith@wesbank.co.za",
-    priority: "High" as const,
-    assignedAgents: ["Agent 1", "Agent 2", "Agent 3"],
-  },
-  {
-    id: 2,
-    name: "Vodacom",
-    logo: "/vodacom-logo.png",
-    collected: 750000,
-    target: 1000000,
-    progress: 75,
-    agents: 8,
-    endDate: "2025-04-30",
-    status: "Active",
-    description:
-      "Telecommunications debt recovery for contract and service accounts.",
-    clientContact: "Sarah Johnson",
-    clientEmail: "s.johnson@vodacom.co.za",
-    priority: "Medium" as const,
-    assignedAgents: ["Agent 4", "Agent 5"],
-  },
-  {
-    id: 3,
-    name: "Legal Practice Council",
-    logo: "/lpc-logo.png",
-    collected: 320000,
-    target: 800000,
-    progress: 40,
-    agents: 5,
-    endDate: "2025-06-20",
-    status: "Active",
-    description: "Legal fee recovery campaign for the Legal Practice Council.",
-    clientContact: "Michael Brown",
-    clientEmail: "m.brown@lpc.org.za",
-    priority: "Medium" as const,
-    assignedAgents: ["Agent 6", "Agent 7"],
-  },
-  {
-    id: 4,
-    name: "Vhembe",
-    logo: "/vhembe-logo.png",
-    collected: 450000,
-    target: 500000,
-    progress: 90,
-    agents: 7,
-    endDate: "2025-03-25",
-    status: "Active",
-    description: "Municipal debt collection for Vhembe District Municipality.",
-    clientContact: "Tshilidzi Ndou",
-    clientEmail: "t.ndou@vhembe.gov.za",
-    priority: "High" as const,
-    assignedAgents: ["Agent 8", "Agent 9"],
-  },
-  {
-    id: 5,
-    name: "Musina",
-    logo: "/musina-logo.png",
-    collected: 180000,
-    target: 600000,
-    progress: 30,
-    agents: 4,
-    endDate: "2025-07-10",
-    status: "Active",
-    description:
-      "Property rates and taxes collection for Musina Local Municipality.",
-    clientContact: "Peter Mulaudzi",
-    clientEmail: "p.mulaudzi@musina.gov.za",
-    priority: "Medium" as const,
-    assignedAgents: ["Agent 10"],
-  },
-  {
-    id: 6,
-    name: "MiX Telematics",
-    logo: "/mix-logo.png",
-    collected: 95000,
-    target: 350000,
-    progress: 27,
-    agents: 3,
-    endDate: "2025-08-05",
-    status: "Active",
-    description:
-      "B2B debt collection for telematics and fleet management services.",
-    clientContact: "Lisa van Wyk",
-    clientEmail: "l.vanwyk@mixtelematics.co.za",
-    priority: "Low" as const,
-    assignedAgents: ["Agent 11", "Agent 12"],
-  },
-];
-
 const COLORS = ["#0088FE", "#FFBB28", "#00C49F", "#FF8042"];
-
-
-const enhancedAgentPerformance = [
-  {
-    id: "82c8d0cd-a13e-47e2-904d-135657f57b8a", // Agnes's UUID
-    name: "Agnes Nkate",
-    avatar: "", // Optional, can use initials as fallback
-    role: "Debt Collector",
-    collections: 0,
-    lastMonthCollections: 0,
-    cases: 0,
-    resolvedCases: 0,
-    rate: 0,
-    lastMonthRate: 0,
-    email: "agnes.n@mahikeng.gov.za",
-    phone: "",
-    joinDate: "2025-01-01",
-    performance: "Medium",
-    badge: null,
-    totalAccounts: 0, // Will be populated from database
-    campaigns: [
-      { name: "Mahikeng", collections: 0, success: 0 },
-    ],
-    monthlyPerformance: [
-      { month: "Jan", collections: 0 },
-      { month: "Feb", collections: 0 },
-      { month: "Mar", collections: 0 },
-    ],
-  },
-  {
-    id: "f2b173ee-0327-418e-987b-01809d920fac", // Gloria's UUID
-    name: "Gloria Jacobs",
-    avatar: "",
-    role: "Debt Collector",
-    collections: 0,
-    lastMonthCollections: 0,
-    cases: 0,
-    resolvedCases: 0,
-    rate: 0,
-    lastMonthRate: 0,
-    email: "gloria.j@mahikeng.gov.za",
-    phone: "",
-    joinDate: "2025-01-01",
-    performance: "Medium",
-    badge: null,
-    totalAccounts: 0, // Will be populated from database
-    campaigns: [
-      { name: "Mahikeng", collections: 0, success: 0 },
-    ],
-    monthlyPerformance: [
-      { month: "Jan", collections: 0 },
-      { month: "Feb", collections: 0 },
-      { month: "Mar", collections: 0 },
-    ],
-  },
-  {
-    id: "e5b14dd3-d428-40ad-abce-58722850d145", // Precious's UUID
-    name: "Precious Letsekenye",
-    avatar: "",
-    role: "Debt Collector",
-    collections: 0,
-    lastMonthCollections: 0,
-    cases: 0,
-    resolvedCases: 0,
-    rate: 0,
-    lastMonthRate: 0,
-    email: "precious.l@mahikeng.gov.za",
-    phone: "",
-    joinDate: "2025-01-01",
-    performance: "Medium",
-    badge: null,
-    totalAccounts: 0, // Will be populated from database
-    campaigns: [
-      { name: "Mahikeng", collections: 0, success: 0 },
-    ],
-    monthlyPerformance: [
-      { month: "Jan", collections: 0 },
-      { month: "Feb", collections: 0 },
-      { month: "Mar", collections: 0 },
-    ],
-  },
-  {
-    id: "4", // No UUID found in logs, using numeric ID
-    name: "Karabo Segato",
-    avatar: "",
-    role: "Debt Collector",
-    collections: 0,
-    lastMonthCollections: 0,
-    cases: 0,
-    resolvedCases: 0,
-    rate: 0,
-    lastMonthRate: 0,
-    email: "karabo.s@mahikeng.gov.za",
-    phone: "",
-    joinDate: "2025-01-01",
-    performance: "Medium",
-    badge: null,
-    totalAccounts: 0, // No allocation found in logs
-    campaigns: [
-      { name: "Mahikeng", collections: 0, success: 0 },
-    ],
-    monthlyPerformance: [
-      { month: "Jan", collections: 0 },
-      { month: "Feb", collections: 0 },
-      { month: "Mar", collections: 0 },
-    ],
-  },
-  {
-    id: "5", // No UUID found in logs, using numeric ID
-    name: "Vivian Agyeman",
-    avatar: "",
-    role: "Debt Collector",
-    collections: 0,
-    lastMonthCollections: 0,
-    cases: 0,
-    resolvedCases: 0,
-    rate: 0,
-    lastMonthRate: 0,
-    email: "vivian.l@mahikeng.gov.za",
-    phone: "",
-    joinDate: "2025-01-01",
-    performance: "Medium",
-    badge: null,
-    totalAccounts: 0, // No allocation found in logs
-    campaigns: [
-      { name: "Mahikeng", collections: 0, success: 0 },
-    ],
-    monthlyPerformance: [
-      { month: "Jan", collections: 0 },
-      { month: "Feb", collections: 0 },
-      { month: "Mar", collections: 0 },
-    ],
-  },
-];
 
 // We'll fetch real notifications from the database
 
@@ -394,7 +151,9 @@ export default function AdminDashboard() {
   );
   const [showCampaignDetails, setShowCampaignDetails] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [agentAllocations, setAgentAllocations] = useState<{[key: string]: number}>({});
+  const [agentAllocations, setAgentAllocations] = useState<{
+    [key: string]: number;
+  }>({});
   const [availableAgents, setAvailableAgents] = useState([
     { id: 1, name: "Thabo Mokoena", performance: "High" },
     { id: 2, name: "Lerato Ndlovu", performance: "Medium" },
@@ -410,29 +169,8 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
 
-  const agents: Agent[] = agentPerformance.map((data, index) => ({
-    id: index + 1, // Generate an ID if needed
-    name: data.name,
-    performance: data.rate, // Map 'rate' to 'performance'
-    collections: data.collections,
-    cases: data.cases,
-    rate: data.rate,
-  }));
-
-  const handleCampaignClick = (campaign: any) => {
-    // Ensure priority is one of the allowed values
-    const validPriority = ["High", "Medium", "Low"].includes(campaign.priority)
-      ? (campaign.priority as "High" | "Medium" | "Low")
-      : "Low"; // Default fallback
-
-    const completeCampaign: Campaign = {
-      ...campaign,
-      priority: validPriority,
-    };
-
-    setSelectedCampaign(completeCampaign);
-    setShowCampaignDetails(true);
-  };
+  // Agents data will be fetched from the database
+  const agents: Agent[] = [];
 
   const handleAssignAgents = () => {
     // In a real app, you would save this to your database
@@ -459,170 +197,118 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // Calculate total collections
-    const total = enhancedAgentPerformance.reduce(
-      (sum, agent) => sum + (agent.collections || 0),
-      0
-    );
-    setTotalCollections(total);
-    
+    // Set total collections to 0 since we removed hardcoded data
+    // Real collections data should come from the database
+    setTotalCollections(0);
+
     // Fetch notifications
     const fetchNotifications = async () => {
       setLoadingNotifications(true);
       try {
-        const notificationsData = await getNotifications('admin', undefined, 5);
+        const notificationsData = await getNotifications("admin", undefined, 5);
         setNotifications(notificationsData);
       } catch (error) {
-        console.error('Error fetching notifications:', error);
+        console.error("Error fetching notifications:", error);
       } finally {
         setLoadingNotifications(false);
       }
     };
-    
+
     fetchNotifications();
-    
+
     // Fetch agent allocations directly from the agent_allocations table
     const fetchAgentAllocations = async () => {
       try {
-        console.log('Fetching agent allocations from agent_allocations table...');
-        
+        console.log(
+          "Fetching agent allocations from agent_allocations table..."
+        );
+
         // Query the agent_allocations table directly
         const { data, error } = await supabase
-          .from('agent_allocations')
-          .select('agent_id, allocated_at, status');
-          
+          .from("agent_allocations")
+          .select("agent_id, allocated_at, status");
+
         if (error) {
           throw error;
         }
-        
-        console.log('Agent allocations data:', data);
-        
+
+        console.log("Agent allocations data:", data);
+
         // Create a map to count allocations per agent
-        const allocationsMap: {[key: string]: number} = {};
-        
+        const allocationsMap: { [key: string]: number } = {};
+
         // Count active allocations for each agent
         if (data && data.length > 0) {
           data.forEach((item: any) => {
             const agentId = item.agent_id;
-            console.log(`Processing allocation for agent ID: ${agentId}, status: ${item.status}`);
-            
+            console.log(
+              `Processing allocation for agent ID: ${agentId}, status: ${item.status}`
+            );
+
             // Initialize the count if it doesn't exist
             if (!allocationsMap[agentId]) {
               allocationsMap[agentId] = 0;
             }
-            
+
             // Increment the count for active allocations
-            if (item.status === 'active') {
+            if (item.status === "active") {
               allocationsMap[agentId]++;
-              console.log(`Incremented count for agent ${agentId} to ${allocationsMap[agentId]}`);
+              console.log(
+                `Incremented count for agent ${agentId} to ${allocationsMap[agentId]}`
+              );
             }
           });
         } else {
-          console.log('No allocation data found');
+          console.log("No allocation data found");
         }
-        
-        console.log('Allocations map:', allocationsMap);
-        
-        // Map agent UUIDs to their names for easier debugging
-        console.log('Mapping agent UUIDs to names:');
-        enhancedAgentPerformance.forEach(agent => {
-          console.log(`Agent ${agent.name}: ID in enhancedAgentPerformance is ${agent.id}`);
-        });
-        
+
+        console.log("Allocations map:", allocationsMap);
+
+        // Agent data will be fetched from database when needed
+        console.log("Agent allocations fetched from database");
+
         // Log the allocation counts from the database
-        console.log('Allocation counts from database:', allocationsMap);
-        
+        console.log("Allocation counts from database:", allocationsMap);
+
         // No hardcoding - we'll use the actual values from the database
-        Object.keys(allocationsMap).forEach(agentId => {
-          console.log(`Agent ${agentId}: ${allocationsMap[agentId]} allocated accounts`);
+        Object.keys(allocationsMap).forEach((agentId) => {
+          console.log(
+            `Agent ${agentId}: ${allocationsMap[agentId]} allocated accounts`
+          );
         });
-        
-        // Update the enhancedAgentPerformance with the allocation counts
-        enhancedAgentPerformance.forEach(agent => {
-          const agentId = agent.id.toString();
-          console.log(`Setting allocation for agent ${agentId} (${agent.name}): ${allocationsMap[agentId] || 0}`);
-          
-          // Use type assertion to ensure TypeScript recognizes totalAccounts property
-          (agent as Agent).totalAccounts = allocationsMap[agentId] || 0;
-          
-          // Special case for Agnes using her UUID
-          if (agent.name === "Agnes Nkate") {
-            const agnesUUID = "82c8d0cd-a13e-47e2-904d-135657f57b8a";
-            const agnesCount = allocationsMap[agnesUUID] || 483; // Use 483 as fallback
-            console.log(`Setting Agnes's allocation count to ${agnesCount}`);
-            agent.totalAccounts = agnesCount;
-          }
-          
-          // Only set bookValue if it exists on the agent type
-          if ('bookValue' in agent) {
-            // TypeScript type assertion to avoid type error
-            (agent as any).bookValue = (agent.totalAccounts || 0) * 10000;
-          }
-        });
-        
+
+        // Agent allocation data is now stored in allocationsMap
+        // Real agent data should be fetched from the database when needed
+        console.log("Agent allocations stored in allocationsMap:", allocationsMap);
+
         setAgentAllocations(allocationsMap);
       } catch (error) {
-        console.error('Error fetching agent allocations:', error);
+        console.error("Error fetching agent allocations:", error);
       }
     };
-    
+
     fetchAgentAllocations();
   }, []);
-  
+
   // Separate useEffect to update the selected agent when needed
   useEffect(() => {
     if (selectedAgent) {
-      // Find the agent in the enhancedAgentPerformance array
-      const agentWithCorrectCount = enhancedAgentPerformance.find(a => a.name === selectedAgent.name);
-      
-      if (agentWithCorrectCount && agentWithCorrectCount.totalAccounts !== selectedAgent.totalAccounts) {
-        console.log(`Updating ${selectedAgent.name}'s allocation count from ${selectedAgent.totalAccounts} to ${agentWithCorrectCount.totalAccounts}`);
-        setSelectedAgent({...selectedAgent, totalAccounts: agentWithCorrectCount.totalAccounts});
-      }
+      // Agent data should be fetched from database when needed
+      // For now, we'll keep the selected agent as is
+      console.log(`Selected agent: ${selectedAgent.name}`);
     }
   }, [selectedAgent]);
 
   // Add these helper functions
   const handleAgentClick = (agent: Agent) => {
     console.log("Agent clicked:", agent);
-    
-    // Find the agent in the enhancedAgentPerformance array to get the most up-to-date data
-    const updatedAgent = enhancedAgentPerformance.find(a => a.name === agent.name);
-    console.log("Found updated agent data:", updatedAgent);
-    
-    // Randomly select 2-4 campaigns for this agent
-    const numCampaigns = Math.floor(Math.random() * 3) + 2; // Random number between 2-4
-    const shuffledCampaigns = [...campaignsData].sort(
-      () => 0.5 - Math.random()
-    );
 
-    // Create properly typed Campaign objects
-    const agentCampaigns: Campaign[] = shuffledCampaigns
-      .slice(0, numCampaigns)
-      .map((campaign) => {
-        // Only include properties that are in the Campaign interface
-        const typedCampaign: Campaign = {
-          id: campaign.id,
-          name: campaign.name,
-          status: campaign.status || "",
-          progress: campaign.progress || 0,
-          collections: campaign.collected || 0,
-          target: campaign.target || 0,
-          startDate: "2025-01-01",
-          endDate: campaign.endDate,
-          priority: campaign.priority,
-          description: campaign.description,
-          clientContact: campaign.clientContact,
-          clientEmail: campaign.clientEmail,
-          assignedAgents: campaign.assignedAgents,
-          success: campaign.progress || 0,
-        };
-        return typedCampaign;
-      });
+    // No campaigns assigned for now
+    const agentCampaigns: Campaign[] = [];
 
-    // Use the updated agent data if available, otherwise use the clicked agent
-    const baseAgent = updatedAgent || agent;
-    
+    // Use the clicked agent data
+    const baseAgent = agent;
+
     const processedAgent: Agent = {
       ...baseAgent,
       campaigns: agentCampaigns,
@@ -634,76 +320,12 @@ export default function AdminDashboard() {
       lastMonthCollections: baseAgent.lastMonthCollections || 0,
       lastMonthRate: baseAgent.lastMonthRate || 0,
     };
-    
+
     console.log("Setting selected agent with data:", processedAgent);
     console.log("Total accounts to display:", processedAgent.totalAccounts);
 
     setSelectedAgent(processedAgent);
     setShowAgentDetails(true);
-  };
-
-  const getPerformanceChange = (current: number, previous: number) => {
-    const change = ((current - previous) / previous) * 100;
-    return change.toFixed(1);
-  };
-
-  const getPerformanceIcon = (current: number, previous: number) => {
-    if (current > previous) {
-      return <TrendingUp size={14} className="text-green-500" />;
-    } else if (current < previous) {
-      return <TrendingDown size={14} className="text-red-500" />;
-    }
-    return null;
-  };
-
-  const getPerformanceChangeElement = (current: number, previous: number) => {
-    const change = ((current - previous) / previous) * 100;
-    const isPositive = change >= 0;
-
-    return (
-      <div
-        className={`flex items-center gap-1 text-xs ${
-          isPositive ? "text-green-400" : "text-red-400"
-        }`}
-      >
-        {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-        <span>{Math.abs(change).toFixed(1)}%</span>
-        <span className="text-white/50">vs last month</span>
-      </div>
-    );
-  };
-
-  const ensureAgentProperties = (agent: any): Agent => {
-    // Create mock monthly performance data
-    const mockMonthlyPerformance = [
-      { month: "Jan", collections: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "Feb", collections: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "Mar", collections: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "Apr", collections: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "May", collections: Math.floor(Math.random() * 50000) + 10000 },
-      { month: "Jun", collections: Math.floor(Math.random() * 50000) + 10000 },
-    ];
-
-    return {
-      id: agent.id,
-      name: agent.name,
-      avatar: agent.avatar || "",
-      performance: agent.performance || 0,
-      status: agent.status || "Active",
-      collections: agent.collections || 0,
-      cases: agent.cases || 0,
-      rate: agent.rate || 0,
-      role: agent.role || "",
-      badge: agent.badge || null,
-      phone: agent.phone || "",
-      email: agent.email || "",
-      joinDate: agent.joinDate || null,
-      lastMonthCollections: agent.lastMonthCollections || 0,
-      lastMonthRate: agent.lastMonthRate || 0,
-      resolvedCases: agent.resolvedCases || 0,
-      monthlyPerformance: mockMonthlyPerformance,
-      // Don't include campaigns here - they'll be added in handleAgentClick
-    };
   };
 
   return (
@@ -798,7 +420,9 @@ export default function AdminDashboard() {
             <div className="w-full h-1.5 bg-white/5 rounded-full mt-2 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-                style={{ width: "100%" }} /* Current collections exceed target */
+                style={{
+                  width: "100%",
+                }} /* Current collections exceed target */
               ></div>
             </div>
           </div>
@@ -1049,10 +673,13 @@ export default function AdminDashboard() {
                       Q{index + 1} {quarter}
                     </div>
                     <div className="text-lg font-semibold">
-                      {index === 0 ? 'R0' : 
-                       index === 1 ? 'R65,540,447.61' : 
-                       index === 2 ? 'R25,756,766.28' : 
-                       'R0'}
+                      {index === 0
+                        ? "R0"
+                        : index === 1
+                        ? "R65,540,447.61"
+                        : index === 2
+                        ? "R25,756,766.28"
+                        : "R0"}
                     </div>
                     <div
                       className={`text-xs mt-1 flex items-center ${
@@ -1097,11 +724,11 @@ export default function AdminDashboard() {
                       fontFamily: "Inter, sans-serif",
                       background: "transparent",
                       toolbar: {
-                        show: false
-                      }
+                        show: false,
+                      },
                     },
                     theme: {
-                      mode: "dark"
+                      mode: "dark",
                     },
                     colors: ["#00C49F"],
                     plotOptions: {
@@ -1109,86 +736,92 @@ export default function AdminDashboard() {
                         borderRadius: 4,
                         columnWidth: "60%",
                         dataLabels: {
-                          position: "top"
-                        }
-                      }
+                          position: "top",
+                        },
+                      },
                     },
                     dataLabels: {
                       enabled: true,
-                      formatter: function(val) {
-                        return val === 0 ? '' : 'R' + val.toLocaleString();
+                      formatter: function (val) {
+                        return val === 0 ? "" : "R" + val.toLocaleString();
                       },
                       offsetY: -20,
                       style: {
-                        fontSize: '12px',
-                        colors: ["#fff"]
-                      }
+                        fontSize: "12px",
+                        colors: ["#fff"],
+                      },
                     },
                     xaxis: {
-                      categories: consolidatedPaymentsData.map(item => item.month),
+                      categories: consolidatedPaymentsData.map(
+                        (item) => item.month
+                      ),
                       labels: {
                         style: {
-                          colors: "rgba(255, 255, 255, 0.7)"
-                        }
+                          colors: "rgba(255, 255, 255, 0.7)",
+                        },
                       },
                       axisBorder: {
-                        show: false
+                        show: false,
                       },
                       axisTicks: {
-                        show: false
-                      }
+                        show: false,
+                      },
                     },
                     yaxis: {
                       labels: {
-                        formatter: function(val) {
-                          return 'R' + (val / 1000000).toFixed(1) + 'M';
+                        formatter: function (val) {
+                          return "R" + (val / 1000000).toFixed(1) + "M";
                         },
                         style: {
-                          colors: "rgba(255, 255, 255, 0.7)"
-                        }
-                      }
+                          colors: "rgba(255, 255, 255, 0.7)",
+                        },
+                      },
                     },
                     grid: {
                       borderColor: "rgba(255, 255, 255, 0.05)",
                       yaxis: {
                         lines: {
-                          show: true
-                        }
+                          show: true,
+                        },
                       },
                       padding: {
                         top: 0,
                         right: 0,
                         bottom: 0,
-                        left: 10
-                      }
+                        left: 10,
+                      },
                     },
                     tooltip: {
                       theme: "dark",
                       y: {
-                        formatter: function(val) {
-                          return 'R' + val.toLocaleString();
-                        }
-                      }
-                    }
+                        formatter: function (val) {
+                          return "R" + val.toLocaleString();
+                        },
+                      },
+                    },
                   }}
-                  series={[{
-                    name: "Monthly Payments",
-                    data: consolidatedPaymentsData.map(item => item.amount)
-                  }]}
+                  series={[
+                    {
+                      name: "Monthly Payments",
+                      data: consolidatedPaymentsData.map((item) => item.amount),
+                    },
+                  ]}
                 />
               )}
             </div>
 
             <div className="grid grid-cols-3 gap-3 mt-6">
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-                <div className="text-xs text-white/50 mb-1">Total Collections</div>
+                <div className="text-xs text-white/50 mb-1">
+                  Total Collections
+                </div>
                 <div className="text-xs font-semibold">R93,153,328.86</div>
                 <div className="text-xs mt-1 flex items-center text-green-400">
                   <ArrowUp size={12} className="mr-1" />
                   <span>100% of total</span>
                 </div>
               </div>
-              
+
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Current Month</div>
                 <div className="text-xs font-semibold">R27,612,881,25</div>
@@ -1196,9 +829,11 @@ export default function AdminDashboard() {
                   <span>July 2025</span>
                 </div>
               </div>
-              
+
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-                <div className="text-xs text-white/50 mb-1">Monthly Average</div>
+                <div className="text-xs text-white/50 mb-1">
+                  Monthly Average
+                </div>
                 <div className="text-xs font-semibold">R22,824,303.47</div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
                   <span>Based On 4 Months</span>
@@ -1543,16 +1178,19 @@ export default function AdminDashboard() {
                 <div className="flex-1">
                   <p className="text-sm text-white">{notification.message}</p>
                   <p className="text-xs text-white/50 mt-1">
-                    {notification.created_at ? (
-                      new Date(notification.created_at).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })
-                    ) : 'Unknown date'}
+                    {notification.created_at
+                      ? new Date(notification.created_at).toLocaleString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )
+                      : "Unknown date"}
                   </p>
                 </div>
                 <button className="text-white/30 hover:text-white/70 transition-colors">
@@ -1563,8 +1201,8 @@ export default function AdminDashboard() {
           </div>
 
           <div className="p-3 border-t border-white/5 flex justify-center">
-            <button 
-              onClick={() => router.push('/admin/notifications')} 
+            <button
+              onClick={() => router.push("/admin/notifications")}
               className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-all"
             >
               View All Notifications
@@ -1612,15 +1250,19 @@ export default function AdminDashboard() {
                 <div className="p-3 rounded-full bg-white/5 mb-3">
                   <Bell size={24} className="text-purple-400/70" />
                 </div>
-                <p className="text-white/70 text-base font-medium">No notifications</p>
-                <p className="text-white/40 text-xs mt-1 text-center">You&apos;re all caught up!</p>
+                <p className="text-white/70 text-base font-medium">
+                  No notifications
+                </p>
+                <p className="text-white/40 text-xs mt-1 text-center">
+                  You&apos;re all caught up!
+                </p>
               </div>
             ) : (
               notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className="flex items-start gap-3 p-3 rounded-lg mb-2 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
-                  onClick={() => router.push('/admin/notifications')}
+                  onClick={() => router.push("/admin/notifications")}
                 >
                   <div
                     className={`p-2 rounded-full ${
@@ -1642,23 +1284,26 @@ export default function AdminDashboard() {
                   <div className="flex-1">
                     <p className="text-sm text-white">{notification.message}</p>
                     <p className="text-xs text-white/50 mt-1">
-                      {notification.created_at ? (
-                        new Date(notification.created_at).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })
-                      ) : new Date().toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                      {notification.created_at
+                        ? new Date(notification.created_at).toLocaleString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            }
+                          )
+                        : new Date().toLocaleString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
                     </p>
                   </div>
                   <button className="text-white/30 hover:text-white/70 transition-colors">
@@ -1670,14 +1315,17 @@ export default function AdminDashboard() {
           </div>
 
           <div className="p-3 border-t border-white/5 flex justify-center">
-            <a href="/admin/notifications" className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 transition-all">
+            <a
+              href="/admin/notifications"
+              className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 transition-all"
+            >
               View All Activity
               <ChevronRight size={14} />
             </a>
           </div>
         </div>
       </div>
-      
+
       {/* Vercel Analytics */}
       <Analytics />
     </div>
