@@ -144,15 +144,109 @@ export default function DashboardPage() {
   const isLoading = authLoading || cacheLoading || performanceLoading;
   const error = cacheError;
 
-  // If still in initial auth loading state, show loading spinner
+  // If still in initial auth loading state, show enhanced loading spinner
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4">
-            <Loader2 className="h-12 w-12 animate-spin text-slate-400 mx-auto" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+        </div>
+
+        {/* Main loading content */}
+        <div className="relative z-10 flex h-screen items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            {/* SmartKollect Logo/Brand */}
+            <div className="mb-8">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-2xl mb-4 relative">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 animate-pulse"></div>
+                <BarChart2 className="h-10 w-10 text-white relative z-10" />
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">SmartKollect</h1>
+              <p className="text-slate-400 text-sm">Intelligent Debt Collection Platform</p>
+            </div>
+
+            {/* Advanced Loading Animation */}
+            <div className="mb-8">
+              <div className="relative">
+                {/* Outer rotating ring */}
+                <div className="w-24 h-24 mx-auto relative">
+                  <div className="absolute inset-0 rounded-full border-4 border-slate-700/30"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-purple-500 animate-spin"></div>
+                  <div className="absolute inset-2 rounded-full border-2 border-slate-600/20"></div>
+                  <div className="absolute inset-2 rounded-full border-2 border-transparent border-b-cyan-400 animate-spin" style={{animationDirection: 'reverse', animationDuration: '3s'}}></div>
+                  
+                  {/* Center pulsing dot */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse shadow-lg"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Loading Progress */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-300">Loading Dashboard</span>
+                <span className="text-sm text-slate-400">Please wait...</span>
+              </div>
+              <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full animate-pulse" style={{width: '60%'}}></div>
+              </div>
+            </div>
+
+            {/* Loading Steps */}
+            <div className="space-y-3 text-left">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-slate-300">Authenticating user...</span>
+                <CheckCircle2 className="h-4 w-4 text-green-500 ml-auto" />
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-slate-300">Loading dashboard metrics...</span>
+                <Loader2 className="h-4 w-4 text-blue-500 animate-spin ml-auto" />
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
+                <span className="text-slate-500">Preparing workspace...</span>
+                <Clock className="h-4 w-4 text-slate-500 ml-auto" />
+              </div>
+            </div>
+
+            {/* Skeleton Preview */}
+            <div className="mt-12 p-6 bg-slate-800/20 rounded-2xl border border-slate-700/30 backdrop-blur-sm">
+              <div className="text-xs text-slate-400 mb-4 text-left">Dashboard Preview</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full bg-slate-700/50" />
+                  <Skeleton className="h-8 w-3/4 bg-slate-700/50" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full bg-slate-700/50" />
+                  <Skeleton className="h-8 w-2/3 bg-slate-700/50" />
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <Skeleton className="h-3 w-full bg-slate-700/50" />
+                <Skeleton className="h-3 w-4/5 bg-slate-700/50" />
+                <Skeleton className="h-3 w-3/5 bg-slate-700/50" />
+              </div>
+            </div>
+
+            {/* Helpful tip */}
+            <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+              <div className="flex items-center gap-2 text-blue-300 text-sm">
+                <Zap className="h-4 w-4" />
+                <span className="font-medium">Pro Tip:</span>
+              </div>
+              <p className="text-blue-200/80 text-xs mt-1">
+                Your dashboard is being optimized for the best performance. This usually takes just a few seconds.
+              </p>
+            </div>
           </div>
-          <p className="text-slate-400">Loading your dashboard...</p>
         </div>
       </div>
     );
