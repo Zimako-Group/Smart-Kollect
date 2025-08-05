@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 // GET /api/settings?category=general
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Check authentication
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 // PATCH /api/settings
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Get the user session

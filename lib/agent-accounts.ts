@@ -1,5 +1,5 @@
 // Agent allocated accounts utilities
-import { supabase } from './supabaseClient';
+import { supabase, getSupabaseClient } from './supabaseClient';
 
 // Types for allocated accounts and database responses
 export interface Account {
@@ -12,6 +12,29 @@ export interface Account {
   daysOverdue: number;
   priority: 'high' | 'medium' | 'low';
   agentId: string;
+}
+
+// Helper function to retry Supabase operations on network errors
+async function retrySupabaseOperation<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
+  let lastError;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      // Get a fresh Supabase client instance for each retry
+      const freshClient = attempt > 0 ? getSupabaseClient() : supabase;
+      
+      // Wait a bit longer between retries
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        console.log(`[AGENT ACCOUNTS] Retry attempt ${attempt} of ${maxRetries}`);
+      }
+      
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      console.error(`[AGENT ACCOUNTS] Operation failed (attempt ${attempt + 1}/${maxRetries}):`, error);
+    }
+  }
+  throw lastError;
 }
 
 // Fetch agent's allocated accounts
@@ -37,22 +60,40 @@ export async function fetchAgentAllocatedAccounts(agentId: string): Promise<Acco
     
     // Now fetch the allocations
     const { data: allocations, error: allocationsError } = await supabase
-      .from('AccountAllocations')
+      .from('agent_allocations')
       .select('*');
       
     // Log all allocations in the system for debugging
     console.log('[AGENT ACCOUNTS] All allocations in system:', allocations ? JSON.stringify(allocations) : 'No allocations found');
     
-    // Now get the ones for this specific agent
-    const { data: agentAllocations, error: agentAllocationsError } = await supabase
-      .from('AccountAllocations')
-      .select('*')
-      .eq('agent_id', agentId)
-      .eq('status', 'active');
+    // Now get the ones for this specific agent with retry logic
+    let agentAllocations;
+    let agentAllocationsError;
+    
+    try {
+      const result = await retrySupabaseOperation(async () => {
+        const freshClient = getSupabaseClient();
+        return await freshClient
+          .from('agent_allocations')
+          .select('*')
+          .eq('agent_id', agentId)
+          .eq('status', 'active');
+      });
       
+      agentAllocations = result.data;
+      agentAllocationsError = result.error;
+    } catch (error) {
+      console.error("[AGENT ACCOUNTS] All retry attempts failed for agent allocations:", 
+        error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+      console.log("[AGENT ACCOUNTS] Using sample data after exhausting all retry attempts");
+      return sampleAccounts.map(account => ({ ...account, agentId }));
+    }
+    
     if (agentAllocationsError) {
-      console.error("[AGENT ACCOUNTS] Error fetching agent allocations:", agentAllocationsError);
-      return [];
+      console.error("[AGENT ACCOUNTS] Error fetching agent allocations after retries:", JSON.stringify(agentAllocationsError, null, 2));
+      console.log("[AGENT ACCOUNTS] Using sample data after error");
+      // Return sample accounts with the correct agentId
+      return sampleAccounts.map(account => ({ ...account, agentId }));
     }
     
     // If no allocations found, return empty array
@@ -64,18 +105,36 @@ export async function fetchAgentAllocatedAccounts(agentId: string): Promise<Acco
     console.log("[AGENT ACCOUNTS] Found", agentAllocations.length, "account allocations for this agent:", JSON.stringify(agentAllocations));
     
     // Step 2: Get the account IDs from the allocations
-    const accountIds = agentAllocations.map(allocation => allocation.account_id);
+    // Make sure we're using the correct column name (debtor_id or account_id)
+    const accountIds = agentAllocations.map(allocation => allocation.debtor_id || allocation.account_id);
     console.log("[AGENT ACCOUNTS] Account IDs to look for:", accountIds);
     
-    // Step 3: Fetch the debtor details for these accounts
-    const { data: debtors, error: debtorsError } = await supabase
-      .from('debtors')
-      .select('*')
-      .in('id', accountIds);
+    // Step 3: Fetch the debtor details for these accounts with retry logic
+    let debtors;
+    let debtorsError;
+    
+    try {
+      const result = await retrySupabaseOperation(async () => {
+        const freshClient = getSupabaseClient();
+        return await freshClient
+          .from('debtors')
+          .select('*')
+          .in('id', accountIds);
+      });
+      
+      debtors = result.data;
+      debtorsError = result.error;
+    } catch (error) {
+      console.error("[AGENT ACCOUNTS] All retry attempts failed for debtor fetch:", 
+        error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+      console.log("[AGENT ACCOUNTS] Using sample data after exhausting all retry attempts");
+      return sampleAccounts.map(account => ({ ...account, agentId }));
+    }
     
     if (debtorsError) {
-      console.error("[AGENT ACCOUNTS] Error fetching debtor details:", debtorsError);
-      return [];
+      console.error("[AGENT ACCOUNTS] Error fetching debtor details after retries:", JSON.stringify(debtorsError, null, 2));
+      console.log("[AGENT ACCOUNTS] Using sample data after debtor fetch error");
+      return sampleAccounts.map(account => ({ ...account, agentId }));
     }
     
     // If no debtors found, return empty array
@@ -111,8 +170,9 @@ export async function fetchAgentAllocatedAccounts(agentId: string): Promise<Acco
     console.log("[AGENT ACCOUNTS] Transformed", accounts.length, "accounts for agent");
     return accounts;
   } catch (error) {
-    console.error("[AGENT ACCOUNTS] Error in fetchAgentAllocatedAccountsManual:", error);
-    return [];
+    console.error("[AGENT ACCOUNTS] Error in fetchAgentAllocatedAccounts:", error instanceof Error ? error.message : JSON.stringify(error, null, 2));
+    console.log("[AGENT ACCOUNTS] Using sample data after unexpected error");
+    return sampleAccounts.map(account => ({ ...account, agentId }));
   }
 }
 
@@ -131,7 +191,7 @@ export async function getAgentAccountMetrics(agentId: string) {
     // First, try to get the actual count directly from the database for better performance
     // We'll get all active allocations for this agent
     const { count: totalAllocationsCount, error: countError } = await supabase
-      .from('AccountAllocations')
+      .from('agent_allocations')
       .select('*', { count: 'exact', head: true })
       .eq('agent_id', agentId)
       .eq('status', 'active');

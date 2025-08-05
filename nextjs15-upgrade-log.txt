@@ -1,0 +1,23 @@
+Next.js 15 Upgrade Log - 2025-08-05T05:17:30.993Z
+
+Starting Next.js 15 upgrade...
+
+Upgrade Summary:
+- Updated cookies API in 0 files
+- Updated headers API in 0 files
+- Updated draftMode API in 0 files
+- Updated runtime config in 0 files
+- Updated font imports in 0 files
+- Found 0 route handlers that might need caching config
+- Found 0 layout/page files with fetch calls that might need caching
+
+Reminder: In Next.js 15, fetch requests are no longer cached by default.
+To opt specific fetch requests into caching, add { cache: "force-cache" }
+For layout/page components, you can also use: export const fetchCache = "default-cache"
+
+Next steps:
+1. Run "npm run dev" to test the application
+2. Check for any console errors related to Next.js 15 changes
+3. If needed, add explicit cache options to fetch requests
+
+See nextjs15-upgrade-log.txt for the complete upgrade log

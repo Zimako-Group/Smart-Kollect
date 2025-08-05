@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     // Skip authentication for wallboard display when bypassAuth is true
     if (!bypassAuth) {
       // Check authentication using Supabase
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const supabaseClient = supabase;
       
       const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
@@ -200,7 +200,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseClient = supabase;
     
     const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();

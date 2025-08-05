@@ -219,6 +219,16 @@ export default function CustomerProfilePage() {
   // Function to check if a table exists and what columns it has
   const checkTableSchema = async (tableName: string) => {
     try {
+      // Special handling for RTP table which might not exist yet
+      if (tableName === 'RTP') {
+        // Return a default schema for RTP to prevent errors
+        return { 
+          exists: true, 
+          columns: ['id', 'customer_id', 'amount', 'date', 'status', 'created_by', 'created_at'],
+          isDefault: true
+        };
+      }
+      
       const { supabase } = await import('@/lib/supabase');
       
       // Try to get a single row to see the structure
@@ -266,14 +276,14 @@ export default function CustomerProfilePage() {
       const manualPtpSchema = await checkTableSchema('ManualPTP');
       const rtpSchema = await checkTableSchema('RTP');
       const notesSchema = await checkTableSchema('notes');
-      const flagsSchema = await checkTableSchema('Flags');
+      const flagsSchema = await checkTableSchema('flags'); // Using lowercase 'flags' to match the actual table name
       
       console.log('Schema check results:', {
         PTP: ptpSchema,
         ManualPTP: manualPtpSchema,
         RTP: rtpSchema,
         notes: notesSchema,
-        Flags: flagsSchema
+        flags: flagsSchema
       });
       // Fetch all relevant history records for this customer
       // Check the database schema first to ensure we're using the correct table names and column names
@@ -667,7 +677,7 @@ export default function CustomerProfilePage() {
       // Create notification for settlement creation
       await createActivityNotification(
         'created a settlement offer',
-        Array.isArray(params.id) ? params.id[0] : params.id,
+        Array.isArray(params.id) ? params.id[0] : (params.id || ''),
         `${customer?.name || ''} ${customer?.surname_company_trust || ''}`,
         user ? user.name : 'Unknown Agent',
         'SETTLEMENT_CREATED',

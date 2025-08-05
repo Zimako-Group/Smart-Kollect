@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -11,13 +11,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Search, 
   X, 
   Phone, 
   Calendar, 
   Clock, 
-  ArrowRight, 
   CheckCircle, 
   AlertCircle,
   AlertTriangle,
@@ -25,19 +30,25 @@ import {
   Wallet,
   Building,
   Landmark,
-  Receipt
+  Receipt,
+  Info,
+  Check,
+  Loader,
+  Banknote,
+  Smartphone
 } from "lucide-react";
-import { format, isToday, differenceInMinutes } from "date-fns";
+import { format, differenceInMinutes } from "date-fns";
 import { toast } from "sonner";
 import { useDialer } from "@/contexts/DialerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import * as settlementService from "@/lib/settlement-service";
 import { Settlement } from "@/lib/settlement-service";
+import { cn } from "@/lib/utils";
 
-// Define the PTP types
+// Define payment method types
 type PaymentMethod = "Debit Order" | "Cash" | "Credit Card" | "EasyPay" | "EFT" | "Other";
 
-// Define the PTP interface
+// Define the payment interface
 interface PaymentDue {
   id: string;
   customerName: string;
@@ -46,7 +57,7 @@ interface PaymentDue {
   dueDate: Date;
   paymentMethod: PaymentMethod;
   notes?: string;
-  status: "pending" | "paid" | "failed";
+  status: "paid" | "overdue" | "due-now" | "upcoming";
   accountNumber?: string;
 }
 
@@ -55,53 +66,107 @@ interface PaymentsDueProps {
   onClose: () => void;
 }
 
-// Empty array for initial state
-const emptyPaymentsDue: PaymentDue[] = [];
-
-// Add CSS for animations
+// CSS animations
 const animationStyles = `
-@keyframes pulse-subtle {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s infinite ease-in-out;
-}
-
-@keyframes slide-in {
-  0% { transform: translateX(-10px); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out forwards;
-}
-
-@keyframes fade-in {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out forwards;
-}
+  @keyframes pulse-subtle {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
+  
+  @keyframes slide-in {
+    0% { transform: translateX(-10px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
+  
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+  
+  @keyframes scale-in {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
+  
+  @keyframes glow {
+    0% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+    50% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+    100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+  }
+  .animate-glow { animation: glow 2s infinite ease-in-out; }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+  
+  .glass-effect {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
 `;
 
 const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
+  // State variables
   const [searchTerm, setSearchTerm] = useState("");
-  const [payments, setPayments] = useState<PaymentDue[]>(emptyPaymentsDue);
-  const [filteredPayments, setFilteredPayments] = useState<PaymentDue[]>(emptyPaymentsDue);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid" | "failed">("all");
+  const [payments, setPayments] = useState<PaymentDue[]>([]);
+  const [filteredPayments, setFilteredPayments] = useState<PaymentDue[]>([]);
   const [paidPayments, setPaidPayments] = useState<string[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Contexts
   const { setIsDialerOpen, setCurrentCustomer } = useDialer();
   const { user } = useAuth();
 
-  // Convert settlement to PaymentDue format
+  // Convert a settlement to a payment due object
   const convertSettlementToPaymentDue = (settlement: Settlement): PaymentDue => {
+    // Map settlement status to PaymentDue status
+    let paymentStatus: "overdue" | "due-now" | "upcoming" | "paid";
+    
+    switch(settlement.status.toLowerCase()) {
+      case "paid":
+        paymentStatus = "paid";
+        break;
+      case "pending":
+        // Determine if pending is overdue, due-now, or upcoming based on date
+        const today = new Date();
+        const expiryDate = new Date(settlement.expiry_date);
+        const daysDiff = Math.floor((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff < 0) {
+          paymentStatus = "overdue";
+        } else if (daysDiff <= 3) {
+          paymentStatus = "due-now";
+        } else {
+          paymentStatus = "upcoming";
+        }
+        break;
+      case "failed":
+        paymentStatus = "overdue"; // Treat failed as overdue
+        break;
+      default:
+        paymentStatus = "upcoming"; // Default fallback
+    }
+    
     return {
       id: settlement.id,
       customerName: settlement.customer_name,
@@ -110,7 +175,7 @@ const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
       dueDate: new Date(settlement.expiry_date),
       paymentMethod: "EFT" as PaymentMethod, // Default payment method
       notes: settlement.description || `Settlement with ${settlement.discount_percentage}% discount`,
-      status: settlement.status.toLowerCase() as "pending" | "paid" | "failed",
+      status: paymentStatus,
       accountNumber: settlement.account_number
     };
   };
@@ -122,13 +187,29 @@ const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
       
       setIsLoading(true);
       try {
-        // Get the agent's full name from user metadata
-        const agentName = user.user_metadata?.full_name;
+        // Try multiple sources to get the agent name
+        let agentName = user.user_metadata?.full_name;
         
+        // If full_name is not available, try other potential sources
         if (!agentName) {
-          console.error('Agent name not found in user metadata');
-          setIsLoading(false);
-          return;
+          // Try name from user metadata
+          agentName = user.user_metadata?.name;
+          
+          // Try email as fallback (remove @domain.com)
+          if (!agentName && user.email) {
+            agentName = user.email.split('@')[0];
+            // Convert email format (e.g., john.doe) to name format (John Doe)
+            agentName = agentName
+              .split('.')
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+              .join(' ');
+          }
+          
+          // If we still don't have a name, use the user ID as last resort
+          if (!agentName) {
+            agentName = user.id;
+            console.warn('Using user ID as agent name fallback');
+          }
         }
         
         const settlementsData = await settlementService.getSettlementsByAgentName(agentName);
@@ -138,7 +219,6 @@ const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
         
         setPayments(paymentDueData);
         setFilteredPayments(paymentDueData);
-        console.log('Fetched settlements:', paymentDueData);
       } catch (error) {
         console.error('Error fetching settlements:', error);
         toast.error('Failed to load settlements');
@@ -148,174 +228,127 @@ const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
     };
     
     fetchSettlements();
-  }, [user]);
-
-  // Update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
+    
+    // Update current time every minute
+    const timeInterval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
     
-    return () => clearInterval(timer);
-  }, []);
-
+    return () => clearInterval(timeInterval);
+  }, [user]);
+  
+  // Filter payments based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredPayments(payments);
+      return;
+    }
+    
+    const search = searchTerm.toLowerCase();
+    const filtered = payments.filter(payment => 
+      payment.customerName.toLowerCase().includes(search) ||
+      payment.accountNumber?.toLowerCase().includes(search) ||
+      payment.notes?.toLowerCase().includes(search)
+    );
+    
+    setFilteredPayments(filtered);
+  }, [searchTerm, payments]);
+  
   // Format time to display
   const formatTime = (date: Date) => {
-    return format(date, 'h:mm a');
+    return format(date, 'MMM d, h:mm a');
   };
-
-  // Get payment status based on time
-  const getPaymentStatus = useCallback((payment: PaymentDue) => {
-    if (paidPayments.includes(payment.id)) return "paid";
+  
+  // Get payment status based on due date
+  const getPaymentStatus = (payment: PaymentDue): "overdue" | "due-now" | "upcoming" | "paid" => {
+    // If payment is already marked as paid in state, return paid
+    if (paidPayments.includes(payment.id) || payment.status === "paid") return "paid";
     
-    const diffMins = differenceInMinutes(payment.dueDate, currentTime);
+    const now = new Date();
+    const dueDate = new Date(payment.dueDate);
     
-    if (diffMins < -60) return "overdue";
-    if (diffMins >= -60 && diffMins <= 60) return "due-now";
+    // Check if payment is overdue
+    if (dueDate < now) return "overdue";
+    
+    // Check if payment is due within the next 24 hours
+    const diffMinutes = differenceInMinutes(dueDate, now);
+    if (diffMinutes <= 24 * 60) return "due-now";
+    
+    // Otherwise, payment is upcoming
     return "upcoming";
-  }, [currentTime, paidPayments]);
-
-  // Get time proximity text
-  const getTimeProximityText = useCallback((dueDate: Date) => {
-    const diffMins = differenceInMinutes(dueDate, currentTime);
-    
-    if (diffMins < -60) {
-      const hours = Math.abs(Math.floor(diffMins / 60));
-      return `${hours} hour${hours !== 1 ? 's' : ''} overdue`;
-    } else if (diffMins < 0) {
-      return `${Math.abs(diffMins)} minutes overdue`;
-    } else if (diffMins < 60) {
-      return `due in ${diffMins} minute${diffMins !== 1 ? 's' : ''}`;
-    } else {
-      const hours = Math.floor(diffMins / 60);
-      return `due in ${hours} hour${hours !== 1 ? 's' : ''}`;
-    }
-  }, [currentTime]);
-
-  // Count payments by status
-  const countByStatus = useCallback((status: "overdue" | "due-now" | "upcoming") => {
-    return filteredPayments.filter(payment => 
-      !paidPayments.includes(payment.id) && 
-      getPaymentStatus(payment) === status
-    ).length;
-  }, [filteredPayments, paidPayments, getPaymentStatus]);
-
-  // Calculate total amount by status
-  const totalAmountByStatus = useCallback((status: "overdue" | "due-now" | "upcoming" | "all") => {
-    return filteredPayments
-      .filter(payment => 
-        status === "all" 
-          ? !paidPayments.includes(payment.id)
-          : !paidPayments.includes(payment.id) && getPaymentStatus(payment) === status
-      )
-      .reduce((sum, payment) => sum + payment.amount, 0);
-  }, [filteredPayments, paidPayments, getPaymentStatus]);
-
+  };
+  
   // Handle marking a payment as paid
   const handleMarkPaid = async (payment: PaymentDue) => {
     try {
+      toast.loading('Marking settlement as paid...');
+      
       // Update the settlement status in the database
       await settlementService.updateSettlement(payment.id, { status: 'paid' });
       
       // Update local state
       setPaidPayments(prev => [...prev, payment.id]);
       
-      // Update the payments list
-      setPayments(prev => prev.map(p => 
-        p.id === payment.id ? { ...p, status: 'paid' } : p
-      ));
-      
-      toast.success(`Marked payment for ${payment.customerName} as paid`);
+      toast.success(`Payment for ${payment.customerName} marked as paid`);
     } catch (error) {
       console.error('Error marking settlement as paid:', error);
       toast.error('Failed to update payment status');
     }
   };
-
+  
   // Handle calling a customer
   const handleCallCustomer = (payment: PaymentDue) => {
     // Set the current customer in the dialer context
     setCurrentCustomer({
-      id: payment.id,
+      id: payment.id, // Add required id property
       name: payment.customerName,
-      phone: payment.customerPhone,
-      balance: payment.amount,
-      status: "ptp"
+      phone: payment.customerPhone || "",
+      acc_number: payment.accountNumber || "",
     });
+    
     // Open the dialer
     setIsDialerOpen(true);
+    
     // Close the PaymentsDue modal
     onClose();
   };
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
   
-  // Filter payments based on search term and status filter
-  useEffect(() => {
-    let filtered = [...payments];
-    
-    // Apply search filter
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(payment => 
-        payment.customerName.toLowerCase().includes(search) ||
-        payment.accountNumber?.toLowerCase().includes(search) ||
-        payment.notes?.toLowerCase().includes(search)
-      );
-    }
-    
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(payment => payment.status === statusFilter);
-    }
-    
-    setFilteredPayments(filtered);
-  }, [searchTerm, statusFilter, payments]);
-
-  // Handle status filter change
-  const handleStatusFilterChange = (status: "all" | "pending" | "paid" | "failed") => {
-    setStatusFilter(status);
-  };
-
   // Format currency
   const formatCurrency = (amount: number) => {
-    return `R ${amount.toFixed(2)}`;
+    return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;  
   };
-
+  
   // Get payment method badge color and icon
   const getPaymentMethodInfo = (method: PaymentMethod) => {
     switch (method) {
-      case "Debit Order": 
+      case "Debit Order":
         return {
-          color: "bg-blue-600 hover:bg-blue-700",
-          icon: <Building className="h-3 w-3 mr-1" />
-        };
-      case "Cash": 
-        return {
-          color: "bg-green-600 hover:bg-green-700",
-          icon: <Wallet className="h-3 w-3 mr-1" />
-        };
-      case "Credit Card": 
-        return {
-          color: "bg-purple-600 hover:bg-purple-700",
+          color: "bg-blue-600",
           icon: <CreditCard className="h-3 w-3 mr-1" />
         };
-      case "EasyPay": 
+      case "Cash":
         return {
-          color: "bg-orange-600 hover:bg-orange-700",
-          icon: <Receipt className="h-3 w-3 mr-1" />
+          color: "bg-green-600",
+          icon: <Wallet className="h-3 w-3 mr-1" />
         };
-      case "EFT": 
+      case "Credit Card":
         return {
-          color: "bg-cyan-600 hover:bg-cyan-700",
+          color: "bg-purple-600",
+          icon: <CreditCard className="h-3 w-3 mr-1" />
+        };
+      case "EasyPay":
+        return {
+          color: "bg-amber-600",
+          icon: <Building className="h-3 w-3 mr-1" />
+        };
+      case "EFT":
+        return {
+          color: "bg-cyan-600",
           icon: <Landmark className="h-3 w-3 mr-1" />
         };
       default: 
         return {
-          color: "bg-gray-600 hover:bg-gray-700",
+          color: "bg-gray-600",
           icon: <Wallet className="h-3 w-3 mr-1" />
         };
     }
@@ -324,203 +357,292 @@ const PaymentsDue: React.FC<PaymentsDueProps> = ({ onClose }) => {
   // Get status icon
   const getStatusIcon = (status: "overdue" | "due-now" | "upcoming" | "paid") => {
     switch (status) {
-      case "overdue": return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case "due-now": return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case "upcoming": return <Clock className="h-4 w-4 text-blue-500" />;
-      case "paid": return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "overdue": return <AlertCircle className="h-3 w-3 text-red-500" />;
+      case "due-now": return <AlertTriangle className="h-3 w-3 text-amber-500" />;
+      case "upcoming": return <Clock className="h-3 w-3 text-blue-500" />;
+      case "paid": return <CheckCircle className="h-3 w-3 text-green-500" />;
     }
   };
 
   return (
     <>
       <style>{animationStyles}</style>
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
-        <div className="flex flex-col space-y-4 w-full max-w-4xl mx-auto">
-          <Card className="bg-slate-900 border-slate-800 shadow-lg overflow-hidden w-full">
-            <CardHeader className="border-b border-slate-800 bg-slate-900/80 p-4">
+      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 backdrop-blur-md animate-fade-in">
+        <div className="flex flex-col w-full max-w-3xl mx-auto max-h-[90vh] animate-scale-in">
+          <Card className="glass-effect border-slate-700/50 shadow-xl overflow-hidden w-full flex flex-col max-h-[90vh] rounded-xl">
+            {/* Header */}
+            <CardHeader className="border-b border-slate-700/50 bg-gradient-to-r from-slate-900/90 to-slate-800/90 p-3 pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  My Settlements Due
+                <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                  <div className="bg-blue-600/20 p-1.5 rounded-lg">
+                    <Calendar className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                    My Settlements Due
+                  </span>
                 </CardTitle>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={onClose}
-                  className="text-slate-400 hover:text-white hover:bg-slate-800"
+                  className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-full transition-all duration-200"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm text-slate-400 mt-1">
-                {format(new Date(), 'EEEE, MMMM d, yyyy')} • Manage your personal settlement collections
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                  <Input
-                    type="text"
-                    placeholder="Search by name, phone, account number or payment method..."
-                    className="pl-9 bg-slate-950/50 border-slate-800 text-slate-200 placeholder:text-slate-500"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                  />
+              <div className="flex flex-row gap-3 items-center justify-between mt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse-subtle"></div>
+                  <p className="text-xs text-blue-200/80 font-medium">
+                    {format(new Date(), 'MMM d, yyyy')} • <span className="text-white">{filteredPayments.length}</span> settlements
+                  </p>
+                </div>
+                <div className="relative flex-1 max-w-xs">
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-md blur opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-blue-400/80 group-hover:text-blue-300 transition-colors duration-200" />
+                      <Input
+                        type="text"
+                        placeholder="Search settlements..."
+                        className="h-7 text-xs pl-8 pr-7 py-1 bg-slate-800/70 border-slate-700/50 text-slate-200 placeholder:text-slate-400 rounded-md focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 group-hover:bg-slate-800/90"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      {searchTerm && (
+                        <button 
+                          className="absolute right-2 top-1.5 bg-slate-700/50 rounded-full p-0.5 hover:bg-slate-700 transition-colors duration-200"
+                          onClick={() => setSearchTerm('')}
+                        >
+                          <X className="h-2.5 w-2.5 text-slate-300" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="p-0">
+            {/* Content */}
+            <CardContent className="p-0 overflow-y-auto max-h-[60vh] bg-gradient-to-b from-slate-900/90 to-slate-950/90">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="rounded-full bg-slate-800/50 p-4 mb-4 animate-pulse-subtle">
-                    <Receipt className="h-8 w-8 text-slate-400" />
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                  <div className="relative mb-4">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500/30 to-purple-500/30 blur-md animate-pulse-subtle"></div>
+                    <div className="rounded-full bg-slate-800/70 p-4 relative z-10">
+                      <Loader className="h-8 w-8 text-blue-400 animate-spin" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-medium text-slate-300 mb-2">Loading settlements...</h3>
-                  <p className="text-slate-400 max-w-md">
-                    Please wait while we fetch your settlement data.
-                  </p>
+                  <p className="text-lg font-medium bg-gradient-to-r from-blue-100 to-blue-300 bg-clip-text text-transparent mb-2">Loading payments...</p>
+                  <p className="text-sm text-blue-200/60">Please wait while we fetch your data</p>
                 </div>
               ) : filteredPayments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="rounded-full bg-slate-800/50 p-4 mb-4">
-                    <Receipt className="h-8 w-8 text-slate-400" />
+                <div className="flex flex-col items-center justify-center h-64">
+                  <div className="relative mb-4 p-3 rounded-full bg-slate-800/50">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-slate-700/30 to-slate-600/30 blur-sm"></div>
+                    <Receipt className="h-10 w-10 text-slate-400 animate-pulse-subtle" />
                   </div>
-                  <h3 className="text-xl font-medium text-slate-300 mb-2">No settlements found</h3>
-                  <p className="text-slate-400 max-w-md">
-                    There are no settlements due for your accounts.
-                  </p>
+                  <p className="text-slate-300 font-medium bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent">No payments found</p>
+                  {searchTerm && (
+                    <p className="text-xs text-slate-400 mt-2 bg-slate-800/50 px-3 py-1.5 rounded-full">Try adjusting your search criteria</p>
+                  )}
                 </div>
               ) : (
-                filteredPayments.map((payment, index) => {
-                  const status = paidPayments.includes(payment.id) ? "paid" : getPaymentStatus(payment);
-                  const { color, icon } = getPaymentMethodInfo(payment.paymentMethod);
-                  
-                  return (
-                    <div 
-                      key={payment.id}
-                      className={`
-                        relative flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg border 
-                        ${status === "paid" 
-                          ? "bg-green-900/20 border-green-800/50" 
-                          : status === "overdue" 
-                            ? "bg-red-900/20 border-red-800/50" 
-                            : status === "due-now" 
-                              ? "bg-amber-900/20 border-amber-800/50" 
-                              : "bg-blue-900/20 border-blue-800/50"
-                        }
-                        ${status === "due-now" && !paidPayments.includes(payment.id) ? "animate-pulse-subtle" : ""}
-                        animate-slide-in
-                      `}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      {/* Left border indicator */}
+                <div className="p-3 space-y-2.5">
+                  {filteredPayments.map((payment, index) => {
+                    const status = getPaymentStatus(payment);
+                    const { color, icon } = getPaymentMethodInfo(payment.paymentMethod);
+                    const isPaid = status === "paid" || paidPayments.includes(payment.id);
+                    const initials = payment.customerName.split(' ').map(n => n[0]).join('');
+                    
+                    // Define status-based styles
+                    const statusStyles = {
+                      paid: {
+                        container: "glass-effect border-green-700/30 shadow-md shadow-green-900/10",
+                        indicator: "bg-gradient-to-b from-green-400 to-green-600",
+                        avatar: "bg-gradient-to-br from-green-700 to-green-900 ring-1 ring-green-400/30 shadow-md",
+                        text: "text-green-300",
+                        badge: "bg-green-900/40 border-green-700/30 text-green-300"
+                      },
+                      overdue: {
+                        container: "glass-effect border-red-700/30 shadow-md shadow-red-900/10",
+                        indicator: "bg-gradient-to-b from-red-400 to-red-600",
+                        avatar: "bg-gradient-to-br from-red-700 to-red-900 ring-1 ring-red-400/30 shadow-md",
+                        text: "text-red-300",
+                        badge: "bg-red-900/40 border-red-700/30 text-red-300"
+                      },
+                      "due-now": {
+                        container: "glass-effect border-amber-700/30 shadow-md shadow-amber-900/10",
+                        indicator: "bg-gradient-to-b from-amber-400 to-amber-600",
+                        avatar: "bg-gradient-to-br from-amber-700 to-amber-900 ring-1 ring-amber-400/30 shadow-md",
+                        text: "text-amber-300",
+                        badge: "bg-amber-900/40 border-amber-700/30 text-amber-300"
+                      },
+                      upcoming: {
+                        container: "glass-effect border-blue-700/30 shadow-md shadow-blue-900/10",
+                        indicator: "bg-gradient-to-b from-blue-400 to-blue-600",
+                        avatar: "bg-gradient-to-br from-blue-700 to-blue-900 ring-1 ring-blue-400/30 shadow-md",
+                        text: "text-blue-300",
+                        badge: "bg-blue-900/40 border-blue-700/30 text-blue-300"
+                      }
+                    };
+                    
+                    const styles = statusStyles[isPaid ? "paid" : status];
+                    
+                    return (
                       <div 
-                        className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg
-                          ${status === "paid" 
-                            ? "bg-green-500" 
-                            : status === "overdue" 
-                              ? "bg-red-500" 
-                              : status === "due-now" 
-                                ? "bg-amber-500" 
-                                : "bg-blue-500"
-                          }
-                        `}
-                      />
-                      
-                      {/* Customer initials */}
-                      <div 
+                        key={payment.id}
                         className={`
-                          flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg
-                          ${status === "paid" 
-                            ? "bg-green-800/50 text-green-200" 
-                            : status === "overdue" 
-                              ? "bg-red-800/50 text-red-200" 
-                              : status === "due-now" 
-                                ? "bg-amber-800/50 text-amber-200" 
-                                : "bg-blue-800/50 text-blue-200"
-                          }
+                          relative flex flex-row items-center gap-3 p-3 rounded-xl 
+                          ${styles.container}
+                          ${status === "due-now" && !isPaid ? "animate-pulse-subtle" : ""}
+                          hover-scale animate-scale-in
                         `}
+                        style={{ animationDelay: `${index * 0.05}s` }}
                       >
-                        {payment.customerName.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      
-                      {/* Customer info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                          <h4 className="font-semibold text-slate-100 flex items-center gap-2">
-                            {payment.customerName}
-                            <span className="inline-flex items-center">
-                              {getStatusIcon(status)}
-                            </span>
-                          </h4>
-                          <div className="text-sm text-slate-400">{payment.customerPhone}</div>
+                        {/* Left border indicator */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${styles.indicator}`} />
+                        
+                        {/* Customer avatar */}
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white ${styles.avatar}`}>
+                          {initials}
                         </div>
-                        <div className="mt-1 text-sm text-slate-400 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                          <span>{payment.notes}</span>
-                          {payment.accountNumber && (
-                            <span className="text-slate-500 text-xs">
-                              Account: {payment.accountNumber}
-                            </span>
-                          )}
+                        
+                        {/* Customer info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-semibold text-white text-xs flex items-center gap-1.5 truncate">
+                              {payment.customerName}
+                              <span className="inline-flex items-center">
+                                {getStatusIcon(status)}
+                              </span>
+                            </h4>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-slate-300 truncate">{payment.accountNumber}</span>
+                            {payment.notes && (
+                              <div className="bg-slate-700/30 rounded-full p-0.5">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="cursor-help">
+                                        <Info className="h-2.5 w-2.5 text-blue-300" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-xs bg-slate-800 border-slate-700 shadow-xl max-w-[200px]">
+                                      {payment.notes}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      {/* Payment details */}
-                      <div className="flex flex-col items-end gap-1 mt-2 sm:mt-0">
-                        <div className="text-xl font-bold">{formatCurrency(payment.amount)}</div>
-                        <Badge className={`${color} text-white flex items-center`}>
-                          {icon}
-                          {payment.paymentMethod}
-                        </Badge>
-                      </div>
-                      
-                      {/* Time and actions */}
-                      <div className="flex flex-col items-end gap-2 mt-2 sm:mt-0">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4 text-slate-400" />
-                          <span className="text-sm font-medium">
-                            {formatTime(payment.dueDate)}
-                          </span>
+                        
+                        {/* Payment details */}
+                        <div className="flex flex-col items-end gap-1.5">
+                          <div className="text-xs font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                            {formatCurrency(payment.amount)}
+                            <Badge
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 h-auto font-medium rounded-md",
+                                payment.status === "paid" && "bg-gradient-to-r from-green-600/30 to-green-500/30 text-green-200 border border-green-500/20 hover:from-green-600/40 hover:to-green-500/40",
+                                payment.status === "overdue" && "bg-gradient-to-r from-red-600/30 to-red-500/30 text-red-200 border border-red-500/20 hover:from-red-600/40 hover:to-red-500/40",
+                                payment.status === "due-now" && "bg-gradient-to-r from-amber-600/30 to-amber-500/30 text-amber-200 border border-amber-500/20 hover:from-amber-600/40 hover:to-amber-500/40",
+                                payment.status === "upcoming" && "bg-gradient-to-r from-blue-600/30 to-blue-500/30 text-blue-200 border border-blue-500/20 hover:from-blue-600/40 hover:to-blue-500/40"
+                              )}
+                            >
+                              <div className="flex items-center gap-0.5">
+                                {payment.status === "paid" && <Check className="h-2 w-2" />}
+                                {payment.status === "overdue" && <AlertTriangle className="h-2 w-2" />}
+                                {payment.status === "due-now" && <AlertCircle className="h-2 w-2" />}
+                                {payment.status === "upcoming" && <Calendar className="h-2 w-2" />}
+                                <span>
+                                  {payment.status === "paid" && "Paid"}
+                                  {payment.status === "overdue" && "Overdue"}
+                                  {payment.status === "due-now" && "Due Now"}
+                                  {payment.status === "upcoming" && "Upcoming"}
+                                </span>
+                              </div>
+                            </Badge>
+                            <Badge
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 h-auto font-medium rounded-md",
+                                payment.paymentMethod.toLowerCase() === "credit card" && "bg-gradient-to-r from-purple-600/30 to-purple-500/30 text-purple-200 border border-purple-500/20 hover:from-purple-600/40 hover:to-purple-500/40",
+                                payment.paymentMethod.toLowerCase() === "cash" && "bg-gradient-to-r from-emerald-600/30 to-emerald-500/30 text-emerald-200 border border-emerald-500/20 hover:from-emerald-600/40 hover:to-emerald-500/40",
+                                payment.paymentMethod.toLowerCase() === "eft" && "bg-gradient-to-r from-blue-600/30 to-blue-500/30 text-blue-200 border border-blue-500/20 hover:from-blue-600/40 hover:to-blue-500/40",
+                                payment.paymentMethod.toLowerCase() === "easypay" && "bg-gradient-to-r from-cyan-600/30 to-cyan-500/30 text-cyan-200 border border-cyan-500/20 hover:from-cyan-600/40 hover:to-cyan-500/40"
+                              )}
+                            >
+                              <div className="flex items-center gap-0.5">
+                                {payment.paymentMethod.toLowerCase() === "credit card" && <CreditCard className="h-2 w-2" />}
+                                {payment.paymentMethod.toLowerCase() === "cash" && <Banknote className="h-2 w-2" />}
+                                {payment.paymentMethod.toLowerCase() === "eft" && <Building className="h-2 w-2" />}
+                                {payment.paymentMethod.toLowerCase() === "easypay" && <Smartphone className="h-2 w-2" />}
+                                {payment.paymentMethod.toLowerCase() === "debit order" && <Landmark className="h-2 w-2" />}
+                                {payment.paymentMethod.toLowerCase() === "other" && <Wallet className="h-2 w-2" />}
+                                <span>
+                                  {payment.paymentMethod}
+                                </span>
+                              </div>
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-400">
-                          {getTimeProximityText(payment.dueDate)}
-                        </div>
-                        <div className="flex gap-2 mt-1">
+                        
+                        {/* Actions */}
+                        <div className="flex gap-1.5">
                           <Button 
                             size="sm" 
                             variant="default" 
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white h-7 text-[10px] px-2.5 rounded-md shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105"
                             onClick={() => handleCallCustomer(payment)}
                           >
-                            <Phone className="h-3.5 w-3.5 mr-1" />
+                            <div className="bg-blue-500/30 p-1 rounded-full mr-1.5">
+                              <Phone className="h-2.5 w-2.5" />
+                            </div>
                             Call
                           </Button>
-                          {!paidPayments.includes(payment.id) && (
+                          {!isPaid ? (
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="border-green-700 text-green-400 hover:bg-green-900/30"
+                              className="bg-gradient-to-r from-green-900/40 to-green-800/40 border-green-700/50 text-green-300 hover:bg-green-800/60 h-7 text-[10px] px-2.5 rounded-md shadow-lg hover:shadow-green-500/20 transition-all duration-300 hover:scale-105"
                               onClick={() => handleMarkPaid(payment)}
                             >
-                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                              <div className="bg-green-500/30 p-1 rounded-full mr-1.5">
+                                <CheckCircle className="h-2.5 w-2.5" />
+                              </div>
                               Mark Paid
                             </Button>
+                          ) : (
+                            <div className="bg-gradient-to-r from-green-600/30 to-green-500/30 border border-green-500/30 text-green-200 h-7 px-2.5 flex items-center gap-1.5 rounded-md shadow-lg">
+                              <div className="bg-green-500/30 p-1 rounded-full">
+                                <Check className="h-2.5 w-2.5" />
+                              </div>
+                              <span className="text-[10px] font-medium">Paid</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
             
-            <CardFooter className="border-t border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-400 flex justify-between items-center">
-              <div>
-                Showing {filteredPayments.length} of {payments.length} settlements
+            {/* Footer */}
+            <CardFooter className="border-t border-slate-700/30 bg-gradient-to-r from-slate-900/80 to-slate-800/80 p-2.5 text-xs flex justify-between items-center">
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                <span className="text-blue-200/80 font-medium">
+                  Showing <span className="text-white">{filteredPayments.length}</span> of <span className="text-white">{payments.length}</span> settlements
+                </span>
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Last updated: {format(currentTime, 'h:mm a')}
+              <div className="flex items-center gap-1.5 text-blue-200/80">
+                <div className="bg-blue-900/30 p-1 rounded-md">
+                  <Clock className="h-3 w-3 text-blue-400" />
+                </div>
+                <span className="font-medium">Updated: <span className="text-white">{format(currentTime, 'h:mm a')}</span></span>
               </div>
             </CardFooter>
           </Card>

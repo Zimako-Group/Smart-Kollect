@@ -6,7 +6,7 @@ import { sipService } from '@/lib/sipService';
 export async function GET(req: NextRequest) {
   try {
     // Check authentication using Supabase
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseClient = supabase;
     
     const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseClient = supabase;
     
     const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();

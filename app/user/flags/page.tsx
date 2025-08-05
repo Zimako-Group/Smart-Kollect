@@ -516,6 +516,12 @@ export default function FlagsPage() {
                     {flagsData.flagsByAge.map((item, index) => {
                       // Calculate start and end positions for each segment
                       const total = flagsData.flagsByAge.reduce((sum, i) => sum + i.count, 0);
+                      
+                      // Prevent division by zero
+                      if (total === 0) {
+                        return null; // Skip rendering this segment if total is zero
+                      }
+                      
                       const percentage = item.count / total;
                       
                       // Calculate previous segments total percentage
