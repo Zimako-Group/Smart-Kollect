@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import sgMail, { MailDataRequired } from '@sendgrid/mail';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
@@ -10,7 +10,9 @@ if (process.env.SENDGRID_API_KEY) {
   console.error('SENDGRID_API_KEY is not set');
 }
 
-export async function POST(request: Request) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Get the request body
     const body = await request.json();

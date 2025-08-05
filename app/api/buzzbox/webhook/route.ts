@@ -9,7 +9,9 @@ import { buzzBoxService } from '@/lib/buzzBoxService';
  * - Call status updates
  * - Call termination events
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Parse the incoming webhook data
     const data = await request.json();

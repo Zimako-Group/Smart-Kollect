@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { getCachedOrFresh, invalidateCache, CACHE_TTL } from '@/lib/redis';
 
 // GET endpoint to list saved reports
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check authentication
     const { data: { session } } = await supabase.auth.getSession();
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest) {
 }
 
 // POST endpoint to create a new saved report
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check authentication
     const { data: { session } } = await supabase.auth.getSession();
@@ -130,7 +134,9 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE endpoint to delete a saved report
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest
+) {
   try {
     // Check authentication
     const { data: { session } } = await supabase.auth.getSession();

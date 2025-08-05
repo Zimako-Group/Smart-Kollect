@@ -16,7 +16,9 @@ const supabaseAdmin = supabaseServiceKey
  * API endpoint for recording account interactions
  * POST /api/interactions
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {
@@ -124,7 +126,9 @@ export async function POST(request: NextRequest) {
  * API endpoint for getting account interactions
  * GET /api/interactions?accountId=xxx&limit=10
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

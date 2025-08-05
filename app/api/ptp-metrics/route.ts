@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMonthlyPTPStats, getMonthlyFulfilledPTPRevenue, getMonthlySettlementsCount } from '@/lib/ptp-service';
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     console.log('Fetching PTP metrics...');
     

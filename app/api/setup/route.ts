@@ -16,7 +16,9 @@ const supabaseAdmin = supabaseServiceKey
  * API endpoint for setting up database tables
  * GET /api/setup
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

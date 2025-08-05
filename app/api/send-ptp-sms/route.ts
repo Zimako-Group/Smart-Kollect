@@ -10,7 +10,9 @@ interface SendPTPSMSRequest {
   notes?: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     const body: SendPTPSMSRequest = await request.json();
 

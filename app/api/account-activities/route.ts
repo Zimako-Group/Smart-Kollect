@@ -18,7 +18,9 @@ const supabaseAdmin = supabaseServiceKey
  * API endpoint for getting account activities
  * GET /api/account-activities?accountId=xxx
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Create a Supabase client using the cookies from the request
     const cookieStore = await cookies();
@@ -145,7 +147,9 @@ export async function GET(request: NextRequest) {
  * API endpoint for creating account activities
  * POST /api/account-activities
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Create a Supabase client using the cookies from the request
     const cookieStore = await cookies();

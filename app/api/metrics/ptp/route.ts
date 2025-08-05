@@ -25,7 +25,7 @@ async function hasMetricsAccess(userId: string) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Get query parameters
     const searchParams = req.nextUrl.searchParams;

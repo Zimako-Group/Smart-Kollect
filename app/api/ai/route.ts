@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
 
 // Create an OpenAI API client with fallback error handling
 const openai = new OpenAI({
@@ -16,7 +17,7 @@ const fallbackResponses = [
   "I can provide insights on this account's payment likelihood. Would you like me to analyze their payment history?"
 ];
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   try {
     // Parse the request with error handling
     let messages;

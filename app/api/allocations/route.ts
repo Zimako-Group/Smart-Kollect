@@ -16,7 +16,9 @@ const supabaseAdmin = supabaseServiceKey
  * API endpoint for allocating accounts to agents
  * POST /api/allocations
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {
@@ -130,7 +132,9 @@ export async function POST(request: NextRequest) {
  * API endpoint for getting agent allocations
  * GET /api/allocations?agentId=xxx
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

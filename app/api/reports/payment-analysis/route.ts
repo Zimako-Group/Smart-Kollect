@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import * as XLSX from 'xlsx';
@@ -40,7 +40,9 @@ interface Payment {
   account_holder_name: string;
 }
 
-export async function GET(request: Request) {
+export async function GET(
+  request: NextRequest
+) {
   console.log('Payment Analysis Report API called');
   
   try {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -20,8 +20,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { allocateAccount } from "@/lib/allocation-service";
 
-export default function AllocateAccountPage({ params }: { params: { id: string } }) {
+export default function AllocateAccountPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const accountId = params.id || '';
   const { toast } = useToast();
   const [account, setAccount] = useState<any>(null);
   const [agents, setAgents] = useState<any[]>([]);
@@ -35,10 +37,10 @@ export default function AllocateAccountPage({ params }: { params: { id: string }
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        console.log("[ALLOCATION PAGE] Fetching data for account ID:", params.id);
+        console.log("[ALLOCATION PAGE] Fetching data for account ID:", accountId);
         
         // Fetch account details
-        const { data: accountData, error: accountError } = await getDebtorById(params.id);
+        const { data: accountData, error: accountError } = await getDebtorById(accountId);
         
         if (accountError) {
           setError("Error fetching account details");
@@ -68,7 +70,7 @@ export default function AllocateAccountPage({ params }: { params: { id: string }
         const { data: existingAllocation, error: allocationError } = await supabase
           .from('AccountAllocations')
           .select('*')
-          .eq('account_id', params.id)
+          .eq('account_id', accountId)
           .maybeSingle();
           
         if (!allocationError && existingAllocation) {
@@ -83,7 +85,7 @@ export default function AllocateAccountPage({ params }: { params: { id: string }
     };
     
     fetchData();
-  }, [params.id]);
+  }, [accountId]);
 
   // Handle allocation
   const handleAllocate = async () => {
@@ -99,10 +101,10 @@ export default function AllocateAccountPage({ params }: { params: { id: string }
     setIsAllocating(true);
     
     try {
-      console.log("[ALLOCATION PAGE] Allocating account ID:", params.id, "to agent ID:", selectedAgent);
+      console.log("[ALLOCATION PAGE] Allocating account ID:", accountId, "to agent ID:", selectedAgent);
       
       // Use our new allocation service
-      await allocateAccount(params.id, selectedAgent);
+      await allocateAccount(accountId, selectedAgent);
       
       console.log("[ALLOCATION PAGE] Allocation successful");
       

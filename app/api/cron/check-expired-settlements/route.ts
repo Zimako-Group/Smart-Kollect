@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { checkForExpiredSettlements } from '@/lib/settlement-service';
 
 // This API route will be called by a cron job to check for expired settlements

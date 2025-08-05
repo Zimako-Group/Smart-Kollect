@@ -5,7 +5,9 @@ import { supabaseAuth } from '@/lib/supabaseClient';
 export const dynamic = 'force-dynamic';
 
 // GET /api/users - Get all users
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     const users = await supabaseAuth.getAllUsers();
     return NextResponse.json({ success: true, users });
@@ -19,7 +21,9 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/users - Create a new user
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Parse the request body
     const body = await request.json();
@@ -53,7 +57,9 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE /api/users?id={userId} - Delete a user
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest
+) {
   try {
     // Get the user ID from the query parameters
     const userId = request.nextUrl.searchParams.get('id');
@@ -85,7 +91,9 @@ export async function DELETE(request: NextRequest) {
 }
 
 // PATCH /api/users?id={userId} - Update user status or role
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest
+) {
   try {
     // Get the user ID from the query parameters
     const userId = request.nextUrl.searchParams.get('id');

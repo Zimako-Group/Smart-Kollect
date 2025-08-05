@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { getCachedOrFresh, CACHE_TTL } from '@/lib/redis';
 
 // Main reports endpoint handler
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check authentication - using supabase auth
     const { data: { session } } = await supabase.auth.getSession();

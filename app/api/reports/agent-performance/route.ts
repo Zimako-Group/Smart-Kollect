@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { getAgents } from '@/lib/accounts-service';
 import { getCachedOrFresh, CACHE_TTL } from '@/lib/redis';
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check authentication
     const { data: { session } } = await supabase.auth.getSession();

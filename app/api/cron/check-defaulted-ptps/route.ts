@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { checkForDefaultedManualPTPs } from '@/lib/manual-ptp-service';
 import { createActivityNotification } from '@/lib/notification-service';
 

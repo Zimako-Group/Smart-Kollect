@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
 
 // Create a Supabase client with admin privileges
@@ -12,12 +12,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // GET handler to fetch a specific settlement
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = params.id;
+    const id = context.params.id;
     
     const { data, error } = await supabase
       .from('Settlements')
@@ -39,12 +36,9 @@ export async function GET(
 }
 
 // PATCH handler to update a settlement
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = params.id;
+    const id = context.params.id;
     const updates = await request.json();
     
     const { data, error } = await supabase
@@ -68,12 +62,9 @@ export async function PATCH(
 }
 
 // DELETE handler to delete a settlement
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = params.id;
+    const id = context.params.id;
     
     const { error } = await supabase
       .from('Settlements')

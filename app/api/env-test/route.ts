@@ -4,7 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 
 // GET /api/env-test - Check environment variables
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check if environment variables are defined (server-side)
     // We only check if they exist, not their actual values for security

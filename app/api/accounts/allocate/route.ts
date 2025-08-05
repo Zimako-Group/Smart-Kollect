@@ -15,7 +15,9 @@ const supabaseAdmin = supabaseServiceKey
 // System user ID for operations that require a user ID
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

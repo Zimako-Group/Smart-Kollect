@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAuth } from '@/lib/supabaseClient';
 import { cookies } from 'next/headers';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Get query parameters
     const searchParams = req.nextUrl.searchParams;

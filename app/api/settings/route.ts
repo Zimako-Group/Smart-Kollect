@@ -5,7 +5,9 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 // GET /api/settings?category=general
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     const cookieStore = await cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -49,7 +51,9 @@ export async function GET(request: NextRequest) {
 }
 
 // PATCH /api/settings
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest
+) {
   try {
     const cookieStore = await cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });

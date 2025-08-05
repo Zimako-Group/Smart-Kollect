@@ -4,7 +4,9 @@ import { getCachedOrFresh, CACHE_TTL } from '@/lib/redis';
 
 // We're using the CACHE_TTL from the redis utility
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check authentication
     const { data: { session } } = await supabase.auth.getSession();

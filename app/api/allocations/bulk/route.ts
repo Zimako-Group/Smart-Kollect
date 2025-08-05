@@ -16,7 +16,9 @@ const supabaseAdmin = supabaseServiceKey
  * API endpoint for bulk allocating accounts to an agent
  * POST /api/allocations/bulk
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

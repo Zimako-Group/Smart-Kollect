@@ -12,7 +12,9 @@ const supabaseAdmin = supabaseServiceKey
     })
   : null;
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {
@@ -46,7 +48,9 @@ export async function GET(request: NextRequest) {
 }
 
 // POST endpoint to execute SQL directly
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     // Check if we have the service role key
     if (!supabaseAdmin) {

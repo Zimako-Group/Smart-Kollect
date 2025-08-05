@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // This is a server-side API route that acts as a proxy for BuzzBox API calls
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     const body = await request.json();
     const { endpoint, method, headers, data } = body;

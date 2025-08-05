@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
 
 // Create a Supabase client with admin privileges
@@ -29,7 +29,9 @@ export async function GET() {
 }
 
 // POST handler to create a new settlement
-export async function POST(request: Request) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     console.log('API - POST /api/settlements - Request received');
     const settlementData = await request.json();

@@ -4,7 +4,9 @@ import { cookies } from "next/headers";
 import { Database } from "../../../types/supabase";
 
 // GET handler to fetch admin templates
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest
+) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
@@ -62,7 +64,9 @@ export async function GET(request: NextRequest) {
 }
 
 // POST handler to create a new admin template
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies });
     const { data: userData, error: userError } = await supabase.auth.getUser();

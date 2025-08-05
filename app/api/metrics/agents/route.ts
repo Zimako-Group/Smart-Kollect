@@ -3,7 +3,7 @@ import { supabase, supabaseAuth } from '@/lib/supabaseClient';
 import { cookies } from 'next/headers';
 import { sipService } from '@/lib/sipService';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Get query parameters
     const searchParams = req.nextUrl.searchParams;
@@ -197,7 +197,7 @@ export async function GET(req: NextRequest) {
 }
 
 // API endpoint to update agent status
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const cookieStore = await cookies();
