@@ -239,7 +239,7 @@ export default function DocumentationPage() {
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Technology Stack</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { name: 'Next.js 14', type: 'Frontend' },
+                        { name: 'Next.js 15', type: 'Frontend' },
                         { name: 'Supabase', type: 'Database' },
                         { name: 'TypeScript', type: 'Language' },
                         { name: 'Tailwind CSS', type: 'Styling' },
