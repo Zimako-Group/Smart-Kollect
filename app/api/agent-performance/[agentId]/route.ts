@@ -70,10 +70,10 @@ function getAgentNameFromId(id: string): string {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
-) {
+  context: { params: { agentId: string } }
+): Promise<NextResponse> {
   try {
-    const { agentId } = params;
+    const { agentId } = context.params;
     
     if (!agentId) {
       return NextResponse.json(
@@ -252,10 +252,10 @@ export async function GET(
 // Optional: Add POST endpoint to manually update agent performance
 export async function POST(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
-) {
+  context: { params: { agentId: string } }
+): Promise<NextResponse> {
   try {
-    const { agentId } = params;
+    const { agentId } = context.params;
     const body = await request.json();
     
     const currentMonth = new Date();

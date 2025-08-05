@@ -12,7 +12,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // GET handler to fetch a specific settlement
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const id = context.params.id;
     
@@ -36,7 +39,10 @@ export async function GET(request: NextRequest, context: { params: { id: string 
 }
 
 // PATCH handler to update a settlement
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const id = context.params.id;
     const updates = await request.json();
@@ -62,7 +68,10 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
 }
 
 // DELETE handler to delete a settlement
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const id = context.params.id;
     
