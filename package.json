@@ -116,7 +116,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "@types/papaparse": "^5.3.15",
+    "@types/papaparse": "^5.3.16",
     "supabase": "^2.22.6"
   }
 }
