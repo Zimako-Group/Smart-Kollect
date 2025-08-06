@@ -57,7 +57,9 @@ import {
   MapPin,
   CalendarX,
   Pencil,
-  MessageCircle
+  MessageCircle,
+  Brain,
+  Sparkles
 } from "lucide-react";
 import { useRedux } from "@/hooks/useRedux";
 import { Progress } from "@/components/ui/progress";
@@ -128,6 +130,11 @@ export default function CustomerProfilePage() {
   const [showManualPTP, setShowManualPTP] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string>('');
   const [showPhoneNumbersModal, setShowPhoneNumbersModal] = useState(false);
+  
+  // AI analysis states
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
   
   // Function to create PTP notification when Manual PTP is created
   const handleManualPTPCreated = async (ptpData: any) => {
@@ -754,22 +761,20 @@ export default function CustomerProfilePage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-end">
-        {!editMode && (
-          <Button variant="outline" onClick={() => setEditMode(true)}>Edit</Button>
-        )}
-      </div>
-      {/* Back button only */}
-      <div className="flex items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Button 
           variant="ghost" 
           size="sm"
           onClick={() => router.push('/user/customers')}
-          className="mr-4 flex items-center"
+          className="flex items-center"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Customers
         </Button>
+        
+        {!editMode && (
+          <Button variant="outline" onClick={() => setEditMode(true)}>Edit</Button>
+        )}
       </div>
 
       {/* Main content area - Restructured */}
@@ -822,7 +827,92 @@ export default function CustomerProfilePage() {
                   {customer.risk_level?.toUpperCase() || 'UNKNOWN'} RISK
                 </Badge>
               </div>
+              
+              {/* AI Analysis Button */}
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border-indigo-500/50 text-indigo-300 hover:text-indigo-200 transition-all duration-200"
+                  onClick={() => {
+                    setIsAnalyzing(true);
+                    // Simulate AI analysis (will be replaced with actual implementation)
+                    setTimeout(() => {
+                      setIsAnalyzing(false);
+                      setShowAIAnalysis(true);
+                      setAnalysisResult({
+                        paymentHistory: "3 missed payments, last payment 45 days ago",
+                        preferredContactMethod: "Email - responds within 2-4 hours",
+                        personalSituation: "Recently changed jobs, expressed hardship",
+                        bestContactTime: "Tuesdays 2-4pm based on response patterns",
+                        suggestedApproach: "Empathetic, offer payment plan",
+                        complianceNotes: "Requested validation letter - sent 30 days ago"
+                      });
+                    }, 1500);
+                  }}
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Analyze Profile
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
+            
+            {/* AI Analysis Results */}
+            {showAIAnalysis && analysisResult && (
+              <div className="mb-6 mt-3 p-4 rounded-xl bg-indigo-900/20 border border-indigo-500/30 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2 text-indigo-400" />
+                    <h3 className="text-lg font-semibold text-indigo-300">AI Case Analysis</h3>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-300"
+                    onClick={() => setShowAIAnalysis(false)}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Payment History</div>
+                    <div className="text-slate-300">{analysisResult.paymentHistory}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Preferred Contact</div>
+                    <div className="text-slate-300">{analysisResult.preferredContactMethod}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Personal Situation</div>
+                    <div className="text-slate-300">{analysisResult.personalSituation}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Best Contact Time</div>
+                    <div className="text-slate-300">{analysisResult.bestContactTime}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Suggested Approach</div>
+                    <div className="text-slate-300">{analysisResult.suggestedApproach}</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="font-medium text-indigo-300 mb-1">Compliance Notes</div>
+                    <div className="text-slate-300">{analysisResult.complianceNotes}</div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
               <div className="bg-slate-800/40 rounded-lg p-3 backdrop-blur-sm border border-slate-700/50 hover:border-indigo-500/50 transition-all duration-300">
