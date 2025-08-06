@@ -212,22 +212,28 @@ export default function DashboardLayout({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">{user?.name}</p>
+                    <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.3.0</span>
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
                   </p>
                 </div>
               </div>
             ) : (
-              <Avatar className="h-8 w-8 mx-auto">
-                <AvatarImage src="/avatar.png" alt="User" />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {user?.name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.3.0</span>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/avatar.png" alt="User" />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {user?.name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             )}
           </div>
         </div>
@@ -336,7 +342,10 @@ export default function DashboardLayout({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium truncate">{user?.name}</p>
+                <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.3.0</span>
+              </div>
               <p className="text-xs text-muted-foreground truncate">
                 {user?.role}
               </p>
@@ -428,11 +437,15 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
+                <Link href="/user/settings" className="w-full">
+                  <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
+                </Link>
+                <Link href="/user/changelog" className="w-full">
+                  <DropdownMenuItem className="cursor-pointer">Changelog</DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()}>
+                <DropdownMenuItem onClick={() => logout()} className="cursor-pointer">
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

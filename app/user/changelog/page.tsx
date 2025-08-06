@@ -15,8 +15,22 @@ interface ChangelogItem {
 
 const changelogData: ChangelogItem[] = [
   {
+    version: "v1.3.0",
+    date: "Q3 2025",
+    title: "AI Agent Integration",
+    changes: [
+      "Smart AI customer analysis",
+      "Conversational debt collection assistant",
+      "Automated payment negotiation",
+      "Sentiment analysis for customer interactions"
+    ],
+    status: "in-progress",
+    category: "feature",
+    timeline: "90 DAYS"
+  },
+  {
     version: "v1.2.0",
-    date: "Q3 2024",
+    date: "July 2025",
     title: "Enhanced Reporting",
     changes: [
       "Advanced analytics dashboard",
@@ -24,13 +38,13 @@ const changelogData: ChangelogItem[] = [
       "Data export functionality",
       "Performance metrics visualization"
     ],
-    status: "upcoming",
+    status: "done",
     category: "feature",
     timeline: "60 DAYS"
   },
   {
     version: "v1.1.0",
-    date: "Q3 2024",
+    date: "June 2025",
     title: "Mobile Optimization",
     changes: [
       "Responsive design improvements",
@@ -38,13 +52,13 @@ const changelogData: ChangelogItem[] = [
       "Offline functionality",
       "Push notifications"
     ],
-    status: "upcoming",
+    status: "done",
     category: "feature",
     timeline: "30 DAYS"
   },
   {
     version: "v1.0.0",
-    date: "Current",
+    date: "May 2025",
     title: "Beta Release",
     changes: [
       "Core system functionality",
@@ -52,13 +66,13 @@ const changelogData: ChangelogItem[] = [
       "Basic reporting capabilities",
       "Initial dashboard implementation"
     ],
-    status: "in-progress",
+    status: "done",
     category: "major",
     timeline: "15 DAYS"
   },
   {
     version: "v0.9.0",
-    date: "May 2024",
+    date: "May 2025",
     title: "Pre-release Testing",
     changes: [
       "System-wide quality assurance",
@@ -72,7 +86,7 @@ const changelogData: ChangelogItem[] = [
   },
   {
     version: "v0.8.0",
-    date: "April 2024",
+    date: "April 2025",
     title: "Integration Phase",
     changes: [
       "Third-party API integrations",
@@ -86,7 +100,7 @@ const changelogData: ChangelogItem[] = [
   },
   {
     version: "v0.7.0",
-    date: "March 2024",
+    date: "March 2025",
     title: "UI/UX Refinement",
     changes: [
       "Interface design improvements",
@@ -100,7 +114,7 @@ const changelogData: ChangelogItem[] = [
   },
   {
     version: "v0.5.0",
-    date: "February 2024",
+    date: "February 2025",
     title: "Core Development",
     changes: [
       "Database architecture implementation",
@@ -114,7 +128,7 @@ const changelogData: ChangelogItem[] = [
   },
   {
     version: "v0.3.0",
-    date: "January 2024",
+    date: "January 2025",
     title: "Prototype Development",
     changes: [
       "Wireframe creation",
@@ -128,7 +142,7 @@ const changelogData: ChangelogItem[] = [
   },
   {
     version: "v0.1.0",
-    date: "December 2023",
+    date: "December 2024",
     title: "Initial Planning",
     changes: [
       "Market research and analysis",
@@ -151,17 +165,17 @@ export default function Changelog() {
   useEffect(() => {
     setIsLoaded(true);
     
-    // Find the index of the first in-progress item
-    const firstInProgressIndex = changelogData.findIndex(
-      (item) => item.status === "in-progress"
+    // Find the index of the latest done item
+    const latestDoneIndex = changelogData.findIndex(
+      (item) => item.status === "done"
     );
     
-    if (firstInProgressIndex !== -1) {
-      setActiveItemIndex(firstInProgressIndex);
+    if (latestDoneIndex !== -1) {
+      setActiveItemIndex(latestDoneIndex);
       
-      // Scroll to the in-progress item
+      // Scroll to the latest done item
       setTimeout(() => {
-        const element = document.getElementById(`changelog-item-${firstInProgressIndex}`);
+        const element = document.getElementById(`changelog-item-${latestDoneIndex}`);
         if (element) {
           const yOffset = -100;
           const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
