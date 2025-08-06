@@ -12,12 +12,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // GET handler to fetch a specific settlement
-export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
-): Promise<NextResponse> {
+export async function GET(request: NextRequest) {
   try {
-    const id = context.params.id;
+    // Extract the id from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
     
     const { data, error } = await supabase
       .from('Settlements')
@@ -39,12 +39,13 @@ export async function GET(
 }
 
 // PATCH handler to update a settlement
-export async function PATCH(
-  request: NextRequest,
-  context: { params: { id: string } }
-): Promise<NextResponse> {
+export async function PATCH(request: NextRequest) {
   try {
-    const id = context.params.id;
+    // Extract the id from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
     const updates = await request.json();
     
     const { data, error } = await supabase
@@ -68,12 +69,12 @@ export async function PATCH(
 }
 
 // DELETE handler to delete a settlement
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
-): Promise<NextResponse> {
+export async function DELETE(request: NextRequest) {
   try {
-    const id = context.params.id;
+    // Extract the id from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
     
     const { error } = await supabase
       .from('Settlements')

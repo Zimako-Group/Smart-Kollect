@@ -17,7 +17,7 @@ const fallbackResponses = [
   "I can provide insights on this account's payment likelihood. Would you like me to analyze their payment history?"
 ];
 
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Parse the request with error handling
     let messages;
@@ -56,29 +56,22 @@ export async function POST(req: Request): Promise<NextResponse> {
       ]) as any;
 
       // Format the response to match exactly what the Vercel AI SDK expects
-      return new Response(
-        JSON.stringify({
-          id: response.id,
-          object: response.object,
-          created: response.created,
-          model: response.model,
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: response.choices[0].message.content,
-              },
-              finish_reason: response.choices[0].finish_reason,
+      return NextResponse.json({
+        id: response.id,
+        object: response.object,
+        created: response.created,
+        model: response.model,
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: response.choices[0].message.content,
             },
-          ],
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/json',
+            finish_reason: response.choices[0].finish_reason,
           },
-        }
-      );
+        ],
+      });
     } catch (apiError) {
       // Log the error but don't fail the request
       console.error('OpenAI API error:', apiError);
@@ -87,38 +80,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       const fallbackResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
       
       // Format the fallback response to match exactly what the Vercel AI SDK expects
-      return new Response(
-        JSON.stringify({
-          id: `fallback-${Date.now()}`,
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'gpt-4o-mini',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: fallbackResponse,
-              },
-              finish_reason: 'stop',
-            },
-          ],
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-    }
-  } catch (error) {
-    // Catch-all error handler
-    console.error('Unhandled error in AI route:', error);
-    
-    // Format the error response to match exactly what the Vercel AI SDK expects
-    return new Response(
-      JSON.stringify({
-        id: `error-${Date.now()}`,
+      return NextResponse.json({
+        id: `fallback-${Date.now()}`,
         object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
         model: 'gpt-4o-mini',
@@ -127,17 +90,33 @@ export async function POST(req: Request): Promise<NextResponse> {
             index: 0,
             message: {
               role: 'assistant',
-              content: "I'm having trouble processing your request right now. Please try again in a moment.",
+              content: fallbackResponse,
             },
             finish_reason: 'stop',
           },
         ],
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
+      });
+    }
+  } catch (error) {
+    // Catch-all error handler
+    console.error('Unhandled error in AI route:', error);
+    
+    // Format the error response to match exactly what the Vercel AI SDK expects
+    return NextResponse.json({
+      id: `error-${Date.now()}`,
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: 'gpt-4o-mini',
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: "I'm having trouble processing your request right now. Please try again in a moment.",
+          },
+          finish_reason: 'stop',
         },
-      }
-    );
+      ],
+    });
   }
 }

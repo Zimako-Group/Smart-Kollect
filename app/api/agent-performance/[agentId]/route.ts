@@ -68,12 +68,13 @@ function getAgentNameFromId(id: string): string {
   return 'Unknown Agent';
 }
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { agentId: string } }
-): Promise<NextResponse> {
+// GET handler for agent performance data
+export async function GET(request: NextRequest) {
   try {
-    const { agentId } = context.params;
+    // Extract agentId from URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const agentId = pathParts[pathParts.length - 1];
     
     if (!agentId) {
       return NextResponse.json(
@@ -86,7 +87,7 @@ export async function GET(
     let agentKey: string | undefined;
     
     // Get agent name from email or name if available in the request
-    const searchParams = new URL(request.url).searchParams;
+    const searchParams = url.searchParams;
     const agentName = searchParams.get('name')?.toLowerCase() || '';
     const agentEmail = searchParams.get('email')?.toLowerCase() || '';
     
@@ -249,13 +250,14 @@ export async function GET(
   }
 }
 
-// Optional: Add POST endpoint to manually update agent performance
-export async function POST(
-  request: NextRequest,
-  context: { params: { agentId: string } }
-): Promise<NextResponse> {
+// POST handler for updating agent performance data
+export async function POST(request: NextRequest) {
   try {
-    const { agentId } = context.params;
+    // Extract agentId from URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const agentId = pathParts[pathParts.length - 1];
+    
     const body = await request.json();
     
     const currentMonth = new Date();

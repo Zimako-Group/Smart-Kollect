@@ -1,9 +1,14 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const cookieStore = await cookies();
+  // In Next.js 15, cookies() returns the cookies directly, not a Promise
+  const cookieStore = cookies();
+  
+  // Create the Supabase client with the correct cookie store format
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   
   const { data: { session }, error } = await supabase.auth.getSession();

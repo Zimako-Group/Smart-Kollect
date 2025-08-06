@@ -4,12 +4,13 @@ import { getSettingsByCategory, updateSettings } from '@/lib/settings-service';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/settings?category=general
-export async function GET(
-  request: NextRequest
-) {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    // In Next.js 15, cookies() returns the cookies directly, not a Promise
+    const cookieStore = cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Check authentication
@@ -46,16 +47,18 @@ export async function GET(
     return NextResponse.json({ success: true, data: settings });
   } catch (error) {
     console.error('Error in GET /api/settings:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) }, 
+      { status: 500 }
+    );
   }
 }
 
 // PATCH /api/settings
-export async function PATCH(
-  request: NextRequest
-) {
+export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    // In Next.js 15, cookies() returns the cookies directly, not a Promise
+    const cookieStore = cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Get the user session
@@ -100,8 +103,6 @@ export async function PATCH(
       );
     }
     
-    console.log('User role:', profile.role);
-    
     // Check if user is admin
     if (profile.role !== 'admin') {
       return NextResponse.json(
@@ -121,7 +122,6 @@ export async function PATCH(
     }
     
     // Use the updateSettings function from the settings service
-    // Note: we're only passing the settings array, not the category
     const success = await updateSettings(settings);
     
     if (!success) {
@@ -134,6 +134,9 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in PATCH /api/settings:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) }, 
+      { status: 500 }
+    );
   }
 }
