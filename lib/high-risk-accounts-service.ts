@@ -86,6 +86,15 @@ export async function generateHighRiskAccountsReport() {
         allRecords = [...allRecords, ...data];
         console.log(`Fetched page ${page + 1}, got ${data.length} records, total so far: ${allRecords.length}`);
         
+        // Debug: Log sample of payment dates from first page
+        if (page === 0 && data.length > 0) {
+          console.log('=== SAMPLE PAYMENT DATES FROM DATABASE ===');
+          data.slice(0, 5).forEach(record => {
+            console.log(`Account ${record.acc_number}: last_payment_date = ${record.last_payment_date}, outstanding_balance = ${record.outstanding_balance}`);
+          });
+          console.log('=== END SAMPLE ===');
+        }
+        
         // Check if we got a full page of results
         if (data.length < PAGE_SIZE) {
           hasMore = false;
@@ -119,32 +128,42 @@ export async function generateHighRiskAccountsReport() {
       
       if (record.last_payment_date) {
         const lastPaymentDate = new Date(record.last_payment_date);
-        const lastPaymentMonth = lastPaymentDate.getMonth();
-        const lastPaymentYear = lastPaymentDate.getFullYear();
         
-        // Calculate months difference
-        const monthsDiff = (currentYear - lastPaymentYear) * 12 + (currentMonth - lastPaymentMonth);
-        
-        // Calculate days since last payment
-        const diffTime = Math.abs(today.getTime() - lastPaymentDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        daysWithoutPayment = diffDays.toString();
-        
-        // Categorize based on payment recency
-        if (monthsDiff === 0) {
-          // Payment in current month
-          riskLevel = 'low';
-        } else if (monthsDiff > 0 && monthsDiff <= 3) {
-          // Payment 1-3 months ago
-          riskLevel = 'medium';
-        } else {
-          // Payment more than 3 months ago
+        // Validate date parsing
+        if (isNaN(lastPaymentDate.getTime())) {
+          console.warn(`Invalid date format for account ${record.acc_number}: ${record.last_payment_date}`);
           riskLevel = 'high';
+          daysWithoutPayment = 'Invalid date format';
+        } else {
+          // Calculate days since last payment
+          const diffTime = Math.abs(today.getTime() - lastPaymentDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          daysWithoutPayment = diffDays.toString();
+          
+          // Categorize based on days since last payment (more accurate than months)
+          if (diffDays <= 30) {
+            // Payment within last 30 days (current month)
+            riskLevel = 'low';
+          } else if (diffDays > 30 && diffDays <= 90) {
+            // Payment 1-3 months ago (31-90 days)
+            riskLevel = 'medium';
+          } else {
+            // Payment more than 90 days ago
+            riskLevel = 'high';
+          }
+          
+          // Only log first few accounts to avoid spam
+          if (allRecords.indexOf(record) < 5) {
+            console.log(`Account ${record.acc_number}: Last payment ${lastPaymentDate.toDateString()}, ${diffDays} days ago, risk: ${riskLevel}`);
+          }
         }
       } else {
         // No payment date recorded - highest risk
         riskLevel = 'high';
         daysWithoutPayment = 'No payment recorded';
+        if (allRecords.indexOf(record) < 5) {
+          console.log(`Account ${record.acc_number}: No payment date, risk: high`);
+        }
       }
       
       // Format the record date for display
@@ -180,7 +199,28 @@ export async function generateHighRiskAccountsReport() {
       low: reportData.filter(record => record.Risk_Level === 'Low').length
     };
     
-    console.log(`Risk categorization complete: ${riskCounts.high} high risk, ${riskCounts.medium} medium risk, ${riskCounts.low} low risk accounts`);
+    // Debug: Log sample records from each risk category
+    const highRiskSample = reportData.filter(record => record.Risk_Level === 'High').slice(0, 3);
+    const mediumRiskSample = reportData.filter(record => record.Risk_Level === 'Medium').slice(0, 3);
+    const lowRiskSample = reportData.filter(record => record.Risk_Level === 'Low').slice(0, 3);
+    
+    console.log('=== RISK CATEGORIZATION SUMMARY ===');
+    console.log(`Total accounts processed: ${reportData.length}`);
+    console.log(`High risk: ${riskCounts.high} accounts`);
+    console.log(`Medium risk: ${riskCounts.medium} accounts`);
+    console.log(`Low risk: ${riskCounts.low} accounts`);
+    
+    if (highRiskSample.length > 0) {
+      console.log('High risk sample:', highRiskSample.map(r => `${r.Account_Number} (${r.Days_Without_Payment} days)`));
+    }
+    if (mediumRiskSample.length > 0) {
+      console.log('Medium risk sample:', mediumRiskSample.map(r => `${r.Account_Number} (${r.Days_Without_Payment} days)`));
+    }
+    if (lowRiskSample.length > 0) {
+      console.log('Low risk sample:', lowRiskSample.map(r => `${r.Account_Number} (${r.Days_Without_Payment} days)`));
+    }
+    
+    console.log('=== END SUMMARY ===');
     
     return {
       data: reportData,
