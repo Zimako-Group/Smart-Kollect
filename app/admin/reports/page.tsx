@@ -685,35 +685,7 @@ export default function ReportsPage() {
                     <HighRiskAccountsCard />
                   </Suspense>
 
-                  {/* Report Card 6 - Monthly Arrangements */}
-                  <div className="bg-slate-800/40 rounded-lg border border-slate-700/40 p-4 hover:bg-slate-800/60 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="rounded-full bg-cyan-900/30 p-2.5">
-                        <Calendar className="h-5 w-5 text-cyan-400" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-slate-200">Monthly Arrangements</h3>
-                        <p className="text-xs text-slate-400">Arrangements made for the current month</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400">Last Generated:</span>
-                        <span className="text-slate-300">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-400">Format:</span>
-                        <span className="text-slate-300 flex items-center">
-                          <BarChart3 className="h-3 w-3 mr-1 text-green-400" /> Excel
-                        </span>
-                      </div>
-                    </div>
-                    <Button className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 text-xs h-8">
-                      Generate Report
-                    </Button>
-                  </div>
-
-                  {/* Report Card 7 */}
+                  {/* Report Card 6 */}
                   <div className="bg-slate-800/40 rounded-lg border border-slate-700/40 p-4 hover:bg-slate-800/60 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="rounded-full bg-slate-700/50 p-2.5">

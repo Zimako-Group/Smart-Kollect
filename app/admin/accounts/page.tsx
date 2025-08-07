@@ -53,7 +53,13 @@ import { parseSpreadsheetFile, validateAccountRecords, formatAccountRecords, Acc
 import { createAccountBatch, uploadAccountRecords, getAccountBatches, getAccountsByBatch, allocateAccounts, AccountBatch, getAgents } from "@/lib/accounts-service";
 import { createBatch, updateBatchStatus, insertDebtors, getDebtors, getDebtorsByBatch, getBatches, deleteBatch } from "@/lib/debtors-service";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabaseClient';
+import { 
+  createPaymentFileUpload, 
+  processPaymentFileRecords,
+  PaymentHistoryRecord,
+  PaymentFileRecord 
+} from '@/lib/payment-history-service';
 import PaymentFileUploader from '@/components/PaymentFileUploader';
 import PaymentFileHistory from '@/components/PaymentFileHistory';
 
@@ -101,6 +107,12 @@ export default function AdminAccountsPage() {
   
   // State for payment file history refresh
   const [paymentHistoryRefreshTrigger, setPaymentHistoryRefreshTrigger] = useState(0);
+  
+  // State for payment file integration
+  const [selectedPaymentFile, setSelectedPaymentFile] = useState<File | null>(null);
+  const [isProcessingPayments, setIsProcessingPayments] = useState(false);
+  const [paymentProcessingProgress, setPaymentProcessingProgress] = useState(0);
+  const [paymentFileUploadId, setPaymentFileUploadId] = useState<string | null>(null);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState("upload");
@@ -439,7 +451,7 @@ export default function AdminAccountsPage() {
     }
   };
 
-  // Allocate accounts to agents
+  // Enhanced allocation function with payment history integration
   const handleAllocateAccounts = async () => {
     if (!currentBatchId) {
       toast({
@@ -462,8 +474,104 @@ export default function AdminAccountsPage() {
     setIsAllocating(true);
     setAllocationSuccess(false);
     setAllocationError(null);
+    setPaymentProcessingProgress(0);
 
     try {
+      // Step 1: Process payment file if one is selected
+      let paymentUploadId: string | null = null;
+      if (selectedPaymentFile) {
+        setIsProcessingPayments(true);
+        setPaymentProcessingProgress(10);
+        
+        toast({
+          title: "Processing Payment File",
+          description: `Processing ${selectedPaymentFile.name}...`,
+          variant: "default",
+        });
+
+        try {
+          // First, we need to parse the file to get the record count
+          const { parsePaymentFile } = await import('@/lib/payment-file-parser');
+          const parseResult = await parsePaymentFile(selectedPaymentFile);
+          
+          if (parseResult.errors.length > 0 || !parseResult.records || parseResult.records.length === 0) {
+            const errorMessage = parseResult.errors.length > 0 
+              ? `Failed to parse payment file: ${parseResult.errors.join(', ')}`
+              : 'Failed to parse payment file: No records found';
+            throw new Error(errorMessage);
+          }
+          
+          // Get current user for uploadedBy field
+          const { data: { user } } = await supabase.auth.getUser();
+          const uploadedBy = user?.email || 'admin';
+          
+          // Create payment file upload record
+          const uploadResult = await createPaymentFileUpload(
+            selectedPaymentFile.name,
+            selectedPaymentFile.size,
+            uploadedBy,
+            parseResult.records.length
+          );
+          
+          if (!uploadResult || !uploadResult.id) {
+            throw new Error('Failed to create payment file upload record');
+          }
+          
+          paymentUploadId = uploadResult.id;
+          setPaymentFileUploadId(paymentUploadId);
+          setPaymentProcessingProgress(30);
+
+          // Convert parsed records to PaymentFileRecord format
+          const paymentFileRecords: PaymentFileRecord[] = parseResult.records.map(record => ({
+            ACCOUNT_NO: String(record.ACCOUNT_NO || ''),
+            ACCOUNT_HOLDER_NAME: String(record.ACCOUNT_HOLDER_NAME || ''),
+            ACCOUNT_STATUS: String(record.ACCOUNT_STATUS || ''),
+            'OCC/OWN': String(record.OCC_OWN || ''),
+            INDIGENT: String(record.INDIGENT === true ? 'Y' : String(record.INDIGENT || 'N')),
+            OUTSTANDING_TOTAL_BALANCE: String(record.OUTSTANDING_TOTAL_BALANCE || '0'),
+            LAST_PAYMENT_AMOUNT: String(record.LAST_PAYMENT_AMOUNT || '0'),
+            LAST_PAYMENT_DATE: record.LAST_PAYMENT_DATE instanceof Date 
+              ? record.LAST_PAYMENT_DATE.toISOString().split('T')[0] 
+              : String(record.LAST_PAYMENT_DATE || '')
+          }));
+
+          setPaymentProcessingProgress(50);
+
+          // Process payment file records
+          const processResult = await processPaymentFileRecords(
+            paymentUploadId,
+            paymentFileRecords
+          );
+
+          if (processResult.failed > 0 && processResult.successful === 0) {
+            throw new Error(`Failed to process payment file: ${processResult.errors.join(', ')}`);
+          } else if (processResult.failed > 0) {
+            console.warn(`Some payment records failed to process: ${processResult.errors.join(', ')}`);
+          }
+
+          setPaymentProcessingProgress(70);
+          
+          toast({
+            title: "Payment File Processed",
+            description: `Successfully processed ${processResult.successful} payment records`,
+            variant: "default",
+          });
+        } catch (paymentError: any) {
+          console.error('Payment file processing error:', paymentError);
+          toast({
+            title: "Payment Processing Warning",
+            description: `Payment file processing failed: ${paymentError.message}. Continuing with account allocation...`,
+            variant: "destructive",
+          });
+          // Continue with allocation even if payment processing fails
+        } finally {
+          setIsProcessingPayments(false);
+        }
+      }
+
+      // Step 2: Allocate accounts to agents
+      setPaymentProcessingProgress(80);
+      
       const result = await allocateAccounts(
         currentBatchId,
         selectedAgents,
@@ -472,14 +580,113 @@ export default function AdminAccountsPage() {
       );
 
       if (result.success) {
+        setPaymentProcessingProgress(90);
+        
+        // Step 3: Update payment history for allocated accounts if payment file was processed
+        if (paymentUploadId) {
+          try {
+            console.log('Starting payment history linking process...');
+            console.log('Payment upload ID:', paymentUploadId);
+            console.log('Current batch ID:', currentBatchId);
+            
+            // Get allocated accounts from the batch
+            const { accounts } = await getAccountsByBatch(currentBatchId, 1, 1000);
+            console.log('Found accounts for linking:', accounts?.length || 0);
+            
+            if (accounts && accounts.length > 0) {
+              // First, let's check what payment records exist for this upload
+              const { data: allPaymentRecords, error: fetchError } = await supabase
+                .from('PaymentHistory')
+                .select('*')
+                .eq('upload_batch_id', paymentUploadId);
+              
+              console.log('Payment records found for upload:', allPaymentRecords?.length || 0);
+              if (allPaymentRecords && allPaymentRecords.length > 0) {
+                console.log('Sample payment record:', allPaymentRecords[0]);
+              }
+              
+              // Update payment history records to link with debtor accounts
+              let updatedCount = 0;
+              for (const account of accounts) {
+                const accountNumber = account.account_number || account.id_Number;
+                console.log(`Processing account: ${accountNumber} (ID: ${account.id})`);
+                
+                if (accountNumber) {
+                  try {
+                    // Link payment history records to this debtor
+                    const { data: paymentRecords, error } = await supabase
+                      .from('PaymentHistory')
+                      .update({ 
+                        debtor_id: account.id,
+                        updated_at: new Date().toISOString()
+                      })
+                      .eq('upload_batch_id', paymentUploadId)
+                      .eq('account_no', accountNumber)
+                      .select();
+                    
+                    if (error) {
+                      console.error(`Supabase error for account ${accountNumber}:`, error);
+                    } else if (paymentRecords && paymentRecords.length > 0) {
+                      console.log(`Successfully linked ${paymentRecords.length} payment records for account ${accountNumber}`);
+                      updatedCount += paymentRecords.length;
+                    } else {
+                      console.log(`No payment records found for account ${accountNumber}`);
+                    }
+                  } catch (linkError) {
+                    console.error(`Error linking payment history for account ${accountNumber}:`, linkError);
+                  }
+                } else {
+                  console.log('Account has no account number:', account);
+                }
+              }
+              
+              console.log(`Total payment records linked: ${updatedCount}`);
+              
+              if (updatedCount > 0) {
+                toast({
+                  title: "Payment History Updated",
+                  description: `Successfully linked ${updatedCount} payment records to allocated accounts`,
+                  variant: "default",
+                });
+              } else {
+                toast({
+                  title: "Payment History Warning",
+                  description: "No payment records were linked to accounts. Check console for details.",
+                  variant: "destructive",
+                });
+              }
+            } else {
+              console.log('No accounts found for linking');
+            }
+          } catch (linkingError: any) {
+            console.error('Error linking payment history:', linkingError);
+            toast({
+              title: "Payment History Warning",
+              description: "Accounts allocated successfully, but some payment history linking failed",
+              variant: "destructive",
+            });
+          }
+        }
+        
+        setPaymentProcessingProgress(100);
         setAllocationSuccess(true);
+        
         toast({
           title: "Success",
-          description: 'Accounts allocated successfully',
+          description: paymentUploadId 
+            ? 'Accounts allocated successfully and payment history updated'
+            : 'Accounts allocated successfully',
           variant: "default",
         });
-        // Refresh preview accounts
+        
+        // Refresh preview accounts and payment history
         fetchPreviewAccounts(currentBatchId, priorityFilter);
+        setPaymentHistoryRefreshTrigger(prev => prev + 1);
+        
+        // Clear payment file after successful processing
+        setSelectedPaymentFile(null);
+        setPaymentFileUploadId(null);
+        
       } else {
         setAllocationError(result.error || 'Failed to allocate accounts');
         toast({
@@ -492,11 +699,13 @@ export default function AdminAccountsPage() {
       setAllocationError(error.message);
       toast({
         title: "Error",
-        description: `Error allocating accounts: ${error.message}`,
+        description: `Error during allocation process: ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setIsAllocating(false);
+      setIsProcessingPayments(false);
+      setPaymentProcessingProgress(0);
     }
   };
 
@@ -1118,6 +1327,70 @@ export default function AdminAccountsPage() {
                     </p>
                   </div>
 
+                  {/* Payment File Selection (Optional) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center">
+                      Payment File (Optional)
+                      <Badge variant="outline" className="ml-2 text-xs bg-blue-900/20 text-blue-400 border-blue-800/40">
+                        New Feature
+                      </Badge>
+                    </label>
+                    <div className="border-2 border-dashed border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
+                      {selectedPaymentFile ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <FileSpreadsheet className="h-8 w-8 text-blue-500" />
+                            <div>
+                              <p className="text-sm font-medium text-slate-300">{selectedPaymentFile.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {(selectedPaymentFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedPaymentFile(null)}
+                            className="text-slate-400 hover:text-slate-200"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <FileSpreadsheet className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+                          <p className="text-sm text-slate-400 mb-2">
+                            Upload a payment file to update payment history during allocation
+                          </p>
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSelectedPaymentFile(file);
+                              }
+                            }}
+                            className="hidden"
+                            id="payment-file-input"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('payment-file-input')?.click()}
+                            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Select Payment File
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Payment files will be processed and linked to allocated accounts automatically
+                    </p>
+                  </div>
+
                   {/* Agents List */}
                   <div className="rounded-lg border border-slate-800 overflow-hidden">
                     <div className="bg-slate-800/50 px-4 py-3 flex justify-between items-center">
@@ -1242,6 +1515,28 @@ export default function AdminAccountsPage() {
                     <p className="text-sm text-red-500">{allocationError}</p>
                   </div>
                 )}
+
+                {/* Payment Processing Progress */}
+                {(isProcessingPayments || paymentProcessingProgress > 0) && (
+                  <div className="mb-4 p-4 bg-blue-900/20 border border-blue-800 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <FileSpreadsheet className="h-5 w-5 text-blue-400 mr-2" />
+                        <p className="text-sm text-blue-400 font-medium">
+                          {isProcessingPayments ? 'Processing Payment File...' : 'Payment Processing Complete'}
+                        </p>
+                      </div>
+                      <span className="text-xs text-blue-300">{Math.round(paymentProcessingProgress)}%</span>
+                    </div>
+                    <Progress 
+                      value={paymentProcessingProgress} 
+                      className="h-2 bg-slate-800"
+                    />
+                    <p className="text-xs text-blue-300 mt-2">
+                      {selectedPaymentFile ? `Processing ${selectedPaymentFile.name}` : 'Payment file processing'}
+                    </p>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-end gap-3 border-t border-slate-800 pt-6">
                 <Button 
@@ -1259,12 +1554,12 @@ export default function AdminAccountsPage() {
                   {isAllocating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Allocating...
+                      {isProcessingPayments ? 'Processing Payments...' : 'Allocating...'}
                     </>
                   ) : allocationSuccess ? (
                     <>
                       <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                      Allocation Successful
+                      {selectedPaymentFile ? 'Allocation & Payment Processing Complete' : 'Allocation Successful'}
                     </>
                   ) : allocationError ? (
                     <>
@@ -1272,7 +1567,7 @@ export default function AdminAccountsPage() {
                       Allocation Failed
                     </>
                   ) : (
-                    'Allocate Accounts'
+                    selectedPaymentFile ? 'Allocate Accounts & Process Payments' : 'Allocate Accounts'
                   )}
                 </Button>
               </CardFooter>
@@ -1306,6 +1601,30 @@ export default function AdminAccountsPage() {
                     <li className="flex items-start">
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mr-2 mt-0.5" />
                       <span><strong className="text-slate-300">Value</strong> - Distributes accounts based on monetary value</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-green-900/20 border border-green-800/40">
+                  <h3 className="text-sm font-medium text-green-400 mb-2 flex items-center">
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Payment Integration
+                  </h3>
+                  <p className="text-xs text-slate-400 mb-2">
+                    Upload a payment file during allocation to automatically update payment history for allocated accounts.
+                  </p>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li className="flex items-start">
+                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Payment records are automatically linked to debtor accounts</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Payment history is updated in real-time during allocation</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Supports XLSX, XLS, and CSV payment file formats</span>
                     </li>
                   </ul>
                 </div>

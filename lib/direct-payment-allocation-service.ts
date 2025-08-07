@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/components/ui/use-toast';
 import { updateAgentPerformance, batchUpdateAgentPerformance, AgentPerformanceUpdate } from './agent-performance-service';
+import { createPaymentFileUpload, processPaymentFileRecords } from './payment-history-service';
+import type { PaymentFileRecord } from './payment-history-service';
 
 // Constants for performance tuning
 const MAX_RETRIES = 3;      // Maximum number of retries for database operations
@@ -608,6 +610,116 @@ export async function allocatePaymentsDirect(
           });
           progress.failed_allocations += debtorsToInsert.length;
           progress.accounts_created -= debtorsToInsert.length;
+        }
+      }
+      
+      // =====================================================
+      // PAYMENT HISTORY INTEGRATION
+      // =====================================================
+      // Create PaymentHistory records for successfully processed payments
+      if (paymentRecords && paymentRecords.length > 0) {
+        console.log('Creating PaymentHistory records for processed payments...');
+        
+        try {
+          // Check for existing PaymentFileUpload record for this week
+          const currentDate = new Date();
+          const currentWeekStart = new Date(currentDate);
+          currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1); // Monday
+          const weekStartString = currentWeekStart.toISOString().split('T')[0];
+          
+          // Check if there's already an upload for this week
+          const { data: existingWeeklyUpload } = await supabase
+            .from('PaymentFileUploads')
+            .select('id, file_name')
+            .eq('upload_week', weekStartString)
+            .single();
+          
+          let paymentUploadId: string;
+          
+          if (existingWeeklyUpload) {
+            // Reuse existing weekly upload record
+            paymentUploadId = existingWeeklyUpload.id;
+            console.log(`Reusing existing PaymentFileUpload for this week: ${paymentUploadId}`);
+          } else {
+            // Create new upload record for this week
+            console.log('Creating new PaymentFileUpload record for this week...');
+            
+            // Get current user for uploadedBy field
+            const { data: { user } } = await supabase.auth.getUser();
+            const uploadedBy = user?.id || null;
+            
+            if (!uploadedBy) {
+              console.error('No user ID found for PaymentFileUpload creation');
+              throw new Error('User authentication required for PaymentHistory creation');
+            }
+            
+            // Create a new upload batch record for this week
+            const uploadResult = await createPaymentFileUpload(
+              `payment-file-week-${weekStartString}`, // fileName based on week
+              0, // fileSize (unknown for direct allocation)
+              uploadedBy, // uploadedBy (user ID)
+              paymentRecords.length // totalRecords
+            );
+            
+            if (!uploadResult || !uploadResult.id) {
+              throw new Error('Failed to create PaymentFileUpload record for PaymentHistory');
+            }
+            
+            paymentUploadId = uploadResult.id;
+            console.log('Created new PaymentFileUpload with ID:', paymentUploadId);
+          }
+          
+          // Convert payment records to PaymentFileRecord format
+          const paymentFileRecords: PaymentFileRecord[] = paymentRecords.map(record => {
+            // Extract payment date from raw_data
+            let lastPaymentDate = '';
+            if (record.raw_data) {
+              if (typeof record.raw_data === 'object' && record.raw_data.LAST_PAYMENT_DATE) {
+                lastPaymentDate = String(record.raw_data.LAST_PAYMENT_DATE || '');
+              } else if (typeof record.raw_data === 'string') {
+                try {
+                  const parsedData = JSON.parse(record.raw_data);
+                  lastPaymentDate = String(parsedData.LAST_PAYMENT_DATE || '');
+                } catch (e) {
+                  console.log('Failed to parse raw_data for payment history');
+                }
+              }
+            }
+            
+            return {
+              ACCOUNT_NO: String(record.account_number || ''),
+              ACCOUNT_HOLDER_NAME: String(record.raw_data?.ACCOUNT_HOLDER_NAME || ''),
+              ACCOUNT_STATUS: String(record.raw_data?.ACCOUNT_STATUS || ''),
+              'OCC/OWN': String(record.raw_data?.OCC_OWN || ''),
+              INDIGENT: String(record.raw_data?.INDIGENT === true ? 'Y' : String(record.raw_data?.INDIGENT || 'N')),
+              OUTSTANDING_TOTAL_BALANCE: String(record.outstanding_balance_total || '0'),
+              LAST_PAYMENT_AMOUNT: String(record.amount || '0'),
+              LAST_PAYMENT_DATE: lastPaymentDate
+            };
+          });
+          
+          console.log(`Processing ${paymentFileRecords.length} payment records for PaymentHistory...`);
+          
+          // Process the payment file records to create PaymentHistory entries
+          const processResult = await processPaymentFileRecords(
+            paymentUploadId,
+            paymentFileRecords
+          );
+          
+          console.log('PaymentHistory processing result:', processResult);
+          
+          if (processResult.successful > 0) {
+            console.log(`Successfully created ${processResult.successful} PaymentHistory records`);
+          }
+          
+          if (processResult.failed > 0) {
+            console.log(`Failed to create ${processResult.failed} PaymentHistory records:`, processResult.errors);
+          }
+          
+        } catch (paymentHistoryError) {
+          console.error('Error creating PaymentHistory records:', paymentHistoryError);
+          // Don't fail the entire allocation if PaymentHistory creation fails
+          // Just log the error and continue
         }
       }
       

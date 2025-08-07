@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RefreshCw, Download, Calendar, CreditCard, Clock, Info } from "lucide-react";
-import { getPaymentHistory, Payment, formatPayment } from '@/lib/payment-service';
+import { getDebtorPaymentHistory, PaymentHistoryRecord, formatCurrency, formatDate } from '@/lib/payment-history-service';
 import { Badge } from './ui/badge';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/store';
 import { closeDialog } from '@/lib/redux/features/payment-history/paymentHistorySlice';
@@ -21,7 +21,7 @@ export function PaymentHistoryDialog() {
     (state) => state.paymentHistory
   );
   
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<PaymentHistoryRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export function PaymentHistoryDialog() {
     setLoading(true);
     setError(null);
     try {
-      const paymentHistory = await getPaymentHistory(customerId);
+      const paymentHistory = await getDebtorPaymentHistory(customerId);
       setPayments(paymentHistory);
     } catch (err: any) {
       console.error('Error fetching payment history:', err);
@@ -57,11 +57,11 @@ export function PaymentHistoryDialog() {
     const csvContent = [
       headers.join(','),
       ...payments.map(payment => [
-        payment.payment_date,
-        payment.amount,
-        payment.payment_method || 'N/A',
-        payment.reference_number || 'N/A',
-        payment.description || 'N/A'
+        payment.last_payment_date || 'N/A',
+        payment.last_payment_amount || 0,
+        'File Import',
+        payment.account_no || 'N/A',
+        `Week ${formatDate(payment.data_week)}`
       ].join(','))
     ].join('\n');
 
@@ -160,7 +160,6 @@ export function PaymentHistoryDialog() {
           ) : (
             <div className="space-y-3 mt-2">
               {payments.map((payment) => {
-                const formattedPayment = formatPayment(payment);
                 return (
                   <div 
                     key={payment.id} 
@@ -169,41 +168,58 @@ export function PaymentHistoryDialog() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2 text-indigo-400" />
-                        <span className="text-sm font-medium text-white">{formattedPayment.formattedDate}</span>
+                        <span className="text-sm font-medium text-white">
+                          {payment.last_payment_date ? formatDate(payment.last_payment_date) : 'No payment date'}
+                        </span>
                       </div>
                       <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full px-3 py-1 shadow-lg">
-                        <p className="text-sm font-bold text-white">{formattedPayment.formattedAmount}</p>
+                        <p className="text-sm font-bold text-white">
+                          {formatCurrency(payment.last_payment_amount || 0)}
+                        </p>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       <div>
-                        <p className="text-xs text-slate-500 mb-1">Payment Method</p>
-                        <p className="text-sm text-slate-300">{payment.payment_method || 'N/A'}</p>
+                        <p className="text-xs text-slate-500 mb-1">Account Status</p>
+                        <p className="text-sm text-slate-300">{payment.account_status || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 mb-1">Reference</p>
-                        <p className="text-sm text-slate-300">{payment.reference_number || 'N/A'}</p>
+                        <p className="text-xs text-slate-500 mb-1">Account Number</p>
+                        <p className="text-sm text-slate-300">{payment.account_no || 'N/A'}</p>
                       </div>
                     </div>
                     
-                    {payment.description && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">Outstanding Balance</p>
+                        <p className="text-sm text-slate-300">
+                          {formatCurrency(payment.outstanding_total_balance || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">OCC/OWN</p>
+                        <p className="text-sm text-slate-300">{payment.occ_own || 'N/A'}</p>
+                      </div>
+                    </div>
+                    
+                    {payment.account_holder_name && (
                       <div className="mt-2">
-                        <p className="text-xs text-slate-500 mb-1">Description</p>
-                        <p className="text-sm text-slate-300">{payment.description}</p>
+                        <p className="text-xs text-slate-500 mb-1">Account Holder</p>
+                        <p className="text-sm text-slate-300">{payment.account_holder_name}</p>
                       </div>
                     )}
                     
                     <div className="mt-3 pt-2 border-t border-slate-700/30 flex items-center justify-between">
                       <div className="flex items-center">
                         <Clock className="h-3 w-3 mr-1 text-slate-500" />
-                        <span className="text-xs text-slate-500">Recorded: {formattedPayment.formattedCreatedAt}</span>
+                        <span className="text-xs text-slate-500">
+                          Data Week: {formatDate(payment.data_week)}
+                        </span>
                       </div>
-                      {payment.batch_id && (
-                        <Badge variant="outline" className="text-xs bg-slate-800/60 border-slate-700 text-slate-400">
-                          Batch Import
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="text-xs bg-slate-800/60 border-slate-700 text-slate-400">
+                        Weekly Import
+                      </Badge>
                     </div>
                   </div>
                 );
