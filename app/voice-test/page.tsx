@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { VoiceConversationService } from "@/lib/voice-conversation-service";
-import { AudioUtils } from "@/lib/audio-utils";
-import { testGradioImport, testAlternativeImport } from "@/lib/gradio-import-test";
+import { HumeVoiceService, HumeVoiceConfig } from "@/lib/hume-voice-service";
 import { Mic, Volume2, MessageSquare, Bug } from "lucide-react";
 
 export default function VoiceTestPage() {
@@ -14,30 +12,33 @@ export default function VoiceTestPage() {
 
   const testVoiceService = async () => {
     setIsLoading(true);
-    setTestResult("Testing voice service...");
+    setTestResult("Testing Hume AI voice service...");
 
     try {
       // Test 1: Create service
-      const service = new VoiceConversationService();
-      setTestResult(prev => prev + "\n✓ Voice service created");
+      const config: HumeVoiceConfig = {
+        apiKey: process.env.NEXT_PUBLIC_HUME_API_KEY || 'test-key'
+      };
+      const service = new HumeVoiceService(config);
+      setTestResult(prev => prev + "\n✓ Hume voice service created");
 
       // Test 2: Connect
       await service.connect();
       setTestResult(prev => prev + "\n✓ Service connected");
 
       // Test 3: Generate response
-      const response = await service.generateResponse("Hello, can you help me with SmartKollect?");
-      setTestResult(prev => prev + `\n✓ Response generated: "${response.text}"`);
+      const response = await service.sendMessage("Hello, can you help me with SmartKollect?");
+      setTestResult(prev => prev + `\n✓ Response generated: "${response.content}"`);
 
-      // Test 4: Test audio utils
-      const silentAudio = AudioUtils.generateSilentAudio(500);
-      setTestResult(prev => prev + `\n✓ Audio generated: ${silentAudio.size} bytes`);
+      // Test 4: Test conversation history
+      const history = service.getConversationHistory();
+      setTestResult(prev => prev + `\n✓ Conversation history: ${history.length} messages`);
 
-      // Test 5: Test text-to-speech availability
-      const ttsAvailable = AudioUtils.isSpeechSynthesisAvailable();
-      setTestResult(prev => prev + `\n✓ Text-to-speech available: ${ttsAvailable}`);
+      // Test 5: Test emotional context
+      const emotionalContext = service.getCurrentEmotionalContext();
+      setTestResult(prev => prev + `\n✓ Emotional context available: ${emotionalContext ? 'Yes' : 'No'}`);
 
-      setTestResult(prev => prev + "\n\n🎉 All tests passed! Voice system is working.");
+      setTestResult(prev => prev + "\n\n🎉 All tests passed! Hume AI voice system is working.");
 
     } catch (error) {
       setTestResult(prev => prev + `\n❌ Error: ${error}`);
@@ -46,45 +47,63 @@ export default function VoiceTestPage() {
     }
   };
 
-  const testTextToSpeech = async () => {
+  const testEmotionalAnalysis = async () => {
+    setIsLoading(true);
+    setTestResult("Testing emotional analysis...");
+    
     try {
-      await AudioUtils.textToSpeech("Hello! This is a test of the text to speech functionality in SmartKollect.");
+      const config: HumeVoiceConfig = {
+        apiKey: process.env.NEXT_PUBLIC_HUME_API_KEY || 'test-key'
+      };
+      const service = new HumeVoiceService(config);
+      await service.connect();
+      
+      // Test emotional response generation
+      const stressedResponse = await service.sendMessage("I'm really stressed about this debt situation");
+      setTestResult(prev => prev + `\n✓ Stress response: "${stressedResponse.content.substring(0, 100)}..."`);;
+      
+      const helpResponse = await service.sendMessage("Can you help me with payment plans?");
+      setTestResult(prev => prev + `\n✓ Help response: "${helpResponse.content.substring(0, 100)}..."`);;
+      
+      setTestResult(prev => prev + "\n\n🎭 Emotional analysis test completed!");
     } catch (error) {
-      console.error("TTS test failed:", error);
+      setTestResult(prev => prev + `\n❌ Emotional analysis failed: ${error}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const debugGradioImport = async () => {
+  const testHumeConnection = async () => {
     setIsLoading(true);
-    setTestResult("Debugging Gradio import...");
+    setTestResult("Testing Hume API connection...");
 
     try {
-      // Test 1: Standard import test
-      const result1 = await testGradioImport();
-      setTestResult(prev => prev + `\n\n=== Standard Import Test ===`);
-      setTestResult(prev => prev + `\nSuccess: ${result1.success}`);
-      if (result1.success) {
-        setTestResult(prev => prev + `\nClient type: ${typeof result1.client}`);
-      } else {
-        setTestResult(prev => prev + `\nReason: ${result1.reason}`);
-        if (result1.exports) {
-          setTestResult(prev => prev + `\nAvailable exports: ${result1.exports.join(', ')}`);
-        }
+      const apiKey = process.env.NEXT_PUBLIC_HUME_API_KEY;
+      setTestResult(prev => prev + `\n\n=== Hume API Configuration ===`);
+      setTestResult(prev => prev + `\nAPI Key configured: ${apiKey ? 'Yes' : 'No'}`);
+      
+      if (!apiKey) {
+        setTestResult(prev => prev + `\n⚠️ Warning: NEXT_PUBLIC_HUME_API_KEY not found in environment`);
+        setTestResult(prev => prev + `\n💡 Add your Hume API key to .env.local for full functionality`);
       }
-
-      // Test 2: Alternative import test
-      const result2 = await testAlternativeImport();
-      setTestResult(prev => prev + `\n\n=== Alternative Import Test ===`);
-      setTestResult(prev => prev + `\nSuccess: ${result2.success}`);
-      if (result2.success) {
-        setTestResult(prev => prev + `\nClient found at index: ${result2.index}`);
-        setTestResult(prev => prev + `\nClient type: ${typeof result2.client}`);
-      } else {
-        setTestResult(prev => prev + `\nReason: ${result2.reason}`);
+      
+      const config: HumeVoiceConfig = {
+        apiKey: apiKey || 'test-key'
+      };
+      const service = new HumeVoiceService(config);
+      
+      setTestResult(prev => prev + `\n\n=== Connection Test ===`);
+      await service.connect();
+      const isConnected = service.isServiceConnected();
+      setTestResult(prev => prev + `\nConnection status: ${isConnected ? 'Connected' : 'Fallback mode'}`);
+      
+      if (isConnected) {
+        const sessionId = await service.startVoiceSession();
+        setTestResult(prev => prev + `\nSession ID: ${sessionId}`);
       }
 
     } catch (error) {
-      setTestResult(prev => prev + `\n❌ Debug error: ${error}`);
+      setTestResult(prev => prev + `\n❌ Connection test error: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +115,7 @@ export default function VoiceTestPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-6 w-6 text-primary" />
-            Voice System Test
+            Hume AI Voice System Test
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -111,22 +130,23 @@ export default function VoiceTestPage() {
             </Button>
             
             <Button 
-              onClick={testTextToSpeech} 
+              onClick={testEmotionalAnalysis} 
               variant="outline"
+              disabled={isLoading}
               className="gap-2"
             >
               <Volume2 className="h-4 w-4" />
-              Test Text-to-Speech
+              Test Emotional Analysis
             </Button>
             
             <Button 
-              onClick={debugGradioImport} 
+              onClick={testHumeConnection} 
               variant="secondary"
               disabled={isLoading}
               className="gap-2"
             >
               <Bug className="h-4 w-4" />
-              Debug Gradio Import
+              Test Hume Connection
             </Button>
           </div>
 
