@@ -867,11 +867,18 @@ export const getMonthlySettlementsCount = async (): Promise<number> => {
   try {
     console.log('Fetching monthly settlements count...');
     
+    // Use the same date calculation pattern as other monthly functions
     const currentDate = new Date();
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
     
-    const { count, error } = await supabase
+    console.log('Settlements date range:', {
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString()
+    });
+    
+    // Use supabaseAdmin for better permissions and consistent with other functions
+    const { count, error } = await supabaseAdmin
       .from('Settlements')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfMonth.toISOString())
@@ -879,6 +886,12 @@ export const getMonthlySettlementsCount = async (): Promise<number> => {
     
     if (error) {
       console.error('Error fetching settlements count:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       throw error;
     }
     
