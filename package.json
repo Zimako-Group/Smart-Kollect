@@ -79,6 +79,7 @@
     "eslint-config-next": "^15.4.5",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.5.0",
+    "hume": "^0.12.2",
     "input-otp": "^1.2.4",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",

@@ -41,6 +41,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GlobalAIButton } from "@/components/GlobalAIButton";
+import { VoiceMicrophoneButton } from "@/components/VoiceMicrophoneButton";
 
 const sidebarItems = [
   { name: "My Dashboard", icon: Home, path: "/user/dashboard" },
@@ -411,6 +412,9 @@ export default function DashboardLayout({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Voice Conversation Button */}
+            <VoiceMicrophoneButton />
             
             {/* Zimako AI Button - Fixed position */}
             <GlobalAIButton fixed={true} />
