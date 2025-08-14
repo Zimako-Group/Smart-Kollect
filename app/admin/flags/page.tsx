@@ -375,6 +375,221 @@ export default function AdminFlagsPage() {
     });
   };
 
+  // Generate comprehensive flags report
+  const generateReport = async () => {
+    try {
+      toast.info("Generating report...", {
+        description: "Please wait while we compile your flags report."
+      });
+
+      // Prepare report data
+      const reportData = {
+        generatedAt: new Date().toISOString(),
+        generatedBy: 'Admin User', // Replace with actual admin name
+        totalFlags: stats.total,
+        activeFlags: stats.active,
+        resolvedFlags: stats.resolved,
+        highPriorityFlags: stats.highPriority,
+        mediumPriorityFlags: stats.mediumPriority,
+        lowPriorityFlags: stats.lowPriority,
+        
+        // Flag type breakdown
+        flagTypeBreakdown: flagTypes.map(type => ({
+          type,
+          count: flags.filter(f => f.type === type).length,
+          active: flags.filter(f => f.type === type && !f.is_resolved).length,
+          resolved: flags.filter(f => f.type === type && f.is_resolved).length
+        })),
+        
+        // Recent activity (last 30 days)
+        recentActivity: {
+          created: flags.filter(f => {
+            const createdDate = new Date(f.created_at);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return createdDate >= thirtyDaysAgo;
+          }).length,
+          resolved: flags.filter(f => {
+            if (!f.resolved_at) return false;
+            const resolvedDate = new Date(f.resolved_at);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return resolvedDate >= thirtyDaysAgo;
+          }).length
+        },
+        
+        // Top creators
+        topCreators: Object.entries(
+          flags.reduce((acc, flag) => {
+            const creator = flag.createdByName || 'Unknown';
+            acc[creator] = (acc[creator] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        )
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count })),
+        
+        // Resolution performance
+        resolutionPerformance: {
+          averageResolutionTime: calculateAverageResolutionTime(),
+          resolutionRate: stats.total > 0 ? ((stats.resolved / stats.total) * 100).toFixed(1) : '0'
+        },
+        
+        // Detailed flags data (filtered)
+        flagsData: filteredFlags.map(flag => ({
+          customerName: flag.customerName,
+          customerAccount: flag.customerAccount,
+          type: flag.type,
+          priority: flag.priority,
+          status: flag.is_resolved ? 'Resolved' : 'Active',
+          createdAt: formatDate(flag.created_at),
+          createdBy: flag.createdByName,
+          resolvedAt: flag.resolved_at ? formatDate(flag.resolved_at) : null,
+          resolvedBy: flag.resolvedByName || null,
+          notes: flag.notes
+        }))
+      };
+
+      // Generate and download the report
+      await downloadReport(reportData);
+      
+      toast.success("Report generated successfully!", {
+        description: "Your flags report has been downloaded."
+      });
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast.error("Failed to generate report", {
+        description: "There was an error creating the report. Please try again."
+      });
+    }
+  };
+
+  // Calculate average resolution time
+  const calculateAverageResolutionTime = () => {
+    const resolvedFlags = flags.filter(f => f.is_resolved && f.resolved_at);
+    if (resolvedFlags.length === 0) return 'N/A';
+    
+    const totalTime = resolvedFlags.reduce((acc, flag) => {
+      const created = new Date(flag.created_at);
+      const resolved = new Date(flag.resolved_at!);
+      const diffDays = Math.ceil((resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+      return acc + diffDays;
+    }, 0);
+    
+    const average = Math.round(totalTime / resolvedFlags.length);
+    return `${average} days`;
+  };
+
+  // Download report as CSV/JSON
+  const downloadReport = async (reportData: any) => {
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    // Create CSV content
+    const csvContent = generateCSVContent(reportData);
+    
+    // Create and download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `flags-report-${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Generate CSV content
+  const generateCSVContent = (reportData: any) => {
+    let csv = 'Flags Management Report\n\n';
+    
+    // Report header
+    csv += `Generated At,${new Date(reportData.generatedAt).toLocaleString()}\n`;
+    csv += `Generated By,${reportData.generatedBy}\n\n`;
+    
+    // Summary statistics
+    csv += 'SUMMARY STATISTICS\n';
+    csv += `Total Flags,${reportData.totalFlags}\n`;
+    csv += `Active Flags,${reportData.activeFlags}\n`;
+    csv += `Resolved Flags,${reportData.resolvedFlags}\n`;
+    csv += `High Priority,${reportData.highPriorityFlags}\n`;
+    csv += `Medium Priority,${reportData.mediumPriorityFlags}\n`;
+    csv += `Low Priority,${reportData.lowPriorityFlags}\n`;
+    csv += `Resolution Rate,${reportData.resolutionPerformance.resolutionRate}%\n`;
+    csv += `Average Resolution Time,${reportData.resolutionPerformance.averageResolutionTime}\n\n`;
+    
+    // Flag type breakdown
+    csv += 'FLAG TYPE BREAKDOWN\n';
+    csv += 'Type,Total,Active,Resolved\n';
+    reportData.flagTypeBreakdown.forEach((item: any) => {
+      csv += `${item.type},${item.count},${item.active},${item.resolved}\n`;
+    });
+    csv += '\n';
+    
+    // Recent activity
+    csv += 'RECENT ACTIVITY (Last 30 Days)\n';
+    csv += `Flags Created,${reportData.recentActivity.created}\n`;
+    csv += `Flags Resolved,${reportData.recentActivity.resolved}\n\n`;
+    
+    // Top creators
+    csv += 'TOP FLAG CREATORS\n';
+    csv += 'Name,Count\n';
+    reportData.topCreators.forEach((creator: any) => {
+      csv += `${creator.name},${creator.count}\n`;
+    });
+    csv += '\n';
+    
+    // Detailed flags data
+    csv += 'DETAILED FLAGS DATA\n';
+    csv += 'Customer Name,Account Number,Flag Type,Priority,Status,Created At,Created By,Resolved At,Resolved By,Notes\n';
+    reportData.flagsData.forEach((flag: any) => {
+      csv += `"${flag.customerName}","${flag.customerAccount}","${flag.type}","${flag.priority}","${flag.status}","${flag.createdAt}","${flag.createdBy}","${flag.resolvedAt || ''}","${flag.resolvedBy || ''}","${flag.notes?.replace(/"/g, '""') || ''}"\n`;
+    });
+    
+    return csv;
+  };
+
+  // Export filtered data
+  const exportData = async () => {
+    try {
+      toast.info("Exporting data...", {
+        description: "Preparing your filtered data for download."
+      });
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      // Create simplified CSV for current filtered data
+      let csv = 'Customer Name,Account Number,Flag Type,Priority,Status,Created At,Created By,Resolved At,Resolved By,Notes\n';
+      
+      filteredFlags.forEach(flag => {
+        csv += `"${flag.customerName}","${flag.customerAccount}","${flag.type}","${flag.priority}","${flag.is_resolved ? 'Resolved' : 'Active'}","${formatDate(flag.created_at)}","${flag.createdByName}","${flag.resolved_at ? formatDate(flag.resolved_at) : ''}","${flag.resolvedByName || ''}","${flag.notes?.replace(/"/g, '""') || ''}"\n`;
+      });
+      
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `flags-export-${timestamp}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Data exported successfully!", {
+        description: `${filteredFlags.length} flags exported to CSV.`
+      });
+
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast.error("Failed to export data", {
+        description: "There was an error exporting the data."
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -397,13 +612,15 @@ export default function AdminFlagsPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            onClick={exportData}
             className="border-slate-800 hover:bg-slate-800/50"
           >
             <Download className="h-4 w-4 mr-2" />
-            Export Report
+            Export Data
           </Button>
           <Button
             variant="default"
+            onClick={generateReport}
             className="bg-rose-600 hover:bg-rose-700 text-white"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
