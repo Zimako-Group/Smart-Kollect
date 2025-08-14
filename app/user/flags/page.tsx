@@ -57,6 +57,10 @@ export default function FlagsPage() {
   const [loading, setLoading] = useState(true);
   const dispatch = useAppDispatch();
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   // Get flags data from Redux store
   const flags = useAppSelector((state) => state.flags.flags);
   const flagsLoading = useAppSelector((state) => state.flags.loading);
@@ -235,6 +239,44 @@ export default function FlagsPage() {
         return diffDays > 30;
       }).length }
     ]
+  };
+
+  // Filter flags based on active tab
+  const filteredFlags = flags.filter(flag => {
+    switch (activeTab) {
+      case "high":
+        return flag.priority === "high" && !flag.isResolved;
+      case "medium":
+        return flag.priority === "medium" && !flag.isResolved;
+      case "low":
+        return flag.priority === "low" && !flag.isResolved;
+      case "resolved":
+        return flag.isResolved;
+      default: // "all"
+        return !flag.isResolved;
+    }
+  });
+
+  // Pagination calculations
+  const totalItems = filteredFlags.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentFlags = filteredFlags.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   return (
@@ -798,14 +840,7 @@ export default function FlagsPage() {
                       </td>
                     </tr>
                   ) : (
-                    flags.filter(flag => {
-                      if (flag.isResolved) return false;
-                      if (activeTab === "all") return true;
-                      if (activeTab === "high" && flag.priority === "high") return true;
-                      if (activeTab === "medium" && flag.priority === "medium") return true;
-                      if (activeTab === "low" && flag.priority === "low") return true;
-                      return false;
-                    }).map(flag => {
+                    currentFlags.map(flag => {
                       // Format date and calculate days ago
                       const flagDate = new Date(flag.dateAdded);
                       const formattedDate = flagDate.toLocaleDateString('en-US', {
@@ -940,6 +975,8 @@ export default function FlagsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-400">Rows per page:</span>
                 <select 
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
                   className="h-8 px-2 rounded-md bg-slate-950/50 border border-slate-800 text-slate-300 text-sm focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
                 >
                   <option value="10">10</option>
@@ -949,7 +986,7 @@ export default function FlagsPage() {
                 </select>
               </div>
               <div className="text-sm text-slate-400">
-                Showing <span className="font-medium text-slate-200">1-10</span> of <span className="font-medium text-slate-200">{flagsData.totalFlags}</span> flags
+                Showing <span className="font-medium text-slate-200">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-medium text-slate-200">{totalItems}</span> flags
               </div>
             </div>
             
@@ -957,7 +994,9 @@ export default function FlagsPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="First page"
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -965,48 +1004,67 @@ export default function FlagsPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
               <div className="flex items-center gap-1 mx-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 w-9 p-0 border-slate-800 bg-rose-600/20 border-rose-600/50 text-rose-100 font-medium"
-                >
-                  1
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
-                >
-                  2
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
-                >
-                  3
-                </Button>
-                <span className="text-slate-600 px-1">...</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
-                >
-                  10
-                </Button>
+                {/* Generate page numbers dynamically */}
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+                  
+                  const isCurrentPage = pageNumber === currentPage;
+                  
+                  return (
+                    <Button 
+                      key={pageNumber}
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => goToPage(pageNumber)}
+                      className={`h-9 w-9 p-0 border-slate-800 font-medium ${
+                        isCurrentPage 
+                          ? "bg-rose-600/20 border-rose-600/50 text-rose-100" 
+                          : "hover:bg-slate-800/50 text-slate-300"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    <span className="text-slate-600 px-1">...</span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => goToPage(totalPages)}
+                      className="h-9 w-9 p-0 border-slate-800 hover:bg-slate-800/50 text-slate-300"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
               </div>
               
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -1014,7 +1072,9 @@ export default function FlagsPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400"
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+                className="h-9 px-2.5 border-slate-800 hover:bg-slate-800/50 text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Last page"
               >
                 <ChevronsRight className="h-4 w-4" />
