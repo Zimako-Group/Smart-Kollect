@@ -13,6 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +57,7 @@ import {
   Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function FlagsPage() {
   const router = useRouter();
@@ -60,6 +69,11 @@ export default function FlagsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [flagToDelete, setFlagToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Get flags data from Redux store
   const flags = useAppSelector((state) => state.flags.flags);
@@ -277,6 +291,60 @@ export default function FlagsPage() {
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Delete flag functions
+  const handleDeleteClick = (flag: any) => {
+    setFlagToDelete(flag);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!flagToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      // Delete from Supabase
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase
+        .from('flags')
+        .delete()
+        .eq('id', flagToDelete.id);
+      
+      if (error) {
+        console.error('Error deleting flag:', error);
+        toast.error("Failed to delete flag", {
+          description: "There was an error deleting the flag. Please try again.",
+        });
+        return;
+      }
+      
+      // Remove from Redux store
+      const updatedFlags = flags.filter(flag => flag.id !== flagToDelete.id);
+      dispatch(setFlags(updatedFlags));
+      
+      // Close dialog
+      setDeleteConfirmOpen(false);
+      setFlagToDelete(null);
+      
+      // Show success toast
+      toast.success("Flag deleted successfully", {
+        description: `The flag for ${flagToDelete.accountName} has been removed.`,
+      });
+      
+    } catch (error) {
+      console.error('Error deleting flag:', error);
+      toast.error("Failed to delete flag", {
+        description: "An unexpected error occurred. Please try again.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setFlagToDelete(null);
   };
 
   return (
@@ -954,6 +1022,7 @@ export default function FlagsPage() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
+                                onClick={() => handleDeleteClick(flag)}
                                 className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
                                 title="Delete flag"
                               >
@@ -1101,6 +1170,73 @@ export default function FlagsPage() {
           Add New Flag
         </Button>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-slate-200 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Delete Flag
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Are you sure you want to delete this flag? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {flagToDelete && (
+            <div className="py-4">
+              <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-slate-200">{flagToDelete.accountName}</span>
+                  <Badge 
+                    variant="outline" 
+                    className={`px-2 py-0.5 text-xs ${
+                      flagToDelete.type === "Special Handling" 
+                        ? "bg-purple-900/30 text-purple-400 border-purple-800/50"
+                        : flagToDelete.type === "Trace Alert"
+                        ? "bg-emerald-900/30 text-emerald-400 border-emerald-800/50"
+                        : "bg-slate-800/50 text-slate-300 border-slate-700"
+                    }`}
+                  >
+                    {flagToDelete.type}
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-400">{flagToDelete.notes}</p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Flag
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
