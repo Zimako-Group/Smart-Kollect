@@ -168,6 +168,9 @@ export default function AdminDashboard() {
   const [showAgentDetails, setShowAgentDetails] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [onlineAgents, setOnlineAgents] = useState<Set<string>>(new Set());
+  const [agentProfiles, setAgentProfiles] = useState<any[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(true);
 
   // Agents data will be fetched from the database
   const agents: Agent[] = [];
@@ -201,6 +204,77 @@ export default function AdminDashboard() {
     // Real collections data should come from the database
     setTotalCollections(0);
 
+    // Fetch agent profiles
+    const fetchAgentProfiles = async () => {
+      try {
+        setLoadingAgents(true);
+        const { data: profiles, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, role, status, avatar_url")
+          .eq("role", "agent");
+
+        if (error) {
+          console.error("Error fetching agent profiles:", error);
+          return;
+        }
+
+        setAgentProfiles(profiles || []);
+      } catch (error) {
+        console.error("Error fetching agent profiles:", error);
+      } finally {
+        setLoadingAgents(false);
+      }
+    };
+
+    // Setup Realtime Presence for tracking online agents
+    const setupPresence = async () => {
+      try {
+        // Create a channel for agent presence
+        const channel = supabase.channel("agent-presence", {
+          config: {
+            presence: {
+              key: "agent-presence",
+            },
+          },
+        });
+
+        // Subscribe to presence events
+        channel
+          .on("presence", { event: "sync" }, () => {
+            const state = channel.presenceState();
+            const onlineAgentIds = new Set<string>();
+
+            Object.keys(state).forEach((key) => {
+              const presences = state[key];
+              presences.forEach((presence: any) => {
+                if (presence.role === "agent") {
+                  onlineAgentIds.add(presence.user_id);
+                }
+              });
+            });
+
+            setOnlineAgents(onlineAgentIds);
+          })
+          .on("presence", { event: "join" }, ({ key, newPresences }) => {
+            console.log("Agent joined:", newPresences);
+          })
+          .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+            console.log("Agent left:", leftPresences);
+          })
+          .subscribe(async (status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("Successfully subscribed to agent presence");
+            }
+          });
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      } catch (error) {
+        console.error("Error setting up presence:", error);
+      }
+    };
+
     // Fetch notifications
     const fetchNotifications = async () => {
       setLoadingNotifications(true);
@@ -213,8 +287,6 @@ export default function AdminDashboard() {
         setLoadingNotifications(false);
       }
     };
-
-    fetchNotifications();
 
     // Fetch agent allocations directly from the agent_allocations table
     const fetchAgentAllocations = async () => {
@@ -287,7 +359,19 @@ export default function AdminDashboard() {
       }
     };
 
+    fetchNotifications();
     fetchAgentAllocations();
+    fetchAgentProfiles();
+
+    // Setup presence tracking
+    const cleanupPresence = setupPresence();
+
+    // Cleanup on unmount
+    return () => {
+      if (cleanupPresence) {
+        cleanupPresence.then((cleanup) => cleanup && cleanup());
+      }
+    };
   }, []);
 
   // Separate useEffect to update the selected agent when needed
@@ -432,31 +516,73 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-white/60 text-sm">Active Agents</p>
-              <h3 className="text-2xl font-bold mt-1 text-white">5</h3>
-              <div className="flex items-center mt-3 text-green-400 bg-green-400/10 px-2 py-1 rounded-full text-xs w-fit">
-                <ArrowUp size={14} className="mr-1" />
-                <span>Active agents online</span>
-              </div>
+              {loadingAgents ? (
+                <div className="flex items-center mt-1">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-secondary"></div>
+                  <span className="ml-2 text-white/60 text-sm">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold mt-1 text-white">{onlineAgents.size}</h3>
+                  <div className="flex items-center mt-3 text-green-400 bg-green-400/10 px-2 py-1 rounded-full text-xs w-fit">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                    <span>{onlineAgents.size} agents online</span>
+                  </div>
+                </>
+              )}
             </div>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center border border-secondary/20 shadow-sm shadow-secondary/10">
               <Users size={24} className="text-secondary" />
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-white/5">
-            <div className="flex justify-between text-xs">
-              <div className="flex flex-col items-center">
-                <span className="text-white/40">New</span>
-                <span className="text-white font-medium mt-1">5</span>
+            {loadingAgents ? (
+              <div className="flex justify-center py-2">
+                <div className="text-white/40 text-xs">Loading agent status...</div>
               </div>
-              <div className="flex flex-col items-center">
-                <span className="text-white/40">Active</span>
-                <span className="text-white font-medium mt-1">0</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-white/40">On Leave</span>
-                <span className="text-white font-medium mt-1">0</span>
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="flex justify-between text-xs mb-3">
+                  <div className="flex flex-col items-center">
+                    <span className="text-white/40">Online</span>
+                    <span className="text-green-400 font-medium mt-1">{onlineAgents.size}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-white/40">Total</span>
+                    <span className="text-white font-medium mt-1">{agentProfiles.length}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-white/40">Offline</span>
+                    <span className="text-red-400 font-medium mt-1">{agentProfiles.length - onlineAgents.size}</span>
+                  </div>
+                </div>
+                {/* Online Agents List */}
+                <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                  {agentProfiles
+                    .filter(agent => onlineAgents.has(agent.id))
+                    .slice(0, 3)
+                    .map((agent) => (
+                      <div key={agent.id} className="flex items-center justify-between py-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-white/80 text-xs truncate">{agent.full_name}</span>
+                        </div>
+                        <span className="text-green-400 text-xs">Online</span>
+                      </div>
+                    ))}
+                  {onlineAgents.size > 3 && (
+                    <div className="text-center text-white/40 text-xs pt-1">
+                      +{onlineAgents.size - 3} more online
+                    </div>
+                  )}
+                  {onlineAgents.size === 0 && (
+                    <div className="text-center text-white/40 text-xs py-2">
+                      No agents currently online
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
