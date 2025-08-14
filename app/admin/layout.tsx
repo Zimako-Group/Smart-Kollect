@@ -25,7 +25,8 @@ import {
   CheckSquare,
   Table,
   TrendingUp,
-  UserCircle
+  UserCircle,
+  Flag
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -158,6 +159,15 @@ export default function AdminLayout({
               >
                 <FileText size={collapsed ? 20 : 18} />
                 {!collapsed && <span className="ml-3">Reports</span>}
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/admin/flags" 
+                className="nav-link flex items-center px-3 py-2 rounded-lg"
+              >
+                <Flag size={collapsed ? 20 : 18} />
+                {!collapsed && <span className="ml-3">Flags Management</span>}
               </Link>
             </li>
             <li>
