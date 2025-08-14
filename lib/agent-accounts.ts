@@ -117,7 +117,7 @@ export async function fetchAgentAllocatedAccounts(agentId: string): Promise<Acco
       const result = await retrySupabaseOperation(async () => {
         const freshClient = getSupabaseClient();
         return await freshClient
-          .from('debtors')
+          .from('Debtors')
           .select('*')
           .in('id', accountIds);
       });

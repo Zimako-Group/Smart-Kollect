@@ -192,12 +192,14 @@ export default function FlagsPage() {
              resolvedDate.getFullYear() === now.getFullYear();
     }).length,
     flagsByType: [
-      { type: "Payment Dispute", count: flags.filter(flag => flag.type === "dispute" && !flag.isResolved).length },
-      { type: "Legal Action", count: flags.filter(flag => flag.type === "legal" && !flag.isResolved).length },
-      { type: "Deceased", count: flags.filter(flag => flag.type === "deceased" && !flag.isResolved).length },
-      { type: "Fraud Alert", count: flags.filter(flag => flag.type === "fraud" && !flag.isResolved).length },
-      { type: "Trace Alert", count: flags.filter(flag => flag.type === "trace" && !flag.isResolved).length },
-      { type: "Special Handling", count: flags.filter(flag => flag.type === "special" && !flag.isResolved).length }
+      { type: "Fraud Alert", count: flags.filter(flag => (flag.type === "fraud" || flag.type === "Fraud Alert") && !flag.isResolved).length },
+      { type: "Legal Action", count: flags.filter(flag => (flag.type === "legal" || flag.type === "Legal Action") && !flag.isResolved).length },
+      { type: "Payment Dispute", count: flags.filter(flag => (flag.type === "dispute" || flag.type === "Payment Dispute") && !flag.isResolved).length },
+      { type: "Bankruptcy", count: flags.filter(flag => (flag.type === "bankruptcy" || flag.type === "Bankruptcy") && !flag.isResolved).length },
+      { type: "Deceased", count: flags.filter(flag => (flag.type === "deceased" || flag.type === "Deceased") && !flag.isResolved).length },
+      { type: "Trace Alert", count: flags.filter(flag => (flag.type === "trace" || flag.type === "Trace Alert") && !flag.isResolved).length },
+      { type: "Special Handling", count: flags.filter(flag => (flag.type === "special" || flag.type === "Special Handling") && !flag.isResolved).length },
+      { type: "No Contact Details", count: flags.filter(flag => (flag.type === "no contact details" || flag.type === "No Contact Details") && !flag.isResolved).length }
     ],
     flagsByAge: [
       { range: "0-7 days", count: flags.filter(flag => {
@@ -456,15 +458,19 @@ export default function FlagsPage() {
               {flagsData.flagsByType.map((item, index) => {
                 // Generate different colors for each type
                 const colors = [
-                  "from-red-600 to-red-400",
-                  "from-amber-600 to-amber-400",
-                  "from-blue-600 to-blue-400",
-                  "from-purple-600 to-purple-400",
-                  "from-cyan-600 to-cyan-400",
-                  "from-emerald-600 to-emerald-400"
+                  "from-red-600 to-red-400",      // Fraud Alert
+                  "from-amber-600 to-amber-400",  // Legal Action
+                  "from-blue-600 to-blue-400",   // Payment Dispute
+                  "from-purple-600 to-purple-400", // Bankruptcy
+                  "from-cyan-600 to-cyan-400",   // Deceased
+                  "from-emerald-600 to-emerald-400", // Trace Alert
+                  "from-pink-600 to-pink-400",   // Special Handling
+                  "from-orange-600 to-orange-400" // Custom Flag
                 ];
                 const colorClass = colors[index % colors.length];
-                const percentage = (item.count / flagsData.totalFlags) * 100;
+                // Handle division by zero and ensure percentage is valid
+                const percentage = flagsData.totalFlags > 0 ? (item.count / flagsData.totalFlags) * 100 : 0;
+                const safePercentage = isNaN(percentage) ? 0 : percentage;
                 
                 return (
                   <div key={index} className="space-y-2">
@@ -475,13 +481,13 @@ export default function FlagsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-200">{item.count}</span>
-                        <span className="text-xs text-slate-400">({percentage.toFixed(1)}%)</span>
+                        <span className="text-xs text-slate-400">({safePercentage.toFixed(1)}%)</span>
                       </div>
                     </div>
                     <div className="h-2 w-full bg-slate-800/80 rounded-full overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${colorClass} rounded-full`}
-                        style={{ width: `${percentage}%` }}
+                        className={`h-full bg-gradient-to-r ${colorClass} rounded-full transition-all duration-300`}
+                        style={{ width: `${Math.max(0, Math.min(100, safePercentage))}%` }}
                       ></div>
                     </div>
                   </div>
