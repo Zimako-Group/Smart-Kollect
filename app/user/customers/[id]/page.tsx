@@ -59,7 +59,10 @@ import {
   Pencil,
   MessageCircle,
   Brain,
-  Sparkles
+  Sparkles,
+  Target,
+  Zap,
+  Lightbulb
 } from "lucide-react";
 import { useRedux } from "@/hooks/useRedux";
 import { Progress } from "@/components/ui/progress";
@@ -86,7 +89,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ManualPTP from "@/components/ManualPTP";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AIAnalysisDialog from "@/components/AIAnalysisDialog";
 
 export default function CustomerProfilePage() {
   const { user } = useAuth(); // Get the current user from AuthContext
@@ -835,21 +837,38 @@ export default function CustomerProfilePage() {
                   variant="outline"
                   size="sm"
                   className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border-indigo-500/50 text-indigo-300 hover:text-indigo-200 transition-all duration-200"
-                  onClick={() => {
+                  onClick={async () => {
                     setIsAnalyzing(true);
-                    // Simulate AI analysis (will be replaced with actual implementation)
-                    setTimeout(() => {
-                      setIsAnalyzing(false);
-                      setShowAIAnalysis(true);
-                      setAnalysisResult({
-                        paymentHistory: "3 missed payments, last payment 45 days ago",
-                        preferredContactMethod: "Email - responds within 2-4 hours",
-                        personalSituation: "Recently changed jobs, expressed hardship",
-                        bestContactTime: "Tuesdays 2-4pm based on response patterns",
-                        suggestedApproach: "Empathetic, offer payment plan",
-                        complianceNotes: "Requested validation letter - sent 30 days ago"
+                    setAnalysisResult(null);
+                    
+                    try {
+                      const response = await fetch('/api/analyze-profile', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          customer,
+                          accountHistory,
+                          paymentHistory: [] // Add payment history if available
+                        }),
                       });
-                    }, 1500);
+                      
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        setAnalysisResult(data.analysis);
+                        setShowAIAnalysis(true);
+                        toast.success('AI analysis completed successfully');
+                      } else {
+                        throw new Error(data.details || data.error || 'Failed to analyze profile');
+                      }
+                    } catch (error) {
+                      console.error('Error analyzing profile:', error);
+                      toast.error(`Error analyzing profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    } finally {
+                      setIsAnalyzing(false);
+                    }
                   }}
                   disabled={isAnalyzing}
                 >
@@ -871,10 +890,13 @@ export default function CustomerProfilePage() {
             {/* AI Analysis Results */}
             {showAIAnalysis && analysisResult && (
               <div className="mb-6 mt-3 p-4 rounded-xl bg-indigo-900/20 border border-indigo-500/30 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <Sparkles className="h-5 w-5 mr-2 text-indigo-400" />
-                    <h3 className="text-lg font-semibold text-indigo-300">AI Case Analysis</h3>
+                    <Brain className="h-5 w-5 mr-2 text-indigo-400" />
+                    <h3 className="text-lg font-semibold text-indigo-300">AI Profile Analysis</h3>
+                    <Badge className="ml-2 bg-indigo-500/20 text-indigo-300 border-indigo-500/50">
+                      Claude Sonnet 4
+                    </Badge>
                   </div>
                   <Button 
                     variant="ghost" 
@@ -886,30 +908,128 @@ export default function CustomerProfilePage() {
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Payment History</div>
-                    <div className="text-slate-300">{analysisResult.paymentHistory}</div>
+                {/* Risk Score and Payment Likelihood */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-2">
+                      <AlertTriangle className="h-4 w-4 mr-2 text-red-400" />
+                      <span className="font-medium text-slate-300">Risk Score</span>
+                    </div>
+                    <div className="text-2xl font-bold text-red-400">{analysisResult.riskScore}/100</div>
+                    <div className="text-sm text-slate-400">Risk assessment</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Preferred Contact</div>
-                    <div className="text-slate-300">{analysisResult.preferredContactMethod}</div>
+                  
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-2">
+                      <TrendingUp className="h-4 w-4 mr-2 text-green-400" />
+                      <span className="font-medium text-slate-300">Payment Likelihood</span>
+                    </div>
+                    <div className={`text-2xl font-bold capitalize ${
+                      analysisResult.paymentLikelihood === 'high' ? 'text-green-400' :
+                      analysisResult.paymentLikelihood === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      {analysisResult.paymentLikelihood}
+                    </div>
+                    <div className="text-sm text-slate-400">Success probability</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Personal Situation</div>
-                    <div className="text-slate-300">{analysisResult.personalSituation}</div>
+                  
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-2">
+                      <Flag className="h-4 w-4 mr-2 text-orange-400" />
+                      <span className="font-medium text-slate-300">Urgency Level</span>
+                    </div>
+                    <div className={`text-2xl font-bold capitalize ${
+                      analysisResult.urgencyLevel === 'high' ? 'text-red-400' :
+                      analysisResult.urgencyLevel === 'medium' ? 'text-yellow-400' : 'text-green-400'
+                    }`}>
+                      {analysisResult.urgencyLevel}
+                    </div>
+                    <div className="text-sm text-slate-400">Collection priority</div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Best Contact Time</div>
-                    <div className="text-slate-300">{analysisResult.bestContactTime}</div>
+                </div>
+
+                {/* Recommended Strategy */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50 mb-4">
+                  <div className="flex items-center mb-2">
+                    <Target className="h-4 w-4 mr-2 text-blue-400" />
+                    <span className="font-medium text-slate-300">Recommended Strategy</span>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Suggested Approach</div>
-                    <div className="text-slate-300">{analysisResult.suggestedApproach}</div>
+                  <div className="text-blue-400 font-medium">{analysisResult.recommendedStrategy}</div>
+                </div>
+
+                {/* Settlement Recommendations */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50 mb-4">
+                  <div className="flex items-center mb-2">
+                    <Scale className="h-4 w-4 mr-2 text-purple-400" />
+                    <span className="font-medium text-slate-300">Settlement Recommendations</span>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                    <div className="font-medium text-indigo-300 mb-1">Compliance Notes</div>
-                    <div className="text-slate-300">{analysisResult.complianceNotes}</div>
+                  <div className="text-purple-400">{analysisResult.settlementRecommendations}</div>
+                </div>
+
+                {/* Lists Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Behavioral Patterns */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-3">
+                      <Lightbulb className="h-4 w-4 mr-2 text-yellow-400" />
+                      <span className="font-medium text-slate-300">Behavioral Patterns</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisResult.behavioralPatterns?.map((pattern: string, index: number) => (
+                        <li key={index} className="text-sm text-slate-400 flex items-start">
+                          <span className="text-yellow-400 mr-2">•</span>
+                          {pattern}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Communication Preferences */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-3">
+                      <MessageCircle className="h-4 w-4 mr-2 text-green-400" />
+                      <span className="font-medium text-slate-300">Communication Preferences</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisResult.communicationPreferences?.map((pref: string, index: number) => (
+                        <li key={index} className="text-sm text-slate-400 flex items-start">
+                          <span className="text-green-400 mr-2">•</span>
+                          {pref}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Key Insights */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center mb-3">
+                      <Zap className="h-4 w-4 mr-2 text-indigo-400" />
+                      <span className="font-medium text-slate-300">Key Insights</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {analysisResult.keyInsights?.map((insight: string, index: number) => (
+                        <li key={index} className="text-sm text-slate-400 flex items-start">
+                          <span className="text-indigo-400 mr-2">•</span>
+                          {insight}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Next Best Actions */}
+                <div className="mt-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                  <div className="flex items-center mb-3">
+                    <ArrowRight className="h-4 w-4 mr-2 text-emerald-400" />
+                    <span className="font-medium text-slate-300">Next Best Actions</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {analysisResult.nextBestActions?.map((action: string, index: number) => (
+                      <div key={index} className="flex items-start p-2 rounded bg-slate-700/50">
+                        <span className="text-emerald-400 mr-2 font-bold">{index + 1}.</span>
+                        <span className="text-sm text-slate-300">{action}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -2806,14 +2926,7 @@ export default function CustomerProfilePage() {
         </Card>
       </div>
       
-      {/* AI Analysis Dialog */}
-      <AIAnalysisDialog
-        isOpen={showAIAnalysis}
-        onClose={() => setShowAIAnalysis(false)}
-        customer={customer}
-        accountHistory={accountHistory}
-        paymentHistory={[]} // Will be populated when payment history is available
-      />
+
     </div>
   );
 }
