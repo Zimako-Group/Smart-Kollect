@@ -285,7 +285,7 @@ export default function DashboardLayout({
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1">
-                <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.3.0</span>
+                <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.4.0</span>
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/avatar.png" alt="User" />
                   <AvatarFallback className="bg-primary/10 text-primary">
