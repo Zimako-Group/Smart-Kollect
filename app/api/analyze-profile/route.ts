@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { anthropic } from '@ai-sdk/anthropic';
-import { generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 // Define the analysis result schema to match Claude's response format
@@ -71,82 +71,23 @@ Consider factors like:
     }
 
     // Generate AI analysis using Anthropic Claude with structured output
-    const result = await generateText({
+    const result = await generateObject({
       model: anthropic('claude-3-5-sonnet-20241022'),
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert debt collection analyst. Analyze customer profiles and provide actionable insights for collection strategy. Always respond with valid JSON matching the requested schema.'
-        },
-        {
-          role: 'user',
-          content: `${analysisPrompt}
-
-Please provide a comprehensive analysis in JSON format with the following structure:
-{
-  "riskScore": number (0-100),
-  "paymentLikelihood": "low" | "medium" | "high",
-  "recommendedStrategy": "detailed strategy description",
-  "behavioralPatterns": ["pattern1", "pattern2", "pattern3"],
-  "communicationPreferences": ["phone", "email", "sms"],
-  "urgencyLevel": "low" | "medium" | "high",
-  "settlementRecommendations": "settlement analysis and recommendations",
-  "keyInsights": ["insight1", "insight2", "insight3"],
-  "nextBestActions": ["action1", "action2", "action3"]
-}`
-        }
-      ],
+      schema: analysisSchema,
+      system: 'You are an expert debt collection analyst. Analyze customer profiles and provide actionable insights for collection strategy.',
+      prompt: analysisPrompt,
       temperature: 0.3,
     });
 
-    // Parse the JSON response from Claude
-    console.log('Raw AI response:', result.text);
+    // Get the structured object response from Claude
+    console.log('AI analysis completed:', result.object);
     
-    let analysisData;
-    try {
-      // Clean the response text - remove any markdown formatting or extra text
-      let cleanedText = result.text.trim();
-      
-      // Extract JSON if it's wrapped in markdown code blocks
-      const jsonMatch = cleanedText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-      if (jsonMatch) {
-        cleanedText = jsonMatch[1];
-      }
-      
-      // Try to find JSON object if there's extra text
-      const jsonObjectMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (jsonObjectMatch) {
-        cleanedText = jsonObjectMatch[0];
-      }
-      
-      console.log('Cleaned text for parsing:', cleanedText);
-      
-      analysisData = JSON.parse(cleanedText);
-      console.log('Parsed analysis data:', analysisData);
-      
-      // Validate against our schema
-      const validatedData = analysisSchema.parse(analysisData);
-      console.log('Validated data:', validatedData);
-      
-      return NextResponse.json({
-        success: true,
-        analysis: validatedData,
-        timestamp: new Date().toISOString()
-      });
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      console.error('Raw AI response:', result.text);
-      console.error('Parse error details:', parseError);
-      
-      // Return more detailed error information
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid AI response format',
-        details: `Parse error: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-        rawResponse: result.text.substring(0, 500), // First 500 chars for debugging
-        timestamp: new Date().toISOString()
-      }, { status: 500 });
-    }
+    // The result.object is already validated by the schema
+    return NextResponse.json({
+      success: true,
+      analysis: result.object,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('Error in AI profile analysis:', error);

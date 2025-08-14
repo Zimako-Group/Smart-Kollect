@@ -86,6 +86,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ManualPTP from "@/components/ManualPTP";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AIAnalysisDialog from "@/components/AIAnalysisDialog";
 
 export default function CustomerProfilePage() {
   const { user } = useAuth(); // Get the current user from AuthContext
@@ -1544,6 +1545,17 @@ export default function CustomerProfilePage() {
                   <History className="h-4 w-4 mr-2 text-orange-400" />
                   Payment History
                 </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/50 hover:from-purple-600/30 hover:to-blue-600/30 hover:border-purple-400 transition-all duration-300"
+                  onClick={() => setShowAIAnalysis(true)}
+                >
+                  <Brain className="h-4 w-4 mr-2 text-purple-400" />
+                  Analyze Profile
+                  <Sparkles className="h-3 w-3 ml-1 text-yellow-400" />
+                </Button>
               </div>
             </div>
           </CardFooter>
@@ -2793,6 +2805,15 @@ export default function CustomerProfilePage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* AI Analysis Dialog */}
+      <AIAnalysisDialog
+        isOpen={showAIAnalysis}
+        onClose={() => setShowAIAnalysis(false)}
+        customer={customer}
+        accountHistory={accountHistory}
+        paymentHistory={[]} // Will be populated when payment history is available
+      />
     </div>
   );
 }
