@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -66,6 +67,56 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
+
+  // Setup agent presence when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && user.role === 'agent') {
+      // Create presence channel for this agent
+      const channel = supabase.channel('agent-presence', {
+        config: {
+          presence: {
+            key: user.id
+          }
+        }
+      });
+
+      // Track this agent's presence
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          console.log('Agent presence synced');
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log('Agent joined presence:', newPresences);
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log('Agent left presence:', leftPresences);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            // Track this agent as online
+            await channel.track({
+              user_id: user.id,
+              role: 'agent',
+              full_name: user.name,
+              email: user.email,
+              online_at: new Date().toISOString()
+            });
+            console.log('Agent presence tracked successfully');
+          }
+        });
+
+      setPresenceChannel(channel);
+
+      // Cleanup function
+      return () => {
+        if (channel) {
+          channel.untrack();
+          supabase.removeChannel(channel);
+        }
+      };
+    }
+  }, [isAuthenticated, user]);
 
   // Then add this effect
   useEffect(() => {
@@ -96,6 +147,16 @@ export default function DashboardLayout({
       router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Cleanup presence on unmount or logout
+  useEffect(() => {
+    return () => {
+      if (presenceChannel) {
+        presenceChannel.untrack();
+        supabase.removeChannel(presenceChannel);
+      }
+    };
+  }, [presenceChannel]);
 
   // Show loading or nothing if not authenticated
   if (isLoading || !isAuthenticated) {
