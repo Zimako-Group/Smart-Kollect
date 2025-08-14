@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { z } from 'zod';
 
@@ -70,31 +70,33 @@ Consider factors like:
       throw new Error('ANTHROPIC_API_KEY environment variable is not set');
     }
 
-    // Generate AI analysis using Anthropic Claude Sonnet 4
-    // Create Anthropic provider instance
-    const anthropic = createAnthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-    
-    // Using generateText with structured JSON response format
+    // Generate AI analysis using Anthropic Claude with structured output
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-20250514'),
-      prompt: `${analysisPrompt}
+      model: anthropic('claude-3-5-sonnet-20241022'),
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert debt collection analyst. Analyze customer profiles and provide actionable insights for collection strategy. Always respond with valid JSON matching the requested schema.'
+        },
+        {
+          role: 'user',
+          content: `${analysisPrompt}
 
-IMPORTANT: Respond with ONLY a valid JSON object that matches this exact schema:
+Please provide a comprehensive analysis in JSON format with the following structure:
 {
   "riskScore": number (0-100),
   "paymentLikelihood": "low" | "medium" | "high",
-  "recommendedStrategy": "detailed strategy description as a string",
+  "recommendedStrategy": "detailed strategy description",
   "behavioralPatterns": ["pattern1", "pattern2", "pattern3"],
   "communicationPreferences": ["phone", "email", "sms"],
   "urgencyLevel": "low" | "medium" | "high",
-  "settlementRecommendations": "settlement analysis and recommendations as a string",
+  "settlementRecommendations": "settlement analysis and recommendations",
   "keyInsights": ["insight1", "insight2", "insight3"],
   "nextBestActions": ["action1", "action2", "action3"]
-}
-
-Do not include any other text, explanations, or markdown formatting. Return only the JSON object.`,
+}`
+        }
+      ],
+      temperature: 0.3,
     });
 
     // Parse the JSON response from Claude
