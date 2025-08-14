@@ -329,6 +329,84 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Our Clients Section */}
+      <section id="clients" className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Trusted by <span className="gradient-text">Leading Organizations</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              SmartKollect powers debt collection for municipalities and businesses across South Africa
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Mahikeng Client Card */}
+            <Card className="group card-hover glass-effect p-8 border-white/10 hover:border-primary/30 transition-all duration-500">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 mb-6 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="h-10 w-10 text-primary group-hover:text-secondary transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors duration-300">
+                  Mahikeng Local Municipality
+                </h3>
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  Streamlining municipal debt collection with intelligent automation and compliance management
+                </p>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>500+ Agents</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <BarChart3 className="h-4 w-4" />
+                    <span>R50M+ Recovered</span>
+                  </div>
+                </div>
+                <Link href="https://mahikeng.smartkollect.co.za" target="_blank" className="mt-6">
+                  <Button variant="outline" className="group-hover:border-primary group-hover:text-primary transition-all duration-300">
+                    Visit Portal
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+
+            {/* Triple M Client Card */}
+            <Card className="group card-hover glass-effect p-8 border-white/10 hover:border-primary/30 transition-all duration-500">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 mb-6 bg-gradient-to-br from-secondary/20 to-tertiary/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="h-10 w-10 text-secondary group-hover:text-tertiary transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 group-hover:text-secondary transition-colors duration-300">
+                  Triple M Financial Services
+                </h3>
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  Advanced debt recovery solutions with AI-powered analytics and automated workflows
+                </p>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>10+ Agents</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>New Client</span>
+                  </div>
+                </div>
+                <Link href="https://triplem.smartkollect.co.za" target="_blank" className="mt-6">
+                  <Button variant="outline" className="group-hover:border-secondary group-hover:text-secondary transition-all duration-300">
+                    Visit Portal
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section id="stats" className="py-20 px-4 bg-gradient-to-r from-primary/5 via-secondary/5 to-tertiary/5">
         <div className="container mx-auto text-center">
