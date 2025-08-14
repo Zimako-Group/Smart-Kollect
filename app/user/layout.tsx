@@ -276,7 +276,7 @@ export default function DashboardLayout({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">{user?.name}</p>
-                    <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.3.0</span>
+                    <span className="text-xs bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">v1.4.0</span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
