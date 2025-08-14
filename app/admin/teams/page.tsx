@@ -62,68 +62,16 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { Users, BarChart3, CheckCircle, Clock, FileText } from "lucide-react";
-
-// Types for jobs
-interface Job {
-  id: string;
-  title: string;
-  debtor: string;
-  amount: number;
-  priority: "high" | "medium" | "low";
-  status: "pending" | "in progress" | "completed";
-  dueDate: string;
-  assignedTo?: string;
-}
-
-// Mock jobs data (we'll implement real jobs later)
-const mockJobs: Job[] = [
-  {
-    id: "j1",
-    title: "High-value recovery - ABC Corp",
-    debtor: "ABC Corporation",
-    amount: 125000,
-    priority: "high",
-    status: "in progress",
-    dueDate: "2025-03-30",
-    assignedTo: "1",
-  },
-  {
-    id: "j2",
-    title: "Small business loan - Johnson Retail",
-    debtor: "Johnson Retail LLC",
-    amount: 45000,
-    priority: "medium",
-    status: "pending",
-    dueDate: "2025-04-15",
-  },
-  {
-    id: "j3",
-    title: "Personal loan recovery - Smith",
-    debtor: "John Smith",
-    amount: 12500,
-    priority: "low",
-    status: "pending",
-    dueDate: "2025-04-10",
-  },
-  {
-    id: "j4",
-    title: "Corporate debt - XYZ Industries",
-    debtor: "XYZ Industries",
-    amount: 230000,
-    priority: "high",
-    status: "pending",
-    dueDate: "2025-03-25",
-  },
-];
+import { Users, BarChart3, CheckCircle, Clock, FileText, ArrowLeft, UserPlus, Shield, UserCheck, UserX } from "lucide-react";
 
 export default function TeamManagementPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("agents");
+  const [activeTab, setActiveTab] = useState("admins");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [agents, setAgents] = useState<Profile[]>([]);
+  const [admins, setAdmins] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreatingAgent, setIsCreatingAgent] = useState(false);
   const [newAgentData, setNewAgentData] = useState({
@@ -136,7 +84,7 @@ export default function TeamManagementPage() {
   const [isAddAgentDialogOpen, setIsAddAgentDialogOpen] = useState(false);
   const [isBroadcastDialogOpen, setIsBroadcastDialogOpen] = useState(false);
 
-  // Function to fetch agents from Supabase
+  // Function to fetch users from Supabase and separate admins/agents
   const fetchAgents = useCallback(async () => {
     setLoading(true);
     try {
@@ -147,23 +95,28 @@ export default function TeamManagementPage() {
         // Log all users for debugging
         console.log('All users from API:', data.users);
         
-        // Filter users with valid roles and sort by name
-        const filteredAgents = data.users
+        // Separate admins and agents
+        const adminUsers = data.users
           .filter((user: Profile) => {
-            // Check if the user has a valid role
-            const isValid = (user.role === 'admin' || user.role === 'agent' || user.role === 'manager' || user.role === 'supervisor' || user.role === 'indigent clerk');
-            
-            // Log each user's role status for debugging
-            console.log(`User ${user.email || user.id}: role=${user.role}, isValid=${isValid}`);
-            
-            return isValid;
+            return user.role === 'admin' && user.full_name && user.email;
+          })
+          .sort((a: Profile, b: Profile) => 
+            a.full_name.localeCompare(b.full_name)
+          );
+
+        const agentUsers = data.users
+          .filter((user: Profile) => {
+            const isAgent = (user.role === 'agent' || user.role === 'manager' || user.role === 'supervisor' || user.role === 'indigent clerk');
+            return isAgent && user.full_name && user.email;
           })
           .sort((a: Profile, b: Profile) => 
             a.full_name.localeCompare(b.full_name)
           );
         
-        console.log('Filtered agents:', filteredAgents);
-        setAgents(filteredAgents);
+        console.log('Admin users:', adminUsers);
+        console.log('Agent users:', agentUsers);
+        setAdmins(adminUsers);
+        setAgents(agentUsers);
       } else {
         console.error('Error fetching agents:', data.error);
         toast({
@@ -393,44 +346,68 @@ export default function TeamManagementPage() {
     }
   };
 
-  // Calculate performance metrics
-  const averageCollectionRate = agents.length > 0
-    ? Math.round(
-        agents.reduce(
-          (sum, agent) => sum + (agent.performance?.collectionRate || 0),
-          0
-        ) / agents.length
-      )
-    : 0;
+  // Filter admins based on search and status
+  const filteredAdmins = admins.filter((admin) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      admin.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      admin.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || admin.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   // Filter agents based on search and status
   const filteredAgents = agents.filter((agent) => {
-    // Apply search filter
     const matchesSearch =
       searchQuery === "" ||
       agent.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Apply status filter
     const matchesStatus =
       statusFilter === "all" || agent.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate statistics
+  const stats = {
+    totalAdmins: admins.length,
+    activeAdmins: admins.filter(a => a.status === "active").length,
+    totalAgents: agents.length,
+    activeAgents: agents.filter(a => a.status === "active").length,
+    inactiveUsers: [...admins, ...agents].filter(u => u.status === "inactive").length,
+    onLeaveUsers: [...admins, ...agents].filter(u => u.status === "on leave").length,
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
-          <p className="text-muted-foreground">
-            Manage your debt collection team, track performance, and assign jobs
-          </p>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-slate-800"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-200">Team Management</h1>
+            <p className="text-sm text-slate-400">Manage administrators and collection agents</p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex items-center gap-2">
           <Dialog open={isBroadcastDialogOpen} onOpenChange={setIsBroadcastDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button
+                variant="outline"
+                className="border-slate-800 hover:bg-slate-800/50"
+              >
                 <Mail className="h-4 w-4 mr-2" />
                 Team Broadcast
               </Button>
@@ -618,95 +595,243 @@ export default function TeamManagementPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Total Admins */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-purple-600 to-purple-400"></div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
+            <CardTitle className="text-sm text-slate-400">Total Admins</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.totalAdmins}</div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{agents.length}</div>
-              <Users className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {agents.filter((a) => a.status === "active").length} active
+            <div className="flex items-center text-xs text-purple-400">
+              <Shield className="h-3 w-3 mr-1" />
+              {stats.activeAdmins} active
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Active Admins */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-green-600 to-green-400"></div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Average Collection Rate
-            </CardTitle>
+            <CardTitle className="text-sm text-slate-400">Active Admins</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.activeAdmins}</div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {averageCollectionRate}%
-              </div>
-              <BarChart3 className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div className="w-full h-2 mt-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${averageCollectionRate}%` }}
-              ></div>
+            <div className="flex items-center text-xs text-green-400">
+              <UserCheck className="h-3 w-3 mr-1" />
+              Online now
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Total Agents */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Jobs
-            </CardTitle>
+            <CardTitle className="text-sm text-slate-400">Total Agents</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.totalAgents}</div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {mockJobs.filter((j) => j.status !== "completed").length}
-              </div>
-              <Briefcase className="h-8 w-8 text-muted-foreground" />
+            <div className="flex items-center text-xs text-blue-400">
+              <Users className="h-3 w-3 mr-1" />
+              Collection team
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {mockJobs.filter((j) => j.priority === "high" && j.status !== "completed").length} high priority
+          </CardContent>
+        </Card>
+
+        {/* Active Agents */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-slate-400">Active Agents</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.activeAgents}</div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center text-xs text-emerald-400">
+              <UserCheck className="h-3 w-3 mr-1" />
+              Working
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inactive Users */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-red-600 to-red-400"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-slate-400">Inactive</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.inactiveUsers}</div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center text-xs text-red-400">
+              <UserX className="h-3 w-3 mr-1" />
+              Not active
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* On Leave */}
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+          <div className="h-1 bg-gradient-to-r from-amber-600 to-amber-400"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-slate-400">On Leave</CardTitle>
+            <div className="text-2xl font-bold text-slate-200">{stats.onLeaveUsers}</div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center text-xs text-amber-400">
+              <Clock className="h-3 w-3 mr-1" />
+              Temporary
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="agents">Agents</TabsTrigger>
-          <TabsTrigger value="jobs">Jobs</TabsTrigger>
-        </TabsList>
-
-        <div className="flex items-center gap-4 mt-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search agents..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      {/* Main Content with Tabs */}
+      <Card className="border-0 shadow-md bg-gradient-to-br from-slate-900 to-slate-900/90">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-slate-200">Team Management</CardTitle>
+          <div className="text-sm text-slate-400">
+            Manage {stats.totalAdmins + stats.totalAgents} team members across administrators and agents
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="on leave">On Leave</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
+              <TabsTrigger value="admins" className="data-[state=active]:bg-slate-700">
+                <Shield className="h-4 w-4 mr-2" />
+                Administrators ({stats.totalAdmins})
+              </TabsTrigger>
+              <TabsTrigger value="agents" className="data-[state=active]:bg-slate-700">
+                <Users className="h-4 w-4 mr-2" />
+                Collection Agents ({stats.totalAgents})
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="agents" className="mt-4">
+            {/* Search and Filter Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-6 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder={`Search ${activeTab === 'admins' ? 'administrators' : 'agents'}...`}
+                  className="pl-10 bg-slate-800/50 border-slate-700 text-slate-200 placeholder-slate-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700 text-slate-200">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="on leave">On Leave</SelectItem>
+                </SelectContent>
+              </Select>
+              <Dialog open={isAddAgentDialogOpen} onOpenChange={setIsAddAgentDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-rose-600 hover:bg-rose-700 text-white">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add {activeTab === 'admins' ? 'Admin' : 'Agent'}
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+            </div>
+
+            {/* Admins Tab Content */}
+            <TabsContent value="admins" className="mt-6">
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div>
+                  <span className="ml-2 text-slate-400">Loading administrators...</span>
+                </div>
+              ) : filteredAdmins.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No administrators found</p>
+                  <p className="text-sm mt-2">Try adjusting your search or filter criteria</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-700">
+                        <th className="text-left py-3 px-4 font-medium text-slate-300">Administrator</th>
+                        <th className="text-left py-3 px-4 font-medium text-slate-300">Email</th>
+                        <th className="text-left py-3 px-4 font-medium text-slate-300">Role</th>
+                        <th className="text-left py-3 px-4 font-medium text-slate-300">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-slate-300">Last Active</th>
+                        <th className="text-right py-3 px-4 font-medium text-slate-300">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAdmins.map((admin) => (
+                        <tr key={admin.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-purple-600/20 flex items-center justify-center">
+                                <Shield className="h-5 w-5 text-purple-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-slate-200">{admin.full_name}</div>
+                                <div className="text-sm text-slate-400">Administrator</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-slate-300">{admin.email}</td>
+                          <td className="py-4 px-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-600/20 text-purple-400 border border-purple-600/30">
+                              {admin.role}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              admin.status === 'active' 
+                                ? 'bg-green-600/20 text-green-400 border-green-600/30'
+                                : admin.status === 'inactive'
+                                ? 'bg-red-600/20 text-red-400 border-red-600/30'
+                                : 'bg-amber-600/20 text-amber-400 border-amber-600/30'
+                            }`}>
+                              {admin.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-slate-400 text-sm">
+                            {admin.updated_at ? new Date(admin.updated_at).toLocaleDateString() : 'Never'}
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 border-slate-700 hover:bg-slate-700"
+                                title="View Details"
+                              >
+                                <User className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 border-slate-700 hover:bg-slate-700"
+                                title="Edit Admin"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Agents Tab Content */}
+            <TabsContent value="agents" className="mt-6">
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -887,89 +1012,10 @@ export default function TeamManagementPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Debtor</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockJobs.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell>
-                    <div className="font-medium">{job.title}</div>
-                  </TableCell>
-                  <TableCell>{job.debtor}</TableCell>
-                  <TableCell>R{job.amount.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        job.priority === "high"
-                          ? "bg-red-500 hover:bg-red-600"
-                          : job.priority === "medium"
-                          ? "bg-yellow-500 hover:bg-yellow-600"
-                          : "bg-blue-500 hover:bg-blue-600"
-                      }
-                    >
-                      {job.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        job.status === "completed"
-                          ? "bg-green-500 hover:bg-green-600"
-                          : job.status === "in progress"
-                          ? "bg-blue-500 hover:bg-blue-600"
-                          : "bg-gray-500 hover:bg-gray-600"
-                      }
-                    >
-                      {job.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(job.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    {job.assignedTo ? (
-                      agents.find((a) => a.id === job.assignedTo)?.full_name || "Unknown"
-                    ) : (
-                      <Badge variant="outline">Unassigned</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Select>
-                        <SelectTrigger className="h-8 w-[130px]">
-                          <SelectValue placeholder="Assign to..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {agents
-                            .filter((a) => a.status === "active")
-                            .map((agent) => (
-                              <SelectItem key={agent.id} value={agent.id}>
-                                {agent.full_name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="outline" size="icon" className="h-8 w-8">
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
+
       </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
