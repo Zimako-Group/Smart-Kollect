@@ -15,6 +15,10 @@ export interface Tenant {
  * Get tenant by subdomain
  */
 export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -36,6 +40,10 @@ export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | 
  * Get tenant by ID
  */
 export async function getTenantById(id: string): Promise<Tenant | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -56,6 +64,10 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
  * Create a new tenant (admin only)
  */
 export async function createTenant(tenant: Omit<Tenant, 'id' | 'created_at' | 'updated_at'>): Promise<Tenant | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
@@ -76,6 +88,10 @@ export async function createTenant(tenant: Omit<Tenant, 'id' | 'created_at' | 'u
  * Update tenant (admin only)
  */
 export async function updateTenant(id: string, updates: Partial<Omit<Tenant, 'id' | 'created_at' | 'updated_at'>>): Promise<Tenant | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
@@ -97,6 +113,10 @@ export async function updateTenant(id: string, updates: Partial<Omit<Tenant, 'id
  * Get all tenants (admin only)
  */
 export async function getAllTenants(): Promise<Tenant[]> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return [];
+  }
   
   const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
@@ -116,6 +136,10 @@ export async function getAllTenants(): Promise<Tenant[]> {
  * Get current user's tenant
  */
 export async function getCurrentUserTenant(): Promise<Tenant | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   // First get the current user
   const supabase = getSupabaseClient();
