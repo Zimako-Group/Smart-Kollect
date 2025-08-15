@@ -27,8 +27,8 @@ function getSupabaseConfig() {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   // Skip validation during build time to avoid environment variable errors
-  if (process.env.NODE_ENV !== 'development' && supabaseUrl && supabaseAnonKey) {
-    // Only validate if we have actual values
+  if (typeof window !== 'undefined' || process.env.NODE_ENV === 'production') {
+    // Only validate if we're in browser or production
     if (!supabaseUrl) {
       throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
     }
@@ -92,6 +92,12 @@ const customStorage = {
 };
 
 export const getSupabaseClient = (): SupabaseClient => {
+  // Skip client creation during build time
+  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+    // Return a mock client during build time
+    return {} as SupabaseClient;
+  }
+  
   if (!_supabaseInstance) {
     const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
     console.log('Initializing Supabase client with URL:', supabaseUrl);
@@ -132,6 +138,12 @@ export const getSupabaseClient = (): SupabaseClient => {
 };
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
+  // Skip client creation during build time
+  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+    // Return a mock client during build time
+    return {} as SupabaseClient;
+  }
+  
   const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
   if (!_supabaseAdminInstance && supabaseServiceKey) {
     _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
