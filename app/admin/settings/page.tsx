@@ -532,6 +532,9 @@ export default function SettingsPage() {
   // Fetch settings on component mount
   useEffect(() => {
     const initializeSettings = async () => {
+      // Skip if not in browser environment
+      if (typeof window === 'undefined') return;
+      
       try {
         setIsLoading(true);
         setError(null);
