@@ -1,7 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
-import { createAdminClient } from '@/lib/supabase/admin';
-
-const supabaseAdmin = createAdminClient();
+import { getSupabaseClient, getSupabaseAdminClient } from '@/lib/supabaseClient';
 
 export interface Tenant {
   id: string;
@@ -19,6 +16,7 @@ export interface Tenant {
  */
 export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | null> {
   
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('tenants')
     .select('*')
@@ -39,6 +37,7 @@ export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | 
  */
 export async function getTenantById(id: string): Promise<Tenant | null> {
   
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('tenants')
     .select('*')
@@ -58,6 +57,7 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
  */
 export async function createTenant(tenant: Omit<Tenant, 'id' | 'created_at' | 'updated_at'>): Promise<Tenant | null> {
   
+  const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
     .from('tenants')
     .insert(tenant)
@@ -77,6 +77,7 @@ export async function createTenant(tenant: Omit<Tenant, 'id' | 'created_at' | 'u
  */
 export async function updateTenant(id: string, updates: Partial<Omit<Tenant, 'id' | 'created_at' | 'updated_at'>>): Promise<Tenant | null> {
   
+  const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
     .from('tenants')
     .update(updates)
@@ -97,6 +98,7 @@ export async function updateTenant(id: string, updates: Partial<Omit<Tenant, 'id
  */
 export async function getAllTenants(): Promise<Tenant[]> {
   
+  const supabaseAdmin = getSupabaseAdminClient();
   const { data, error } = await supabaseAdmin
     .from('tenants')
     .select('*')
@@ -116,6 +118,7 @@ export async function getAllTenants(): Promise<Tenant[]> {
 export async function getCurrentUserTenant(): Promise<Tenant | null> {
   
   // First get the current user
+  const supabase = getSupabaseClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {
@@ -144,6 +147,7 @@ export async function getCurrentUserTenant(): Promise<Tenant | null> {
  */
 export async function setTenantContext(subdomain: string): Promise<string | null> {
   
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase.rpc('set_tenant_context', {
     tenant_subdomain: subdomain
   });
@@ -189,6 +193,7 @@ export function extractSubdomain(hostname: string): string | null {
  */
 export async function userBelongsToTenant(userId: string, tenantId: string): Promise<boolean> {
   
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('id')
