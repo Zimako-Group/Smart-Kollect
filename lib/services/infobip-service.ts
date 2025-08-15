@@ -4,8 +4,8 @@
  */
 
 // Infobip API configuration
-const INFOBIP_API_BASE_URL = 'https://wpmnqd.api.infobip.com';
-const INFOBIP_API_KEY = 'ba81d7b2e0df52df953f83271532fd3b-0ea4a502-4fbb-447b-b3d5-8b5b9e3ee26b';
+const INFOBIP_API_BASE_URL = process.env.INFOBIP_BASE_URL || 'https://wpmnqd.api.infobip.com';
+const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY || 'ba81d7b2e0df52df953f83271532fd3b-0ea4a502-4fbb-447b-b3d5-8b5b9e3ee26b';
 
 import { store } from '../redux/store';
 import { updateSmsStatus } from '../redux/features/sms/smsSlice';

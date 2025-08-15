@@ -230,7 +230,7 @@ export const createManualPTP = async (ptp: CreateManualPTPParams): Promise<Manua
       // Get customer name for the notification
       const { data: customerData, error: customerError } = await supabaseAdmin
         .from('Debtors')
-        .select('full_name')
+        .select('name, surname_company_trust')
         .eq('id', formattedPTP.debtor_id)
         .single();
       
@@ -240,10 +240,11 @@ export const createManualPTP = async (ptp: CreateManualPTPParams): Promise<Manua
         // Create notification for admin
         try {
           const notificationType: 'info' | 'warning' | 'urgent' = 'info';
+          const customerFullName = `${customerData.name || ''} ${customerData.surname_company_trust || ''}`.trim();
           await createActivityNotification(
             'created a PTP arrangement',
             formattedPTP.debtor_id,
-            customerData.full_name,
+            customerFullName,
             createdByName,
             'PTP_CREATED',
             data.id,
