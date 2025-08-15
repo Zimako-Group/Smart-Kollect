@@ -28,7 +28,10 @@ export default function TenantsManagementPage() {
   });
 
   useEffect(() => {
-    loadTenants();
+    // Only load tenants in browser environment to avoid build-time issues
+    if (typeof window !== 'undefined') {
+      loadTenants();
+    }
   }, []);
 
   const loadTenants = async () => {
