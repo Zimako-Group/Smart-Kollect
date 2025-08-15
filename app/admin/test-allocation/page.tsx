@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, AlertCircle, RefreshCw, UserCheck, Upload, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { allocateAccount, bulkAllocateAccounts } from "@/lib/allocation-service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +68,7 @@ export default function TestAllocationPage() {
     try {
       // Check if the table exists by trying to query it
       try {
+        const supabase = getSupabaseClient();
         const { count, error: tableCheckError } = await supabase
           .from('agent_allocations')
           .select('*', { count: 'exact', head: true });
@@ -84,6 +85,7 @@ export default function TestAllocationPage() {
       }
       
       // Fetch allocations
+      const supabase = getSupabaseClient();
       const { data: allocationsData, error: allocationsError } = await supabase
         .from('agent_allocations')
         .select(`
@@ -107,6 +109,7 @@ export default function TestAllocationPage() {
       // Get account and agent details for each allocation
       const enhancedAllocations = await Promise.all((allocationsData || []).map(async (allocation) => {
         // Get account details
+        const supabase = getSupabaseClient();
         const { data: account } = await supabase
           .from('Debtors')
           .select('id, acc_number, name, surname_company_trust, outstanding_balance')
@@ -183,6 +186,7 @@ export default function TestAllocationPage() {
       setIsLoading(true);
       try {
         // Get total count of records
+        const supabase = getSupabaseClient();
         const { count, error: countError } = await supabase
           .from('Debtors')
           .select('*', { count: 'exact', head: true });
