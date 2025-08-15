@@ -170,6 +170,10 @@ export async function getCurrentUserTenant(): Promise<Tenant | null> {
  * Set tenant context for RLS
  */
 export async function setTenantContext(subdomain: string): Promise<string | null> {
+  // Skip if not in browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.rpc('set_tenant_context', {
