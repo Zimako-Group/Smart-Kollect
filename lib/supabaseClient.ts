@@ -26,9 +26,9 @@ function getSupabaseConfig() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Skip validation during build time to avoid environment variable errors
-  if (typeof window !== 'undefined' || process.env.NODE_ENV === 'production') {
-    // Only validate if we're in browser or production
+  // Skip validation completely during server-side/build time
+  if (typeof window !== 'undefined') {
+    // Only validate if we're in browser (client-side)
     if (!supabaseUrl) {
       throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
     }
@@ -92,9 +92,9 @@ const customStorage = {
 };
 
 export const getSupabaseClient = (): SupabaseClient => {
-  // Skip client creation during build time
-  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
-    // Return a mock client during build time
+  // Skip client creation during build time completely
+  if (typeof window === 'undefined') {
+    // Return a mock client during build time (server-side)
     return {} as SupabaseClient;
   }
   
@@ -138,9 +138,9 @@ export const getSupabaseClient = (): SupabaseClient => {
 };
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
-  // Skip client creation during build time
-  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
-    // Return a mock client during build time
+  // Skip client creation during build time completely
+  if (typeof window === 'undefined') {
+    // Return a mock client during build time (server-side)
     return {} as SupabaseClient;
   }
   
