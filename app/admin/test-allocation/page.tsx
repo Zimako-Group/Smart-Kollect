@@ -64,6 +64,9 @@ export default function TestAllocationPage() {
   
   // Fetch allocations
   const fetchAllocations = useCallback(async () => {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined') return;
+    
     setIsLoadingAllocations(true);
     try {
       // Check if the table exists by trying to query it
@@ -183,6 +186,9 @@ export default function TestAllocationPage() {
   // Fetch accounts and agents
   useEffect(() => {
     const fetchData = async () => {
+      // Skip if not in browser environment
+      if (typeof window === 'undefined') return;
+      
       setIsLoading(true);
       try {
         // Get total count of records

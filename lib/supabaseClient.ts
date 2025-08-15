@@ -103,13 +103,15 @@ const customStorage = {
 };
 
 export const getSupabaseClient = (): SupabaseClient => {
+  // Return empty client during build time or server-side rendering
+  if (typeof window === 'undefined') {
+    return {} as SupabaseClient;
+  }
+  
   if (!_supabaseInstance) {
     const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
     
-    // Only log in browser environment
-    if (typeof window !== 'undefined') {
-      console.log('Initializing Supabase client with URL:', supabaseUrl);
-    }
+    console.log('Initializing Supabase client with URL:', supabaseUrl);
     
     _supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -122,27 +124,25 @@ export const getSupabaseClient = (): SupabaseClient => {
     });
     
     // Set up auth state change listener
-    if (typeof window !== 'undefined') {
-      _supabaseInstance.auth.onAuthStateChange((event, session) => {
-        console.log(`[SUPABASE] Auth state change: ${event}`);
-        
-        if (event === 'SIGNED_OUT') {
-          // Clear all auth-related data from localStorage
-          const keysToRemove = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.includes('supabase') || key.includes('zimako') || key.startsWith('profile_'))) {
-              keysToRemove.push(key);
-            }
+    _supabaseInstance.auth.onAuthStateChange((event, session) => {
+      console.log(`[SUPABASE] Auth state change: ${event}`);
+      
+      if (event === 'SIGNED_OUT') {
+        // Clear all auth-related data from localStorage
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('zimako') || key.startsWith('profile_'))) {
+            keysToRemove.push(key);
           }
-          keysToRemove.forEach(key => localStorage.removeItem(key));
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('[SUPABASE] Token refreshed successfully');
-        } else if (event === 'USER_UPDATED') {
-          console.log('[SUPABASE] User data updated');
         }
-      });
-    }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('[SUPABASE] Token refreshed successfully');
+      } else if (event === 'USER_UPDATED') {
+        console.log('[SUPABASE] User data updated');
+      }
+    });
   }
   return _supabaseInstance;
 };

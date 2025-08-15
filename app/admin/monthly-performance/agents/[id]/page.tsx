@@ -129,9 +129,11 @@ export default function AgentDetailPage() {
 
   // Fetch agent details from Supabase
   useEffect(() => {
-    const fetchAgentDetails = async () => {
+    const fetchAgentData = async () => {
+      if (!agentId || typeof window === 'undefined') return;
+      
+      setLoading(true);
       try {
-        setLoading(true);
         const supabase = getSupabaseClient();
         
         // Fetch agent profile
@@ -181,7 +183,7 @@ export default function AgentDetailPage() {
       }
     };
     
-    fetchAgentDetails();
+    fetchAgentData();
   }, [agentId]);
 
   return (
