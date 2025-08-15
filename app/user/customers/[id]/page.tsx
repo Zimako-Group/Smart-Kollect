@@ -9,6 +9,7 @@ import { createActivityNotification } from "@/lib/notification-service";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
 import { openDialog as openPaymentHistoryDialog } from "@/lib/redux/features/payment-history/paymentHistorySlice";
 import PaymentHistoryDialog from "@/components/PaymentHistoryDialog";
+import AIAnalysisFeedback from "@/components/AIAnalysisFeedback";
 
 import { 
   Card, 
@@ -138,6 +139,7 @@ export default function CustomerProfilePage() {
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisSessionId, setAnalysisSessionId] = useState<string>('');
   
   // Function to create PTP notification when Manual PTP is created
   const handleManualPTPCreated = async (ptpData: any) => {
@@ -841,6 +843,10 @@ export default function CustomerProfilePage() {
                     setIsAnalyzing(true);
                     setAnalysisResult(null);
                     
+                    // Generate unique session ID for this analysis
+                    const sessionId = crypto.randomUUID();
+                    setAnalysisSessionId(sessionId);
+                    
                     try {
                       const response = await fetch('/api/analyze-profile', {
                         method: 'POST',
@@ -1032,6 +1038,15 @@ export default function CustomerProfilePage() {
                     ))}
                   </div>
                 </div>
+                
+                {/* AI Analysis Feedback Component */}
+                {analysisSessionId && (
+                  <AIAnalysisFeedback
+                    customerId={customer.id}
+                    analysisSessionId={analysisSessionId}
+                    tenantId="mahikeng"
+                  />
+                )}
               </div>
             )}
             
