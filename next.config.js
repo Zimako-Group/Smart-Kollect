@@ -9,7 +9,14 @@ const nextConfig = {
         '*.smartkollect.co.za',
         'localhost:3000'
       ]
-    }
+    },
+    serverComponentsExternalPackages: ['@supabase/supabase-js']
+  },
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+    // Provide build-time fallbacks for required environment variables
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key',
   },
   async headers() {
     return [
