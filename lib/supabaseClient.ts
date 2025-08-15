@@ -21,17 +21,21 @@ export type Profile = {
 };
 
 // Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Validate environment variables
-if (!supabaseUrl) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
-}
+  // Validate environment variables
+  if (!supabaseUrl) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+  }
 
-if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+  if (!supabaseAnonKey) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+  }
+
+  return { supabaseUrl, supabaseAnonKey, supabaseServiceKey };
 }
 
 // Create a single supabase client for interacting with your database
@@ -86,6 +90,7 @@ const customStorage = {
 
 export const getSupabaseClient = (): SupabaseClient => {
   if (!_supabaseInstance) {
+    const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
     console.log('Initializing Supabase client with URL:', supabaseUrl);
     _supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -124,6 +129,7 @@ export const getSupabaseClient = (): SupabaseClient => {
 };
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
+  const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
   if (!_supabaseAdminInstance && supabaseServiceKey) {
     _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -491,6 +497,7 @@ export const supabaseAuth = {
       // For a complete deletion, we would also delete the auth user
       // This requires admin privileges and should be done with caution
       // We're using the service role client for this
+      const { supabaseServiceKey } = getSupabaseConfig();
       if (supabaseServiceKey) {
         const adminClient = getSupabaseAdminClient();
         const { error: authError } = await adminClient.auth.admin.deleteUser(userId);

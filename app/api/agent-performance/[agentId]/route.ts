@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 // Define the type for agent performance data
 type AgentPerformanceType = {
@@ -146,6 +146,7 @@ export async function GET(request: NextRequest) {
     const monthYear = currentMonth.toISOString().split('T')[0];
 
     // Fetch agent performance data
+    const supabase = getSupabaseClient();
     const { data: performance, error: performanceError } = await supabase
       .from('agent_performance')
       .select('*')
@@ -202,7 +203,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (!rankingError && rankings) {
-      const agentRankIndex = rankings.findIndex(r => r.agent_id === agentId);
+      const agentRankIndex = rankings.findIndex((r: any) => r.agent_id === agentId);
       if (agentRankIndex !== -1) {
         ranking.position = agentRankIndex + 1;
         ranking.percentile = Math.round((1 - (ranking.position / rankings.length)) * 100);
@@ -266,6 +267,7 @@ export async function POST(request: NextRequest) {
     const monthYear = currentMonth.toISOString().split('T')[0];
 
     // Update or create agent performance record
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('agent_performance')
       .upsert({
