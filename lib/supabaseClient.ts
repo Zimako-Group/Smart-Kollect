@@ -26,6 +26,17 @@ function getSupabaseConfig() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  // During build time, return empty strings to avoid errors
+  // The actual values will be available at runtime
+  if (typeof window === 'undefined' && !supabaseUrl && !supabaseAnonKey) {
+    console.log('[Build Time] Supabase config not available, using placeholders');
+    return { 
+      supabaseUrl: 'https://placeholder.supabase.co', 
+      supabaseAnonKey: 'placeholder-key',
+      supabaseServiceKey: undefined 
+    };
+  }
+
   // Skip validation completely during server-side/build time
   if (typeof window !== 'undefined') {
     // Only validate if we're in browser (client-side)
@@ -92,15 +103,14 @@ const customStorage = {
 };
 
 export const getSupabaseClient = (): SupabaseClient => {
-  // Skip client creation during build time completely
-  if (typeof window === 'undefined') {
-    // Return a mock client during build time (server-side)
-    return {} as SupabaseClient;
-  }
-  
   if (!_supabaseInstance) {
     const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
-    console.log('Initializing Supabase client with URL:', supabaseUrl);
+    
+    // Only log in browser environment
+    if (typeof window !== 'undefined') {
+      console.log('Initializing Supabase client with URL:', supabaseUrl);
+    }
+    
     _supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -138,12 +148,6 @@ export const getSupabaseClient = (): SupabaseClient => {
 };
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
-  // Skip client creation during build time completely
-  if (typeof window === 'undefined') {
-    // Return a mock client during build time (server-side)
-    return {} as SupabaseClient;
-  }
-  
   const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
   if (!_supabaseAdminInstance && supabaseServiceKey) {
     _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
@@ -160,8 +164,9 @@ export const getSupabaseAdminClient = (): SupabaseClient => {
 };
 
 // Export the singleton instances
-export const supabase = getSupabaseClient();
-export const supabaseAdmin = getSupabaseAdminClient();
+// Lazy initialization to avoid issues during build time
+export const supabase = typeof window !== 'undefined' ? getSupabaseClient() : ({} as SupabaseClient);
+export const supabaseAdmin = typeof window !== 'undefined' ? getSupabaseAdminClient() : ({} as SupabaseClient);
 
 // Auth functions
 export const supabaseAuth = {
