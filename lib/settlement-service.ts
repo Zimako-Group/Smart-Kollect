@@ -271,7 +271,7 @@ export async function getPendingSettlementsCount(agentName: string) {
     }
     
     // Manually filter for pending settlements with case insensitivity
-    const pendingSettlements = agentSettlements?.filter(settlement => 
+    const pendingSettlements = agentSettlements?.filter((settlement: any) => 
       settlement.status?.toLowerCase() === 'pending');
     
     const count = pendingSettlements?.length || 0;
