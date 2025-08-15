@@ -835,61 +835,68 @@ export default function CustomerProfilePage() {
               
               {/* AI Analysis Button */}
               <div className="mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border-indigo-500/50 text-indigo-300 hover:text-indigo-200 transition-all duration-200"
-                  onClick={async () => {
-                    setIsAnalyzing(true);
-                    setAnalysisResult(null);
-                    
-                    // Generate unique session ID for this analysis
-                    const sessionId = crypto.randomUUID();
-                    setAnalysisSessionId(sessionId);
-                    
-                    try {
-                      const response = await fetch('/api/analyze-profile', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          customer,
-                          accountHistory,
-                          paymentHistory: [] // Add payment history if available
-                        }),
-                      });
+                <div className="relative inline-block">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border-indigo-500/50 text-indigo-300 hover:text-indigo-200 transition-all duration-200"
+                    onClick={async () => {
+                      setIsAnalyzing(true);
+                      setAnalysisResult(null);
                       
-                      const data = await response.json();
+                      // Generate unique session ID for this analysis
+                      const sessionId = crypto.randomUUID();
+                      setAnalysisSessionId(sessionId);
                       
-                      if (data.success) {
-                        setAnalysisResult(data.analysis);
-                        setShowAIAnalysis(true);
-                        toast.success('AI analysis completed successfully');
-                      } else {
-                        throw new Error(data.details || data.error || 'Failed to analyze profile');
+                      try {
+                        const response = await fetch('/api/analyze-profile', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            customer,
+                            accountHistory,
+                            paymentHistory: [] // Add payment history if available
+                          }),
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                          setAnalysisResult(data.analysis);
+                          setShowAIAnalysis(true);
+                          toast.success('AI analysis completed successfully');
+                        } else {
+                          throw new Error(data.details || data.error || 'Failed to analyze profile');
+                        }
+                      } catch (error) {
+                        console.error('Error analyzing profile:', error);
+                        toast.error(`Error analyzing profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      } finally {
+                        setIsAnalyzing(false);
                       }
-                    } catch (error) {
-                      console.error('Error analyzing profile:', error);
-                      toast.error(`Error analyzing profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                    } finally {
-                      setIsAnalyzing(false);
-                    }
-                  }}
-                  disabled={isAnalyzing}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Analyze Profile
-                    </>
-                  )}
-                </Button>
+                    }}
+                    disabled={isAnalyzing}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Analyze Profile
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Beta Tag */}
+                  <div className="absolute -top-2 -right-11 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+                    BETA
+                  </div>
+                </div>
               </div>
             </div>
             
