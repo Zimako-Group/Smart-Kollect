@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, supabaseAuth } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Define user roles
@@ -110,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {      
       console.log('[AUTH] Fetching user profile from database');
+      const supabase = getSupabaseClient();
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, role, avatar_url')
@@ -176,10 +177,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(loginKey, now.toString());
       
       // Clear any existing auth state first to prevent conflicts
+      const supabase = getSupabaseClient();
       await supabase.auth.signOut();
       
       // Attempt login
-      const { data, error } = await supabaseAuth.signIn(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
       if (error) {
         console.error('[AUTH] Login error:', error.message);
@@ -225,7 +230,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       
       // Sign out from Supabase
-      await supabaseAuth.signOut();
+      const supabase = getSupabaseClient();
+      await supabase.auth.signOut();
       
       // Clear user from state
       setUser(null);
@@ -252,7 +258,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
 
         // Check for active session directly from Supabase
-        const { data, error } = await supabase.auth.getSession();
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase.auth.getUser();
         
         if (error) {
           console.error('[AUTH] Session error:', error.message);
@@ -260,9 +267,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        if (data.session) {
+        if (data.user) {
           console.log('[AUTH] Active session found, fetching user profile');
-          const userProfile = await fetchUserProfile(data.session.user.id);
+          const userProfile = await fetchUserProfile(data.user.id);
           
           if (mounted && userProfile) {
             console.log('[AUTH] Setting user from profile');
@@ -322,6 +329,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }, 100); // 100ms debounce
     };
     
+    const supabase = getSupabaseClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     // Cleanup subscription and prevent state updates after unmount
