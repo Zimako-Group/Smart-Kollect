@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { createSettlement, getSettlements } from "@/lib/settlement-service";
 import {
   ArrowUpDown,
@@ -241,6 +241,7 @@ export default function SettlementsPage() {
       let agentName = 'Unknown Agent';
       
       // Try to get the user from Supabase session
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {

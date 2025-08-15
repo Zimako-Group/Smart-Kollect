@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export default function TestPage() {
   const [result, setResult] = useState<any>(null);
@@ -18,7 +18,8 @@ export default function TestPage() {
       console.log("Listing all tables in Supabase...");
       
       // Use rpc to call the information_schema.tables view
-      const { data, error } = await supabase
+      const supabase = getSupabaseClient();
+    const { data, error } = await supabase
         .rpc('list_tables');
       
       if (error) {
@@ -66,7 +67,8 @@ export default function TestPage() {
       console.log("Testing Supabase connection...");
       
       // Try to query the Settlements table
-      const { data, error } = await supabase.from('Settlements').select('*');
+      const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('Settlements').select('*');
       
       if (error) {
         console.error("Supabase error:", error);
@@ -121,7 +123,8 @@ export default function TestPage() {
       try {
         console.log("Attempting direct insertion to Settlements table...");
         
-        const { data, error } = await supabase
+        const supabase = getSupabaseClient();
+    const { data, error } = await supabase
           .from('Settlements')
           .insert(testSettlement)
           .select();

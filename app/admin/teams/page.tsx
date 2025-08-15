@@ -44,7 +44,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { supabaseAuth } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Profile } from "@/lib/supabaseClient";
 import {
@@ -139,6 +138,8 @@ export default function TeamManagementPage() {
 
   // Fetch agents on component mount
   useEffect(() => {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined') return;
     fetchAgents();
   }, [fetchAgents]);
 
