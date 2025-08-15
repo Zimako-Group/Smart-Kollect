@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -7,170 +7,199 @@ const isBuildTime = () => {
   return !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 };
 
+// RBAC Route Configuration
+const ROUTE_PERMISSIONS = {
+  // Public routes - no authentication required
+  public: ['/login', '/', '/api/auth', '/_next', '/favicon.ico', '/sounds', '.mp3', '.svg'],
+  
+  // Agent routes - requires 'agent' role
+  agent: ['/user/dashboard', '/user/customers', '/user/ptp', '/user/reports', '/user/settings'],
+  
+  // Admin routes - requires 'admin' or 'super_admin' role
+  admin: ['/admin'],
+  
+  // Super admin routes - requires 'super_admin' role only
+  superAdmin: ['/admin/tenants', '/admin/system']
+};
+
+// Role hierarchy - higher roles inherit permissions from lower roles
+const ROLE_HIERARCHY = {
+  'agent': 0,
+  'admin': 1,
+  'super_admin': 2
+};
+
+type UserRole = 'agent' | 'admin' | 'super_admin';
+
+// Check if user has permission to access route
+function hasPermission(userRole: UserRole, pathname: string): boolean {
+  // Check public routes
+  if (ROUTE_PERMISSIONS.public.some(route => 
+    pathname.startsWith(route) || pathname.includes(route) || pathname === route
+  )) {
+    return true;
+  }
+  
+  // Check role-specific routes
+  const userRoleLevel = ROLE_HIERARCHY[userRole];
+  
+  // Super admin can access everything
+  if (userRole === 'super_admin') return true;
+  
+  // Admin can access admin and agent routes
+  if (userRole === 'admin' && (
+    ROUTE_PERMISSIONS.admin.some(route => pathname.startsWith(route)) ||
+    ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))
+  )) {
+    return true;
+  }
+  
+  // Agent can only access agent routes
+  if (userRole === 'agent' && 
+    ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))
+  ) {
+    return true;
+  }
+  
+  return false;
+}
+
 import { extractSubdomain } from '@/lib/tenant-service';
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+  const pathname = req.nextUrl.pathname;
+  
+  console.log('[RBAC-MIDDLEWARE] Processing:', {
+    pathname,
+    hostname: req.headers.get('host'),
+    method: req.method
+  });
   
   // Skip middleware during build time
   if (isBuildTime()) {
-    return res;
+    console.log('[RBAC-MIDDLEWARE] Skipping - build time');
+    return NextResponse.next();
   }
   
-  // Get hostname and extract subdomain
-  const hostname = req.headers.get('host') || '';
-  const subdomain = extractSubdomain(hostname);
+  // Check if this is a public route that doesn't need authentication
+  const isPublicRoute = ROUTE_PERMISSIONS.public.some(route => 
+    pathname.startsWith(route) || pathname.includes(route) || pathname === route
+  );
   
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient({ req, res });
-  
-  // Check if this is the main marketing site (no subdomain)
-  const isMarketingSite = !subdomain && !hostname.includes('mahikeng') && !hostname.includes('triplem');
-  
-  // Public routes that don't require auth
-  const pathname = req.nextUrl.pathname;
-  
-  // Skip middleware for API routes, static files, and public paths
-  if (
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon.ico') ||
-    pathname === '/login' ||
-    pathname === '/' ||
-    pathname === '/_not-found' ||
-    pathname.startsWith('/sounds/') ||
-    pathname.endsWith('.mp3') ||
-    pathname.endsWith('.svg')
-  ) {
-    return res;
+  if (isPublicRoute) {
+    console.log('[RBAC-MIDDLEWARE] Public route, allowing access:', pathname);
+    return NextResponse.next();
   }
   
-  // If it's the marketing site, allow access to the landing page
-  if (isMarketingSite && req.nextUrl.pathname === '/') {
-    return res;
-  }
-  
-  // If no subdomain and trying to access protected routes, redirect to main site
-  if (!subdomain && pathname !== '/') {
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-  
-  // If we have a subdomain, validate it
-  if (subdomain) {
-    // Set tenant context in headers for downstream use
-    const headers = new Headers(res.headers);
-    headers.set('x-tenant-subdomain', subdomain);
+  // Create Supabase server client for authentication
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          // We can't modify request cookies in middleware, so we skip this
+        },
+        remove(name: string, options: CookieOptions) {
+          // We can't modify request cookies in middleware, so we skip this
+        },
+      },
+    }
+  );
+
+  try {
+    // Get session from cookies
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    const isPublicRoute = pathname === '/login' || pathname === '/';
+    console.log('[RBAC-MIDDLEWARE] Session check:', {
+      hasSession: !!session,
+      sessionError: sessionError?.message,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email
+    });
     
-    // For public routes on tenant subdomains, just pass through with headers
-    if (isPublicRoute) {
-      return NextResponse.next({
-        headers,
-      });
+    // If no session, redirect to login
+    if (!session) {
+      console.log('[RBAC-MIDDLEWARE] No session, redirecting to login');
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(loginUrl);
     }
     
-    // Check authentication for protected routes
-    try {
-      // Refresh session to ensure we have the latest auth state
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.log('Session error in middleware:', sessionError);
-      }
-      
-      if (!session && !isPublicRoute) {
-        // Redirect to login if not authenticated
-        const loginUrl = new URL('/login', req.url);
-        loginUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-      
-      // If session exists, verify user belongs to this tenant
-      if (session) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('tenant_id')
-          .eq('id', session.user.id)
-          .single();
-        
-        console.log('Middleware Debug:', {
-          userId: session.user.id,
-          subdomain,
-          profile,
-          profileError,
-          userEmail: session.user.email
-        });
-        
-        if (!profile) {
-          console.log('Profile not found for user:', session.user.id);
-          // Instead of redirecting to login, let the app handle this
-          // The user is authenticated but may need profile setup
-          return NextResponse.next({ headers });
-        }
-        
-        // Get tenant info
-        const { data: tenant, error: tenantError } = await supabase
-          .from('tenants')
-          .select('id, subdomain')
-          .eq('subdomain', subdomain)
-          .single();
-        
-        console.log('Tenant Debug:', {
-          subdomain,
-          tenant,
-          tenantError,
-          profileTenantId: profile.tenant_id,
-          tenantMatch: tenant?.id === profile.tenant_id
-        });
-        
-        if (!tenant) {
-          console.log('Tenant not found for subdomain:', subdomain);
-          // Let the app handle tenant not found instead of redirecting to login
-          return NextResponse.next({ headers });
-        }
-        
-        if (profile.tenant_id !== tenant.id) {
-          console.log('Tenant mismatch:', {
-            profileTenantId: profile.tenant_id,
-            tenantId: tenant.id
-          });
-          
-          // User doesn't belong to this tenant, redirect to their correct tenant
-          const { data: userTenant } = await supabase
-            .from('tenants')
-            .select('subdomain')
-            .eq('id', profile.tenant_id)
-            .single();
-          
-          if (userTenant && userTenant.subdomain) {
-            console.log('Redirecting to correct tenant:', userTenant.subdomain);
-            const correctUrl = new URL(req.url);
-            correctUrl.hostname = correctUrl.hostname.replace(subdomain, userTenant.subdomain);
-            return NextResponse.redirect(correctUrl);
-          }
-          
-          // If no user tenant found, let the app handle this
-          console.log('No user tenant found, letting app handle');
-          return NextResponse.next({ headers });
-        }
-        
-        // User is authenticated and belongs to this tenant
-        headers.set('x-tenant-id', tenant.id);
-        headers.set('x-user-id', session.user.id);
-      }
-      
-      return NextResponse.next({
-        headers,
-      });
-      
-    } catch (error) {
-      console.error('[MIDDLEWARE] Error:', error);
-      return NextResponse.redirect(new URL('/login', req.url));
+    // Get user profile with role information
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role, status, tenant_id')
+      .eq('id', session.user.id)
+      .single();
+    
+    console.log('[RBAC-MIDDLEWARE] Profile check:', {
+      profile,
+      profileError: profileError?.message
+    });
+    
+    // If no profile found, redirect to login
+    if (!profile || profileError) {
+      console.log('[RBAC-MIDDLEWARE] No profile found, redirecting to login');
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(loginUrl);
     }
+    
+    // Check if user account is active
+    if (profile.status !== 'active') {
+      console.log('[RBAC-MIDDLEWARE] User account not active:', profile.status);
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('error', 'account_inactive');
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    // Check RBAC permissions
+    const userRole = profile.role as UserRole;
+    const hasAccess = hasPermission(userRole, pathname);
+    
+    console.log('[RBAC-MIDDLEWARE] Permission check:', {
+      userRole,
+      pathname,
+      hasAccess
+    });
+    
+    if (!hasAccess) {
+      console.log('[RBAC-MIDDLEWARE] Access denied, insufficient permissions');
+      // Redirect to appropriate dashboard based on role
+      let redirectPath = '/login';
+      if (userRole === 'agent') {
+        redirectPath = '/user/dashboard';
+      } else if (userRole === 'admin' || userRole === 'super_admin') {
+        redirectPath = '/admin';
+      }
+      
+      if (pathname !== redirectPath) {
+        return NextResponse.redirect(new URL(redirectPath, req.url));
+      }
+    }
+    
+    // Set user context headers for downstream use
+    const response = NextResponse.next();
+    response.headers.set('x-user-id', session.user.id);
+    response.headers.set('x-user-role', userRole);
+    response.headers.set('x-user-email', session.user.email || '');
+    if (profile.tenant_id) {
+      response.headers.set('x-tenant-id', profile.tenant_id);
+    }
+    
+    console.log('[RBAC-MIDDLEWARE] Access granted for:', userRole, 'to', pathname);
+    return response;
+    
+  } catch (error) {
+    console.error('[RBAC-MIDDLEWARE] Error:', error);
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('error', 'auth_error');
+    return NextResponse.redirect(loginUrl);
   }
-  
-  return res;
 }
 
 // Specify which routes this middleware should run on

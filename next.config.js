@@ -9,9 +9,9 @@ const nextConfig = {
         '*.smartkollect.co.za',
         'localhost:3000'
       ]
-    },
-    serverComponentsExternalPackages: ['@supabase/supabase-js']
+    }
   },
+  serverExternalPackages: ['@supabase/supabase-js'],
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
     // Provide build-time fallbacks for required environment variables

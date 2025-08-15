@@ -42,6 +42,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Track auth requests to prevent duplicates
   const pendingAuthRequest = useRef<Promise<any> | null>(null);
+  
+  // Track mounted state and auth change timeout
+  let mounted = true;
+  let authChangeTimeoutId: NodeJS.Timeout | null = null;
 
   // Check if user has permission
   const checkPermission = (permission: string): boolean => {
@@ -71,7 +75,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Redirect based on user role - wrapped in useCallback to prevent recreation on each render
   const redirectBasedOnRole = useCallback((role: UserRole) => {
-    console.log("[AUTH] Redirecting based on role:", role);
+    console.log("[AUTH] redirectBasedOnRole called with role:", role);
+    console.log("[AUTH] Current window location:", window.location.href);
     
     switch (role) {
       case 'admin':
@@ -84,7 +89,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         break;
       case 'agent':
         console.log("[AUTH] Redirecting agent to /user/dashboard");
-        router.push('/user/dashboard');
+        console.log("[AUTH] Using window.location.href for redirect");
+        window.location.href = '/user/dashboard';
         break;
       case 'manager':
         console.log("[AUTH] Redirecting manager to /manager/dashboard");
@@ -203,11 +209,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: 'User profile not found' };
       }
       
-      console.log('[AUTH] Setting user state with profile');
+      console.log('[AUTH] Setting user state with profile:', {
+        userId: userProfile.id,
+        userRole: userProfile.role,
+        userName: userProfile.name
+      });
       setUser(userProfile);
       
       // Redirect based on role with a small delay to ensure state is set
+      console.log('[AUTH] Scheduling redirect for role:', userProfile.role);
       setTimeout(() => {
+        console.log('[AUTH] Executing delayed redirect...');
         redirectBasedOnRole(userProfile.role);
       }, 50);
       
@@ -296,50 +308,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initializeAuth();
 
-    // Set up auth state change listener - use a debounced version
-    let authChangeTimeoutId: NodeJS.Timeout | null = null;
-    
-    const handleAuthChange = (event: string, session: any) => {
-      console.log("[AUTH] Auth state change event:", event);
-      
-      // Clear any existing timeout to debounce rapid auth changes
-      if (authChangeTimeoutId) {
-        clearTimeout(authChangeTimeoutId);
-      }
-      
-      // Set a new timeout to debounce the auth change handling
-      authChangeTimeoutId = setTimeout(async () => {
-        if (!mounted) return;
-        
-        if (event === 'SIGNED_IN' && session) {
-          console.log("[AUTH] User signed in, ID:", session.user.id);
-          const userProfile = await fetchUserProfile(session.user.id);
-          console.log("[AUTH] User profile after sign-in:", userProfile ? "Profile found" : "No profile found");
-          
-          if (userProfile && mounted) {
-            console.log("[AUTH] Setting user state with role:", userProfile.role);
-            setUser(userProfile);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log("[AUTH] User signed out");
-          if (mounted) {
-            setUser(null);
-          }
-        }
-      }, 100); // 100ms debounce
-    };
-    
-    const supabase = getSupabaseClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
-
-    // Cleanup subscription and prevent state updates after unmount
+    // Cleanup function
     return () => {
-      console.log('[AUTH] Cleaning up auth subscription');
+      console.log('[AUTH] Cleaning up auth');
       mounted = false;
       if (authChangeTimeoutId) {
         clearTimeout(authChangeTimeoutId);
       }
-      subscription.unsubscribe();
     };
   }, [fetchUserProfile, redirectBasedOnRole, router]);
 

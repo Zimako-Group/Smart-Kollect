@@ -15,9 +15,17 @@ import Link from 'next/link';
 // Component to handle search params with suspense
 function SearchParamsWrapper() {
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '';
+  const redirectPath = searchParams.get('redirect') || searchParams.get('redirectTo') || '';
   const timeout = searchParams.get('timeout') === 'true';
   const errorParam = searchParams.get('error');
+  
+  console.log('[LOGIN-WRAPPER] Search params:', {
+    redirect: searchParams.get('redirect'),
+    redirectTo: searchParams.get('redirectTo'),
+    timeout,
+    error: errorParam,
+    allParams: Object.fromEntries(searchParams.entries())
+  });
   
   return <LoginContent 
     redirectPath={redirectPath} 
@@ -33,16 +41,39 @@ function LoginContent({ redirectPath, timeout, sessionExpired }: { redirectPath:
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const { login, user, isLoading: authLoading } = useAuth();
+  const { login, user, isLoading: authLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+
+  console.log('[LOGIN-CONTENT] Component state:', {
+    hasUser: !!user,
+    userRole: user?.role,
+    authLoading,
+    isAuthenticated,
+    isLoading,
+    isRedirecting,
+    redirectPath,
+    currentPath: typeof window !== 'undefined' ? window.location.pathname : 'SSR',
+  });
 
   // Check if user is already logged in - only set redirecting state, let AuthContext handle redirects
   useEffect(() => {
-    if (user && !authLoading) {
-      console.log('[LOGIN] User already logged in, redirecting');
+    console.log('[LOGIN-CONTENT] useEffect triggered with:', {
+      user: !!user,
+      authLoading,
+      isAuthenticated,
+      redirectPath
+    });
+    
+    if (user && !authLoading && isAuthenticated) {
+      console.log('[LOGIN-CONTENT] User already logged in, redirecting immediately');
       setIsRedirecting(true);
+      
+      // Use router.push for client-side navigation to avoid refresh loops
+      const targetPath = redirectPath || '/user/dashboard';
+      console.log('[LOGIN-CONTENT] Redirecting to:', targetPath);
+      router.push(targetPath);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, isAuthenticated, redirectPath, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,14 +82,24 @@ function LoginContent({ redirectPath, timeout, sessionExpired }: { redirectPath:
 
     try {
       console.log('[LOGIN] Attempting login with email:', email);
+      console.log('[LOGIN] Current redirect path:', redirectPath);
+      
       const result = await login(email, password);
+      console.log('[LOGIN] Login result:', result);
       
       if (!result.success) {
         console.log('[LOGIN] Login failed:', result.error);
         setError(result.error || 'Invalid email or password');
         setIsLoading(false);
+      } else {
+        console.log('[LOGIN] Login successful, waiting for AuthContext redirect...');
+        setIsRedirecting(true);
+        
+        // Use router.push for immediate redirect after successful login
+        const targetPath = redirectPath || '/user/dashboard';
+        console.log('[LOGIN] Redirecting to:', targetPath);
+        router.push(targetPath);
       }
-      // If successful, the useEffect above will handle redirection
     } catch (err) {
       console.error('[LOGIN] Login error:', err);
       setError('An unexpected error occurred. Please try again.');
