@@ -72,7 +72,7 @@ export function useDashboardCache(agentId: string | null, agentName: string | nu
       
       if (error) throw error;
       
-      const pendingSettlements = agentSettlements?.filter(settlement => 
+      const pendingSettlements = agentSettlements?.filter((settlement: any) => 
         settlement.status?.toLowerCase() === 'pending') || [];
       
       return pendingSettlements.length;
