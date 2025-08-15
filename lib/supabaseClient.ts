@@ -125,7 +125,15 @@ export const getSupabaseClient = (): SupabaseClient => {
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
   if (!_supabaseAdminInstance && supabaseServiceKey) {
-    _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey);
+    _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      },
+      db: {
+        schema: 'public'
+      }
+    });
   }
   return _supabaseAdminInstance || getSupabaseClient();
 };
