@@ -186,7 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: error.message };
       }
       
-      if (!data.user) {
+      if (!data || !data.user) {
         console.error('[AUTH] No user returned from login');
         return { success: false, error: 'Invalid login credentials' };
       }
