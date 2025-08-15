@@ -47,7 +47,7 @@ export function useAuth() {
 
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         console.log('Auth state changed:', event);
         
         if (session) {
