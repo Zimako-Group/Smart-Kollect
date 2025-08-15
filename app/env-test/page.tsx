@@ -7,12 +7,15 @@ export default function EnvTestPage() {
 
   useEffect(() => {
     // Check if environment variables are defined (client-side)
-    const envVars = {
-      'NEXT_PUBLIC_SUPABASE_URL': !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY': !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    };
-    
-    setEnvStatus(envVars);
+    // Only check in browser environment to avoid build-time access
+    if (typeof window !== 'undefined') {
+      const envVars = {
+        'NEXT_PUBLIC_SUPABASE_URL': !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY': !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      };
+      
+      setEnvStatus(envVars);
+    }
     
     // Check server-side environment variables
     fetch('/api/env-test')
