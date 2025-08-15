@@ -1,14 +1,10 @@
-// This is a documentation/example middleware file - not active
-// Renamed to prevent build-time processing
-/*
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
-import { extractSubdomain, getTenantBySubdomain, userBelongsToTenant } from '@/lib/tenant-service';
+import { extractSubdomain } from '@/lib/tenant-service';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
   
   // Get hostname and extract subdomain
   const hostname = req.headers.get('host') || '';
@@ -50,6 +46,9 @@ export async function middleware(req: NextRequest) {
     
     // Check authentication for protected routes
     try {
+      // Create Supabase client at runtime to avoid build-time env var access
+      const supabase = createMiddlewareClient({ req, res });
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -144,4 +143,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|css)$).*)',
   ],
 };
-*/
