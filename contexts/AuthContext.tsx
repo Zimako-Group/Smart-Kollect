@@ -206,8 +206,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('[AUTH] Setting user state with profile');
       setUser(userProfile);
       
-      // Redirect based on role
-      redirectBasedOnRole(userProfile.role);
+      // Redirect based on role with a small delay to ensure state is set
+      setTimeout(() => {
+        redirectBasedOnRole(userProfile.role);
+      }, 50);
       
       return { success: true };
     } catch (err: any) {

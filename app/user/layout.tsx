@@ -69,6 +69,15 @@ export default function DashboardLayout({
   const [mounted, setMounted] = useState(false);
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
 
+  // Debug logging for authentication state
+  console.log('[USER-LAYOUT] Auth state:', { 
+    isAuthenticated, 
+    isLoading, 
+    hasUser: !!user, 
+    userRole: user?.role,
+    pathname 
+  });
+
   // Setup agent presence when user is authenticated
   useEffect(() => {
     if (isAuthenticated && user && user.role === 'agent') {
@@ -141,10 +150,16 @@ export default function DashboardLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - with delay to prevent race condition
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/");
+      // Add a small delay to prevent race condition with AuthContext redirect
+      const timeoutId = setTimeout(() => {
+        console.log('[USER-LAYOUT] Redirecting unauthenticated user to home');
+        router.push("/");
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated, isLoading, router]);
 
