@@ -57,24 +57,48 @@ export async function middleware(req: NextRequest) {
       }
       
       // Verify user belongs to this tenant
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id')
         .eq('id', session.user.id)
         .single();
       
+      console.log('Middleware Debug:', {
+        userId: session.user.id,
+        subdomain,
+        profile,
+        profileError,
+        userEmail: session.user.email
+      });
+      
       if (!profile) {
+        console.log('Profile not found for user:', session.user.id);
         return NextResponse.redirect(new URL('/login', req.url));
       }
       
       // Get tenant info
-      const { data: tenant } = await supabase
+      const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .select('id, subdomain')
         .eq('subdomain', subdomain)
         .single();
       
+      console.log('Tenant Debug:', {
+        subdomain,
+        tenant,
+        tenantError,
+        profileTenantId: profile.tenant_id,
+        tenantMatch: tenant?.id === profile.tenant_id
+      });
+      
       if (!tenant || profile.tenant_id !== tenant.id) {
+        console.log('Tenant mismatch or not found:', {
+          tenantExists: !!tenant,
+          profileTenantId: profile.tenant_id,
+          tenantId: tenant?.id,
+          match: profile.tenant_id === tenant?.id
+        });
+        
         // User doesn't belong to this tenant, redirect to their correct tenant
         const { data: userTenant } = await supabase
           .from('tenants')
@@ -83,11 +107,13 @@ export async function middleware(req: NextRequest) {
           .single();
         
         if (userTenant) {
+          console.log('Redirecting to correct tenant:', userTenant.subdomain);
           const correctUrl = new URL(req.url);
           correctUrl.hostname = correctUrl.hostname.replace(subdomain, userTenant.subdomain);
           return NextResponse.redirect(correctUrl);
         }
         
+        console.log('No user tenant found, redirecting to login');
         return NextResponse.redirect(new URL('/login', req.url));
       }
       
