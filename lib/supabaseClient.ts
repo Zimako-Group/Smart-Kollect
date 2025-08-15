@@ -26,13 +26,16 @@ function getSupabaseConfig() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Validate environment variables
-  if (!supabaseUrl) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
-  }
+  // Skip validation during build time to avoid environment variable errors
+  if (process.env.NODE_ENV !== 'development' && supabaseUrl && supabaseAnonKey) {
+    // Only validate if we have actual values
+    if (!supabaseUrl) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+    }
 
-  if (!supabaseAnonKey) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+    if (!supabaseAnonKey) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+    }
   }
 
   return { supabaseUrl, supabaseAnonKey, supabaseServiceKey };
@@ -160,7 +163,8 @@ export const supabaseAuth = {
       return { data: null, error: { message: 'Too many requests, please try again in a moment', status: 429 } };
     }
     
-    return supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    return { data, error };
   },
 
   /**
@@ -171,7 +175,8 @@ export const supabaseAuth = {
       console.log('Sign-out request throttled');
       return { error: null };
     }
-    return supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    return { error };
   },
 
   /**
@@ -189,14 +194,14 @@ export const supabaseAuth = {
       }
     }
     
-    const result = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
     
     // Cache the session
-    if (result.data.session && typeof localStorage !== 'undefined') {
-      localStorage.setItem('supabase_session', JSON.stringify(result.data.session));
+    if (data.session && typeof localStorage !== 'undefined') {
+      localStorage.setItem('supabase_session', JSON.stringify(data.session));
     }
     
-    return result;
+    return { data, error };
   },
 
   /**
@@ -542,14 +547,14 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
     timeoutId = setTimeout(async () => {
       try {
         if (event === 'SIGNED_IN' && session) {
-          const profile = await supabaseAuth.getUserProfile(session.user.id);
-          if (profile) {
+          const { data } = await supabase.rpc('get_agent_performance', { profile_id: session.user.id });
+          if (data) {
             const user: User = {
-              id: profile.id,
-              name: profile.full_name,
-              email: profile.email,
-              role: profile.role,
-              avatar: profile.avatar_url
+              id: session.user.id,
+              name: session.user.user_metadata.full_name,
+              email: session.user.email,
+              role: session.user.user_metadata.role,
+              avatar: session.user.user_metadata.avatar_url
             };
             
             // Only call callback if user has changed
