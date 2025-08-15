@@ -36,30 +36,13 @@ function LoginContent({ redirectPath, timeout, sessionExpired }: { redirectPath:
   const { login, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Check if user is already logged in
+  // Check if user is already logged in - only set redirecting state, let AuthContext handle redirects
   useEffect(() => {
     if (user && !authLoading) {
       console.log('[LOGIN] User already logged in, redirecting');
       setIsRedirecting(true);
-      
-      // If there's a redirect path, use it, otherwise redirect based on role
-      if (redirectPath) {
-        router.push(redirectPath);
-      } else if (user.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (user.role === 'agent') {
-        router.push('/user/dashboard');
-      } else if (user.role === 'manager') {
-        router.push('/manager/dashboard');
-      } else if (user.role === 'supervisor') {
-        router.push('/supervisor/dashboard');
-      } else if (user.role === 'indigent clerk') {
-        router.push('/indigent-clerk/dashboard');
-      } else {
-        router.push('/');
-      }
     }
-  }, [redirectPath, router, user, authLoading]);
+  }, [user, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

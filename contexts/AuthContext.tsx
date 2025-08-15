@@ -3,7 +3,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabaseClient';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Define user roles
 export type UserRole = 'admin' | 'agent' | 'manager' | 'supervisor' | 'indigent clerk' | 'system';
@@ -40,7 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabaseClient = createClientComponentClient();
   
   // Track auth requests to prevent duplicates
   const pendingAuthRequest = useRef<Promise<any> | null>(null);
