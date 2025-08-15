@@ -37,7 +37,10 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname === '/login' ||
     pathname === '/' ||
-    pathname === '/_not-found'
+    pathname === '/_not-found' ||
+    pathname.startsWith('/sounds/') ||
+    pathname.endsWith('.mp3') ||
+    pathname.endsWith('.svg')
   ) {
     return res;
   }
@@ -69,8 +72,12 @@ export async function middleware(req: NextRequest) {
     
     // Check authentication for protected routes
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
+      // Refresh session to ensure we have the latest auth state
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.log('Session error in middleware:', sessionError);
+      }
       
       if (!session && !isPublicRoute) {
         // Redirect to login if not authenticated
@@ -97,7 +104,9 @@ export async function middleware(req: NextRequest) {
         
         if (!profile) {
           console.log('Profile not found for user:', session.user.id);
-          return NextResponse.redirect(new URL('/login', req.url));
+          // Instead of redirecting to login, let the app handle this
+          // The user is authenticated but may need profile setup
+          return NextResponse.next({ headers });
         }
         
         // Get tenant info
@@ -115,12 +124,16 @@ export async function middleware(req: NextRequest) {
           tenantMatch: tenant?.id === profile.tenant_id
         });
         
-        if (!tenant || profile.tenant_id !== tenant.id) {
-          console.log('Tenant mismatch or not found:', {
-            tenantExists: !!tenant,
+        if (!tenant) {
+          console.log('Tenant not found for subdomain:', subdomain);
+          // Let the app handle tenant not found instead of redirecting to login
+          return NextResponse.next({ headers });
+        }
+        
+        if (profile.tenant_id !== tenant.id) {
+          console.log('Tenant mismatch:', {
             profileTenantId: profile.tenant_id,
-            tenantId: tenant?.id,
-            match: profile.tenant_id === tenant?.id
+            tenantId: tenant.id
           });
           
           // User doesn't belong to this tenant, redirect to their correct tenant
@@ -137,8 +150,9 @@ export async function middleware(req: NextRequest) {
             return NextResponse.redirect(correctUrl);
           }
           
-          console.log('No user tenant found, redirecting to login');
-          return NextResponse.redirect(new URL('/login', req.url));
+          // If no user tenant found, let the app handle this
+          console.log('No user tenant found, letting app handle');
+          return NextResponse.next({ headers });
         }
         
         // User is authenticated and belongs to this tenant
