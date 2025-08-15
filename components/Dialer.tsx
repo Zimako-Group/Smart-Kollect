@@ -1742,7 +1742,7 @@ export function Dialer({ open, onOpenChange }: DialerProps) {
 
       {/* Call Wrap-up Dialog */}
       <Dialog open={showWrapUpDialog} onOpenChange={setShowWrapUpDialog}>
-        <DialogContent className="bg-slate-900 text-slate-200 border-slate-700">
+        <DialogContent className="bg-slate-900 text-slate-200 border-slate-700 sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>Call Wrap-up</DialogTitle>
             <DialogDescription className="text-slate-400">
@@ -1897,7 +1897,7 @@ export function Dialer({ open, onOpenChange }: DialerProps) {
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-slate-900 border-slate-700">
+                  <PopoverContent className="w-auto p-2 bg-slate-900 border-slate-700">
                     <CalendarComponent
                       mode="single"
                       selected={callbackDate}
@@ -1906,7 +1906,29 @@ export function Dialer({ open, onOpenChange }: DialerProps) {
                         setShowCallbackDatePicker(false);
                       }}
                       initialFocus
-                      className="bg-slate-900"
+                      className="bg-slate-900 rounded-md"
+                      classNames={{
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                        month: "space-y-4",
+                        caption: "flex justify-center pt-1 relative items-center",
+                        caption_label: "text-sm font-medium text-slate-200",
+                        nav: "space-x-1 flex items-center",
+                        nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-slate-400 hover:text-slate-200",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex",
+                        head_cell: "text-slate-400 rounded-md w-8 font-normal text-[0.8rem]",
+                        row: "flex w-full mt-2",
+                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-slate-700 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                        day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-slate-300 hover:bg-slate-700 hover:text-slate-100 rounded-md",
+                        day_selected: "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-600 focus:text-white",
+                        day_today: "bg-slate-700 text-slate-100",
+                        day_outside: "text-slate-600 opacity-50",
+                        day_disabled: "text-slate-600 opacity-50",
+                        day_range_middle: "aria-selected:bg-slate-700 aria-selected:text-slate-100",
+                        day_hidden: "invisible",
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
