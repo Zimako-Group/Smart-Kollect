@@ -133,8 +133,8 @@ export default function SettlementsPage() {
         
         // Filter settlements to only show those created by the current agent
         const agentSettlements = allSettlements
-          .filter(settlement => settlement.agent_name === user.name)
-          .map(settlement => ({
+          .filter((settlement: any) => settlement.agent_name === user.name)
+          .map((settlement: any) => ({
             id: settlement.id,
             customerId: settlement.customer_id,
             customerName: settlement.customer_name,
