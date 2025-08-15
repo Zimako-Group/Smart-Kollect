@@ -9,9 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getAllTenants, createTenant, updateTenant, type Tenant } from "@/lib/tenant-service";
 import { Plus, Edit, Shield, Users, Globe, Calendar, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+// Dynamic import type
+type Tenant = {
+  id: string;
+  name: string;
+  subdomain: string;
+  domain?: string;
+  status: 'active' | 'inactive' | 'suspended';
+  settings: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+};
 
 export default function TenantsManagementPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -37,6 +51,8 @@ export default function TenantsManagementPage() {
   const loadTenants = async () => {
     try {
       setLoading(true);
+      // Dynamic import to avoid build-time initialization
+      const { getAllTenants } = await import('@/lib/tenant-service');
       const data = await getAllTenants();
       setTenants(data);
     } catch (error) {
@@ -53,6 +69,8 @@ export default function TenantsManagementPage() {
 
   const handleCreateTenant = async () => {
     try {
+      // Dynamic import to avoid build-time initialization
+      const { createTenant } = await import('@/lib/tenant-service');
       const newTenant = await createTenant({
         name: formData.name,
         subdomain: formData.subdomain,
@@ -84,6 +102,8 @@ export default function TenantsManagementPage() {
     if (!selectedTenant) return;
 
     try {
+      // Dynamic import to avoid build-time initialization
+      const { updateTenant } = await import('@/lib/tenant-service');
       const updatedTenant = await updateTenant(selectedTenant.id, {
         name: formData.name,
         subdomain: formData.subdomain,
