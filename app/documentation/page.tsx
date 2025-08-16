@@ -542,7 +542,7 @@ export default function DocumentationPage() {
                         features: ["Row-level security", "Role management", "Audit logging", "Data encryption"]
                       },
                       {
-                        icon: Brain,
+                        icon: Sparkles,
                         title: "AI Customer Profile Analysis",
                         description: "Intelligent customer insights powered by Anthropic Claude for optimized collection strategies.",
                         features: ["Risk score assessment", "Payment likelihood prediction", "Behavioral analysis", "Smart recommendations"]
