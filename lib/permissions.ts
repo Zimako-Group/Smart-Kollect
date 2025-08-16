@@ -13,6 +13,14 @@ export type Permission =
 
 // Role-permission mapping (fallback if database check fails)
 const rolePermissions: Record<UserRole, Permission[]> = {
+  super_admin: [
+    'view_dashboard',
+    'manage_debtors',
+    'make_calls',
+    'view_reports',
+    'manage_users',
+    'manage_settings'
+  ],
   admin: [
     'view_dashboard',
     'manage_debtors',

@@ -19,7 +19,7 @@ const ROUTE_PERMISSIONS = {
   admin: ['/admin', '/admin/dashboard', '/admin/accounts', '/admin/campaigns', '/admin/all-accounts'],
   
   // Super admin routes - requires 'super_admin' role only
-  superAdmin: ['/admin/tenants', '/admin/system']
+  superAdmin: ['/super-admin', '/admin/tenants', '/admin/system']
 };
 
 // Role hierarchy - higher roles inherit permissions from lower roles
@@ -50,18 +50,21 @@ function hasPermission(userRole: UserRole, pathname: string): boolean {
   // Super admin has access to everything
   if (userRole === 'super_admin') return true;
   
-  // Admin can access admin and agent routes
-  if (userRole === 'admin' && (
-    ROUTE_PERMISSIONS.admin.some(route => pathname.startsWith(route)) ||
-    ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))
-  )) {
-    return true;
+  // Admin can access admin and agent routes, but not super admin routes
+  if (userRole === 'admin') {
+    // Check if it's a super admin only route
+    if (ROUTE_PERMISSIONS.superAdmin.some(route => pathname.startsWith(route))) {
+      return false;
+    }
+    // Admin can access admin and agent routes
+    if (ROUTE_PERMISSIONS.admin.some(route => pathname.startsWith(route)) ||
+        ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))) {
+      return true;
+    }
   }
   
-  // Agent can only access agent routes
-  if (userRole === 'agent' && 
-    ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))
-  ) {
+  // Other roles (agent, manager, supervisor, etc.) can access agent routes
+  if (ROUTE_PERMISSIONS.agent.some(route => pathname.startsWith(route))) {
     return true;
   }
   
@@ -177,7 +180,9 @@ export async function middleware(req: NextRequest) {
       let redirectPath = '/login';
       if (userRole === 'agent') {
         redirectPath = '/user/dashboard';
-      } else if (userRole === 'admin' || userRole === 'super_admin') {
+      } else if (userRole === 'super_admin') {
+        redirectPath = '/super-admin';
+      } else if (userRole === 'admin') {
         redirectPath = '/admin';
       }
       
