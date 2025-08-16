@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
@@ -193,12 +194,26 @@ export default function DashboardLayout({
         <div className="flex flex-col h-full">
           <div className="flex items-center h-16 px-4 border-b shrink-0">
             {!collapsed && (
-              <div className="flex items-center space-x-2">
-                <CreditCard className="h-6 w-6 text-primary" />
+              <div className="flex items-center space-x-3">
+                <Image
+                  src="/images/smartkollect-logo.png"
+                  alt="SmartKollect"
+                  width={32}
+                  height={32}
+                  className="drop-shadow-lg"
+                />
                 <span className="font-bold text-lg gradient-text">SmartKollect</span>
               </div>
             )}
-            {collapsed && <CreditCard className="h-6 w-6 text-primary mx-auto" />}
+            {collapsed && (
+              <Image
+                src="/images/smartkollect-logo.png"
+                alt="SmartKollect"
+                width={32}
+                height={32}
+                className="drop-shadow-lg mx-auto"
+              />
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -331,8 +346,14 @@ export default function DashboardLayout({
         }`}
       >
         <div className="flex items-center h-16 px-4 border-b">
-          <div className="flex items-center space-x-2">
-            <CreditCard className="h-6 w-6 text-primary" />
+          <div className="flex items-center space-x-3">
+            <Image
+              src="/images/smartkollect-logo.png"
+              alt="SmartKollect"
+              width={32}
+              height={32}
+              className="drop-shadow-lg"
+            />
             <span className="font-bold text-lg gradient-text">SmartKollect</span>
           </div>
           <Button

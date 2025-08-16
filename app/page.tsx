@@ -168,14 +168,14 @@ export default function Home() {
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <DollarSign className="h-8 w-8 text-primary drop-shadow-lg" />
-                <div className="absolute inset-0 h-8 w-8 text-primary animate-pulse opacity-30"></div>
-              </div>
-              <span className="text-2xl font-bold gradient-text drop-shadow-sm">
-                SmartKollect
-              </span>
+            <div className="flex items-center">
+              <Image
+                src="/images/smartkollect-logo.png"
+                alt="SmartKollect"
+                width={120}
+                height={120}
+                className="drop-shadow-2xl hover:drop-shadow-3xl transition-all duration-300"
+              />
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <a
@@ -494,14 +494,14 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-5 gap-8 mb-12">
             <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="relative">
-                  <DollarSign className="h-8 w-8 text-primary drop-shadow-lg" />
-                  <div className="absolute inset-0 h-8 w-8 text-primary animate-pulse opacity-30"></div>
-                </div>
-                <span className="text-2xl font-bold gradient-text">
-                 SmartKollect
-                </span>
+              <div className="flex items-center mb-6">
+                <Image
+                  src="/images/smartkollect-logo.png"
+                  alt="SmartKollect"
+                  width={80}
+                  height={80}
+                  className="drop-shadow-2xl hover:drop-shadow-3xl transition-all duration-300"
+                />
               </div>
               <p className="text-muted-foreground mb-6 leading-relaxed">
                 Transforming debt collection through intelligent automation.

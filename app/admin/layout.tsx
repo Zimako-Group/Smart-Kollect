@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -114,10 +115,25 @@ export default function AdminLayout({
       >
         <div className="p-5 flex items-center justify-between border-b border-white/5 shrink-0">
           {!collapsed && (
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <Image
+                src="/images/smartkollect-logo.png"
+                alt="SmartKollect"
+                width={32}
+                height={32}
+                className="drop-shadow-lg"
+              />
               <span className="text-xl font-bold gradient-text">SmartKollect</span>
-              <span className="text-xs ml-2 text-white/60"></span>
             </div>
+          )}
+          {collapsed && (
+            <Image
+              src="/images/smartkollect-logo.png"
+              alt="SmartKollect"
+              width={32}
+              height={32}
+              className="drop-shadow-lg mx-auto"
+            />
           )}
           <button 
             onClick={toggleSidebar}
