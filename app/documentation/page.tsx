@@ -25,7 +25,9 @@ import {
   Settings,
   CreditCard,
   Bell,
-  Activity
+  Activity,
+  Brain,
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -115,6 +117,37 @@ export default function DocumentationPage() {
         API->>DB: Store call record
         DB-->>API: Confirm storage
         API-->>F: Activity logged
+  `;
+
+  const aiAnalysisFlowDiagram = `
+    sequenceDiagram
+        participant A as Agent
+        participant F as Frontend
+        participant API as API Layer
+        participant AI as Anthropic Claude
+        participant DB as Supabase
+        
+        Note over A,AI: AI Customer Profile Analysis Flow
+        A->>F: Click "Analyze Profile"
+        F->>F: Open AI Analysis Dialog
+        F->>API: POST /api/analyze-profile
+        Note over API: Prepare customer data
+        API->>DB: Fetch customer details
+        API->>DB: Fetch account history
+        API->>DB: Fetch payment history
+        DB-->>API: Return customer data
+        
+        Note over API,AI: AI Processing
+        API->>AI: Send structured prompt
+        Note over AI: Analyze customer profile<br/>Generate insights<br/>Calculate risk score
+        AI-->>API: Return structured analysis
+        
+        Note over API: Validate & format response
+        API-->>F: Return analysis results
+        F->>F: Display comprehensive insights
+        F-->>A: Show AI recommendations
+        
+        Note over A: Agent reviews insights<br/>Makes informed decisions<br/>Takes recommended actions
   `;
 
   return (
@@ -277,9 +310,10 @@ export default function DocumentationPage() {
                   </p>
 
                   <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-slate-900/50">
+                    <TabsList className="grid w-full grid-cols-3 bg-slate-900/50">
                       <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">Architecture</TabsTrigger>
                       <TabsTrigger value="dataflow" className="data-[state=active]:bg-slate-700">Data Flow</TabsTrigger>
+                      <TabsTrigger value="ai-flow" className="data-[state=active]:bg-slate-700">AI Analysis</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="overview" className="mt-6">
@@ -293,6 +327,20 @@ export default function DocumentationPage() {
                       <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
                         <h3 className="text-lg font-semibold text-slate-200 mb-4">Data Flow Sequence</h3>
                         <Mermaid chart={dataFlowDiagram} />
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="ai-flow" className="mt-6">
+                      <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                        <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                          <Brain className="h-5 w-5 text-purple-400" />
+                          AI Customer Profile Analysis Flow
+                          <Sparkles className="h-4 w-4 text-yellow-400" />
+                        </h3>
+                        <p className="text-slate-400 text-sm mb-4">
+                          Powered by Anthropic Claude-3.5-sonnet for intelligent customer insights and collection strategy recommendations.
+                        </p>
+                        <Mermaid chart={aiAnalysisFlowDiagram} />
                       </div>
                     </TabsContent>
                   </Tabs>
@@ -347,6 +395,12 @@ export default function DocumentationPage() {
                         title: "Security & Compliance",
                         description: "Enterprise-grade security with role-based access and audit trails.",
                         features: ["Row-level security", "Role management", "Audit logging", "Data encryption"]
+                      },
+                      {
+                        icon: Brain,
+                        title: "AI Customer Profile Analysis",
+                        description: "Intelligent customer insights powered by Anthropic Claude for optimized collection strategies.",
+                        features: ["Risk score assessment", "Payment likelihood prediction", "Behavioral analysis", "Smart recommendations"]
                       }
                     ].map((feature, index) => (
                       <div key={index} className="p-6 rounded-lg bg-gradient-to-br from-slate-900/50 to-slate-800/50 border border-slate-600/30">
@@ -455,6 +509,44 @@ export default function DocumentationPage() {
 }`
                           }
                         ]
+                      },
+                      {
+                        id: "ai-analysis-api",
+                        title: "AI Analysis API",
+                        endpoints: [
+                          {
+                            method: "POST",
+                            path: "/api/analyze-profile",
+                            description: "Generate AI-powered customer profile analysis using Anthropic Claude",
+                            example: `{
+  "customer": {
+    "id": "uuid",
+    "name": "John Doe",
+    "account_number": "ACC123456",
+    "balance": 15000.00,
+    "status": "active"
+  },
+  "accountHistory": [...],
+  "paymentHistory": [...]
+}
+
+Response:
+{
+  "success": true,
+  "analysis": {
+    "riskScore": 75,
+    "paymentLikelihood": "medium",
+    "recommendedStrategy": "Focus on payment plan options...",
+    "behavioralPatterns": ["Responsive to SMS", "Prefers morning calls"],
+    "communicationPreferences": ["phone", "sms"],
+    "urgencyLevel": "high",
+    "settlementRecommendations": "Consider 70% settlement...",
+    "keyInsights": ["Customer shows willingness to pay", "Previous PTP fulfilled"],
+    "nextBestActions": ["Call within 2 days", "Offer payment plan"]
+  }
+}`
+                          }
+                        ]
                       }
                     ].map((section) => (
                       <AccordionItem key={section.id} value={section.id} className="border-slate-600">
@@ -549,6 +641,13 @@ export default function DocumentationPage() {
                         features: ["Email templates", "Delivery tracking", "Analytics", "Automation"],
                         status: "Active",
                         docs: "https://docs.sendgrid.com"
+                      },
+                      {
+                        name: "Anthropic Claude",
+                        description: "Advanced AI model for intelligent customer profile analysis and insights",
+                        features: ["Risk assessment", "Behavioral analysis", "Strategy recommendations", "Natural language processing"],
+                        status: "Active",
+                        docs: "https://docs.anthropic.com"
                       }
                     ].map((integration, index) => (
                       <div key={index} className="p-6 rounded-lg bg-gradient-to-br from-slate-900/50 to-slate-800/50 border border-slate-600/30">
@@ -621,7 +720,10 @@ SENDGRID_API_KEY=your_sendgrid_key
 
 # BuzzBox Configuration
 BUZZBOX_API_URL=your_buzzbox_url
-BUZZBOX_API_KEY=your_buzzbox_key`}</code>
+BUZZBOX_API_KEY=your_buzzbox_key
+
+# AI Analysis Configuration
+ANTHROPIC_API_KEY=your_anthropic_api_key`}</code>
                         </pre>
                       </div>
                     </div>
