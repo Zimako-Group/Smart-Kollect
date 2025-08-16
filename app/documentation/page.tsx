@@ -119,6 +119,46 @@ export default function DocumentationPage() {
         API-->>F: Activity logged
   `;
 
+  const multiTenantFlowDiagram = `
+    flowchart TD
+        A[User visits subdomain] --> B{Extract subdomain}
+        B --> C[mahikeng.smartkollect.co.za]
+        B --> D[triplem.smartkollect.co.za]
+        B --> E[smartkollect.co.za]
+        
+        C --> F[Middleware validates Mahikeng tenant]
+        D --> G[Middleware validates Triple M tenant]
+        E --> H[Landing page - no tenant context]
+        
+        F --> I{User authenticated?}
+        G --> J{User authenticated?}
+        
+        I -->|No| K[Redirect to login]
+        I -->|Yes| L[Check user tenant membership]
+        J -->|No| M[Redirect to login]
+        J -->|Yes| N[Check user tenant membership]
+        
+        L --> O{User belongs to Mahikeng?}
+        N --> P{User belongs to Triple M?}
+        
+        O -->|Yes| Q[Set tenant context]
+        O -->|No| R[Redirect to correct tenant]
+        P -->|Yes| S[Set tenant context]
+        P -->|No| T[Redirect to correct tenant]
+        
+        Q --> U[Apply RLS policies]
+        S --> V[Apply RLS policies]
+        
+        U --> W[Access Mahikeng data only]
+        V --> X[Access Triple M data only]
+        
+        style C fill:#3b82f6,stroke:#1e40af,color:#fff
+        style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+        style E fill:#10b981,stroke:#059669,color:#fff
+        style W fill:#3b82f6,stroke:#1e40af,color:#fff
+        style X fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  `;
+
   const aiAnalysisFlowDiagram = `
     sequenceDiagram
         participant A as Agent
@@ -208,6 +248,7 @@ export default function DocumentationPage() {
                 <CardContent className="space-y-2">
                   {[
                     { id: 'overview', label: 'Overview', icon: FileText },
+                    { id: 'multi-tenant', label: 'Multi-Tenant', icon: Users },
                     { id: 'architecture', label: 'Architecture', icon: Layers },
                     { id: 'features', label: 'Features', icon: Zap },
                     { id: 'api', label: 'API Reference', icon: Code },
@@ -294,6 +335,110 @@ export default function DocumentationPage() {
               </Card>
             </section>
 
+            {/* Multi-Tenant Section */}
+            <section id="multi-tenant" className="scroll-mt-8">
+              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-slate-200 flex items-center gap-2">
+                    <Users className="h-6 w-6 text-purple-400" />
+                    Multi-Tenant Architecture
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-slate-300 text-lg leading-relaxed">
+                    SmartKollect implements a robust multi-tenant architecture with subdomain-based tenant isolation. 
+                    Each organization operates in a completely isolated environment while sharing the same infrastructure.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-green-400" />
+                        Current Tenants
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-blue-900/30 to-blue-800/30 border border-blue-700/30">
+                          <h4 className="font-semibold text-blue-300 mb-1">Mahikeng Local Municipality</h4>
+                          <p className="text-slate-400 text-sm mb-2">Municipal debt collection operations</p>
+                          <Badge className="bg-blue-600/20 text-blue-300 border-blue-600/30">
+                            mahikeng.smartkollect.co.za
+                          </Badge>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-purple-900/30 to-purple-800/30 border border-purple-700/30">
+                          <h4 className="font-semibold text-purple-300 mb-1">Triple M Financial Services</h4>
+                          <p className="text-slate-400 text-sm mb-2">Commercial debt recovery solutions</p>
+                          <Badge className="bg-purple-600/20 text-purple-300 border-purple-600/30">
+                            triplem.smartkollect.co.za
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <Layers className="h-5 w-5 text-orange-400" />
+                        Key Features
+                      </h3>
+                      <div className="space-y-3">
+                        {[
+                          { title: 'Data Isolation', desc: 'Complete separation of tenant data using RLS policies' },
+                          { title: 'Subdomain Routing', desc: 'Automatic tenant detection via subdomain' },
+                          { title: 'Shared Infrastructure', desc: 'Cost-effective resource utilization' },
+                          { title: 'Scalable Design', desc: 'Easy addition of new tenants' },
+                        ].map((feature, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-slate-900/50">
+                            <div className="w-2 h-2 rounded-full bg-orange-400 mt-2 flex-shrink-0" />
+                            <div>
+                              <h5 className="font-medium text-slate-200">{feature.title}</h5>
+                              <p className="text-sm text-slate-400">{feature.desc}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-cyan-400" />
+                      Multi-Tenant Flow Diagram
+                    </h3>
+                    <Mermaid chart={multiTenantFlowDiagram} />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-700/30">
+                      <h4 className="font-semibold text-green-300 mb-2 flex items-center gap-2">
+                        <Database className="h-4 w-4" />
+                        Database Level
+                      </h4>
+                      <p className="text-slate-400 text-sm">
+                        Row-Level Security (RLS) policies ensure complete data isolation between tenants at the database level.
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-blue-900/30 to-blue-800/30 border border-blue-700/30">
+                      <h4 className="font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Application Level
+                      </h4>
+                      <p className="text-slate-400 text-sm">
+                        Middleware validates tenant membership and sets context for all database operations.
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-purple-900/30 to-purple-800/30 border border-purple-700/30">
+                      <h4 className="font-semibold text-purple-300 mb-2 flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        User Level
+                      </h4>
+                      <p className="text-slate-400 text-sm">
+                        Users are automatically routed to their tenant subdomain and can only access their organization's data.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
             {/* Architecture Section */}
             <section id="architecture" className="scroll-mt-8">
               <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
@@ -338,7 +483,7 @@ export default function DocumentationPage() {
                           <Sparkles className="h-4 w-4 text-yellow-400" />
                         </h3>
                         <p className="text-slate-400 text-sm mb-4">
-                          Powered by Anthropic Claude-3.5-sonnet for intelligent customer insights and collection strategy recommendations.
+                          Powered by Anthropic Claude-4-sonnet for intelligent customer insights and collection strategy recommendations.
                         </p>
                         <Mermaid chart={aiAnalysisFlowDiagram} />
                       </div>
