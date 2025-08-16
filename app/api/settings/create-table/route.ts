@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient';
+import { supabase, getSupabaseAdminClient } from '@/lib/supabaseClient';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
     }
     
     // Get user role from profile using admin client to bypass RLS
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if system_settings table exists
-    const { data: tableExists, error: checkError } = await supabaseAdmin
+    const { data: tableExists, error: checkError } = await adminClient
       .from('system_settings')
       .select('id')
       .limit(1);

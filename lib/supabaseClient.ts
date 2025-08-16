@@ -149,7 +149,9 @@ export const getSupabaseClient = (): SupabaseClient => {
 
 export const getSupabaseAdminClient = (): SupabaseClient => {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
-  if (!_supabaseAdminInstance && supabaseServiceKey) {
+  
+  // For server-side, we need to create the admin client even if we don't have cached instance
+  if (!_supabaseAdminInstance && supabaseServiceKey && supabaseUrl) {
     _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -160,13 +162,54 @@ export const getSupabaseAdminClient = (): SupabaseClient => {
       }
     });
   }
+  
+  // If we still don't have admin client, create one with service key if available
+  if (!_supabaseAdminInstance && supabaseServiceKey) {
+    const url = supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    if (url) {
+      _supabaseAdminInstance = createClient(url, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        db: {
+          schema: 'public'
+        }
+      });
+    }
+  }
+  
   return _supabaseAdminInstance || getSupabaseClient();
 };
 
 // Export the singleton instances
 // Lazy initialization to avoid issues during build time
 export const supabase = typeof window !== 'undefined' ? getSupabaseClient() : ({} as SupabaseClient);
-export const supabaseAdmin = typeof window !== 'undefined' ? getSupabaseAdminClient() : ({} as SupabaseClient);
+
+// For supabaseAdmin, we need to create it properly on server-side too
+export const supabaseAdmin = (() => {
+  if (typeof window !== 'undefined') {
+    return getSupabaseAdminClient();
+  } else {
+    // Server-side: create admin client if we have the service key
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    
+    if (serviceKey && url) {
+      return createClient(url, serviceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        db: {
+          schema: 'public'
+        }
+      });
+    }
+    
+    return {} as SupabaseClient;
+  }
+})();
 
 // Auth functions
 export const supabaseAuth = {

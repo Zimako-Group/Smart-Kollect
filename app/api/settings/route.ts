@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient';
+import { supabase, getSupabaseAdminClient } from '@/lib/supabaseClient';
 import { getSettingsByCategory, updateSettings } from '@/lib/settings-service';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
     
     if (!category) {
       // Get all settings
-      const { data, error } = await supabaseAdmin
+      const adminClient = getSupabaseAdminClient();
+      const { data, error } = await adminClient
         .from('system_settings')
         .select('*');
         
@@ -81,7 +82,8 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Get user role from profile using the admin client to bypass RLS
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)

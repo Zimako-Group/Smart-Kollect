@@ -1,5 +1,5 @@
 // lib/settings-service.ts
-import { supabase, supabaseAdmin } from './supabaseClient';
+import { supabase, getSupabaseAdminClient } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SystemSetting {
@@ -40,11 +40,12 @@ const prepareValueForStorage = (value: any): any => {
 export const initializeSettingsTable = async () => {
   try {
     // Check if the table exists by trying to select from it
-    const { error } = await supabaseAdmin.from('system_settings').select('id').limit(1);
+    const adminClient = getSupabaseAdminClient();
+    const { error } = await adminClient.from('system_settings').select('id').limit(1);
     
     if (error && error.code === '42P01') { // Table doesn't exist
       // Create the table using SQL (requires service role)
-      const { error: createError } = await supabaseAdmin.rpc('create_system_settings_table');
+      const { error: createError } = await adminClient.rpc('create_system_settings_table');
       
       if (createError) {
         console.error('Error creating system_settings table:', createError);
@@ -154,7 +155,8 @@ export const updateSetting = async (settingId: string, value: string | boolean |
   try {
     const preparedValue = prepareValueForStorage(value);
     
-    const { error } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { error } = await adminClient
       .from('system_settings')
       .update({ value: preparedValue })
       .eq('id', settingId);
@@ -175,8 +177,9 @@ export const updateSetting = async (settingId: string, value: string | boolean |
 export const updateSettings = async (settings: { id: string; value: string | boolean | number | object }[]): Promise<boolean> => {
   try {
     // Use a transaction to update all settings
+    const adminClient = getSupabaseAdminClient();
     const updates = settings.map(setting => 
-      supabaseAdmin
+      adminClient
         .from('system_settings')
         .update({ value: prepareValueForStorage(setting.value) })
         .eq('id', setting.id)
@@ -185,7 +188,7 @@ export const updateSettings = async (settings: { id: string; value: string | boo
     const results = await Promise.all(updates);
     
     // Check for any errors
-    const errors = results.filter(result => result.error);
+    const errors = results.filter((result: any) => result.error);
     if (errors.length > 0) {
       console.error('Errors updating settings:', errors);
       return false;
@@ -207,7 +210,8 @@ export const insertSetting = async (setting: Omit<SystemSetting, 'id'>): Promise
       options: setting.options ? setting.options.map(prepareValueForStorage) : undefined
     };
     
-    const { data, error } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { data, error } = await adminClient
       .from('system_settings')
       .insert([preparedSetting])
       .select('id')
@@ -236,7 +240,8 @@ export async function insertDefaultSettings(category: string, settings: Omit<Sys
       options: setting.options ? setting.options.map(prepareValueForStorage) : undefined
     }));
     
-    const { error } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { error } = await adminClient
       .from('system_settings')
       .insert(settingsWithIds);
     
@@ -256,7 +261,8 @@ export async function insertDefaultSettings(category: string, settings: Omit<Sys
 export async function createSystemSettingsTable(): Promise<boolean> {
   try {
     // Check if system_settings table exists
-    const { data: tableExists, error: checkError } = await supabaseAdmin
+    const adminClient = getSupabaseAdminClient();
+    const { data: tableExists, error: checkError } = await adminClient
       .from('system_settings')
       .select('id')
       .limit(1);
