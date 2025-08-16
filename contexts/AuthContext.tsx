@@ -84,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!currentPath) currentPath = window.location.pathname;
       
       switch (role) {
+        case 'super_admin':
+          return currentPath.startsWith('/super-admin');
         case 'admin':
           return currentPath.startsWith('/admin');
         case 'system':
@@ -108,6 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     switch (role) {
+      case 'super_admin':
+        console.log("[AUTH] Redirecting super admin to /super-admin");
+        router.push('/super-admin');
+        break;
       case 'admin':
         console.log("[AUTH] Redirecting admin to /admin/dashboard");
         router.push('/admin/dashboard');

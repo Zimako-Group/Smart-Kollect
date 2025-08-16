@@ -57,7 +57,7 @@ export default function SuperAdminLayout({
   const [darkMode, setDarkMode] = useState(true);
 
   return (
-    <div className={cn("min-h-screen", darkMode ? "dark bg-gray-950" : "bg-gray-50")}>
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950">
       {/* Mobile sidebar */}
       <div className={cn(
         "fixed inset-0 z-50 lg:hidden",
@@ -236,7 +236,7 @@ export default function SuperAdminLayout({
         </header>
 
         {/* Page content */}
-        <main className="flex-1">
+        <main className="flex-1 bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-indigo-950/50 min-h-screen">
           {children}
         </main>
       </div>
