@@ -403,7 +403,7 @@ export default function TestAllocationPage() {
   };
 
   return (
-    <div className="container py-10 space-y-8">
+    <div className="w-full max-w-none py-10 space-y-8 px-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Account Allocation</h1>
         <Button 

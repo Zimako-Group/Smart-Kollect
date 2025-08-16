@@ -410,7 +410,7 @@ export default function SettlementsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full max-w-none py-6 space-y-6 px-6">
       {/* Settlement Creation Dialog */}
       <Dialog open={showNewSettlementDialog} onOpenChange={setShowNewSettlementDialog}>
         <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-800 text-slate-100">

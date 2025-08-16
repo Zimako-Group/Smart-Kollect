@@ -35,7 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HelpPage() {
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="w-full max-w-none py-8 space-y-6 px-6">
       {/* Hero Section */}
       <div className="relative mb-12 rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 z-0"></div>

@@ -363,7 +363,7 @@ export default function CustomersPage() {
   };
   
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full max-w-none py-6 space-y-6 px-6">
       {/* Page header */}
       <div className="flex justify-between items-center">
         <div>

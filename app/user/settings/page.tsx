@@ -379,7 +379,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full max-w-none py-6 space-y-6 px-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
