@@ -13,10 +13,10 @@ const ROUTE_PERMISSIONS = {
   public: ['/login', '/', '/api/auth', '/_next', '/favicon.ico', '/sounds', '.mp3', '.svg'],
   
   // Agent routes - requires 'agent' role
-  agent: ['/user/dashboard', '/user/customers', '/user/ptp', '/user/reports', '/user/settings'],
+  agent: ['/user'],
   
   // Admin routes - requires 'admin' or 'super_admin' role
-  admin: ['/admin'],
+  admin: ['/admin', '/admin/dashboard', '/admin/accounts', '/admin/campaigns', '/admin/all-accounts'],
   
   // Super admin routes - requires 'super_admin' role only
   superAdmin: ['/admin/tenants', '/admin/system']
@@ -25,11 +25,15 @@ const ROUTE_PERMISSIONS = {
 // Role hierarchy - higher roles inherit permissions from lower roles
 const ROLE_HIERARCHY = {
   'agent': 0,
-  'admin': 1,
-  'super_admin': 2
+  'manager': 1,
+  'supervisor': 2,
+  'indigent clerk': 3,
+  'system': 4,
+  'admin': 5,
+  'super_admin': 6
 };
 
-type UserRole = 'agent' | 'admin' | 'super_admin';
+type UserRole = 'agent' | 'admin' | 'super_admin' | 'manager' | 'supervisor' | 'indigent clerk' | 'system';
 
 // Check if user has permission to access route
 function hasPermission(userRole: UserRole, pathname: string): boolean {
@@ -43,7 +47,7 @@ function hasPermission(userRole: UserRole, pathname: string): boolean {
   // Check role-specific routes
   const userRoleLevel = ROLE_HIERARCHY[userRole];
   
-  // Super admin can access everything
+  // Super admin has access to everything
   if (userRole === 'super_admin') return true;
   
   // Admin can access admin and agent routes

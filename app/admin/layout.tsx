@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, type UserRole } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -48,10 +48,10 @@ export default function AdminLayout({
     if (user === null) {
       // User is definitely not logged in
       router.push("/login");
-    } else if (user && user.role !== "admin") {
+    } else if (user && user.role !== "admin" && user.role !== "super_admin") {
       // User is logged in but not an admin
-      router.push("/");
-    } else if (user && user.role === "admin") {
+      router.push("/user/dashboard");
+    } else if (user && (user.role === "admin" || user.role === "super_admin")) {
       // User is an admin, mark auth as checked
       setAuthChecked(true);
     }
@@ -80,7 +80,7 @@ export default function AdminLayout({
   }
   
   // Don't render anything if user is not an admin
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
     return null;
   }
 

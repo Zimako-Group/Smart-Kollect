@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 
 // Define user roles
-export type UserRole = 'admin' | 'agent' | 'manager' | 'supervisor' | 'indigent clerk' | 'system';
+export type UserRole = 'admin' | 'agent' | 'manager' | 'supervisor' | 'indigent clerk' | 'system' | 'super_admin';
 
 // Define user type
 export type User = {
@@ -74,9 +74,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Redirect based on user role - wrapped in useCallback to prevent recreation on each render
-  const redirectBasedOnRole = useCallback((role: UserRole) => {
+  const redirectBasedOnRole = useCallback((role: UserRole, currentPath?: string) => {
     console.log("[AUTH] redirectBasedOnRole called with role:", role);
     console.log("[AUTH] Current window location:", window.location.href);
+    console.log("[AUTH] Current path:", currentPath);
+    
+    // Check if user is already on a valid page for their role
+    const isOnValidPage = () => {
+      if (!currentPath) currentPath = window.location.pathname;
+      
+      switch (role) {
+        case 'admin':
+          return currentPath.startsWith('/admin');
+        case 'system':
+          return currentPath.startsWith('/metrics-dashboard');
+        case 'agent':
+          return currentPath.startsWith('/user');
+        case 'manager':
+          return currentPath.startsWith('/manager');
+        case 'supervisor':
+          return currentPath.startsWith('/supervisor');
+        case 'indigent clerk':
+          return currentPath.startsWith('/indigent-clerk');
+        default:
+          return false;
+      }
+    };
+    
+    // Only redirect if user is not already on a valid page
+    if (isOnValidPage()) {
+      console.log("[AUTH] User already on valid page for role, skipping redirect");
+      return;
+    }
     
     switch (role) {
       case 'admin':
@@ -89,8 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         break;
       case 'agent':
         console.log("[AUTH] Redirecting agent to /user/dashboard");
-        console.log("[AUTH] Using window.location.href for redirect");
-        window.location.href = '/user/dashboard';
+        router.push('/user/dashboard');
         break;
       case 'manager':
         console.log("[AUTH] Redirecting manager to /manager/dashboard");
@@ -216,10 +244,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       setUser(userProfile);
       
-      // Redirect based on role with a small delay to ensure state is set
-      console.log('[AUTH] Scheduling redirect for role:', userProfile.role);
+      // Only redirect during login, not during page refresh/initialization
+      console.log('[AUTH] Login successful, redirecting to appropriate dashboard');
       setTimeout(() => {
-        console.log('[AUTH] Executing delayed redirect...');
         redirectBasedOnRole(userProfile.role);
       }, 50);
       
@@ -286,6 +313,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (mounted && userProfile) {
             console.log('[AUTH] Setting user from profile');
             setUser(userProfile);
+            // Don't redirect during initialization - user is already on a page
           } else {
             console.log('[AUTH] No user profile found for session');
             setUser(null);
