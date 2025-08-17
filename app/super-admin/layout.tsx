@@ -57,24 +57,24 @@ export default function SuperAdminLayout({
   const [darkMode, setDarkMode] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-950">
       {/* Mobile sidebar */}
       <div className={cn(
         "fixed inset-0 z-50 lg:hidden",
         sidebarOpen ? "block" : "hidden"
       )}>
         <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900">
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b from-gray-900 via-gray-800 to-slate-900">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Globe className="h-8 w-8 text-purple-200" />
-                <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 animate-pulse" />
+                <Globe className="h-8 w-8 text-gray-300" />
+                <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-blue-400 animate-pulse" />
               </div>
               <span className="text-xl font-bold text-white">Super Admin</span>
             </div>
             <button onClick={() => setSidebarOpen(false)}>
-              <X className="h-6 w-6 text-purple-200" />
+              <X className="h-6 w-6 text-gray-300" />
             </button>
           </div>
           <nav className="flex-1 space-y-1 px-3 py-4">
@@ -88,16 +88,16 @@ export default function SuperAdminLayout({
                     "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                     isActive
                       ? "bg-white/20 text-white shadow-lg backdrop-blur-sm"
-                      : "text-purple-100 hover:bg-white/10 hover:text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   <item.icon className={cn(
                     "h-5 w-5 transition-transform group-hover:scale-110",
-                    isActive ? "text-yellow-400" : "text-purple-200"
+                    isActive ? "text-blue-400" : "text-gray-400"
                   )} />
                   {item.name}
                   {isActive && (
-                    <div className="ml-auto h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                    <div className="ml-auto h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
                   )}
                 </Link>
               );
@@ -108,16 +108,16 @@ export default function SuperAdminLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-grow flex-col overflow-y-auto bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 shadow-2xl">
+        <div className="flex flex-grow flex-col overflow-y-auto bg-gradient-to-b from-gray-900 via-gray-800 to-slate-900 shadow-2xl">
           <div className="flex h-16 items-center px-6 backdrop-blur-sm bg-black/10">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Globe className="h-9 w-9 text-purple-200" />
-                <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 animate-pulse" />
+                <Globe className="h-9 w-9 text-gray-300" />
+                <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-blue-400 animate-pulse" />
               </div>
               <div>
                 <span className="text-xl font-bold text-white">Super Admin</span>
-                <p className="text-xs text-purple-200">Global Control Center</p>
+                <p className="text-xs text-gray-400">Global Control Center</p>
               </div>
             </div>
           </div>
@@ -133,27 +133,27 @@ export default function SuperAdminLayout({
                     "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-white/20 text-white shadow-lg backdrop-blur-sm"
-                      : "text-purple-100 hover:bg-white/10 hover:text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   <item.icon className={cn(
                     "h-5 w-5 transition-transform group-hover:scale-110",
-                    isActive ? "text-yellow-400" : "text-purple-200"
+                    isActive ? "text-blue-400" : "text-gray-400"
                   )} />
                   {item.name}
                   {isActive && (
-                    <div className="ml-auto h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                    <div className="ml-auto h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
                   )}
                 </Link>
               );
             })}
           </nav>
-          <div className="border-t border-purple-700 p-4">
-            <div className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 p-4">
+          <div className="border-t border-gray-700 p-4">
+            <div className="rounded-lg bg-gradient-to-r from-gray-700 to-slate-700 p-4">
               <p className="text-sm font-medium text-white">System Status</p>
               <div className="mt-2 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-xs text-purple-100">All systems operational</p>
+                <p className="text-xs text-gray-300">All systems operational</p>
               </div>
             </div>
           </div>
@@ -163,21 +163,21 @@ export default function SuperAdminLayout({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top header */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-purple-800/20 bg-white/5 backdrop-blur-xl px-6">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-gray-800/20 bg-white/5 backdrop-blur-xl px-6">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden"
           >
-            <Menu className="h-6 w-6 text-purple-400" />
+            <Menu className="h-6 w-6 text-gray-400" />
           </button>
           
           <div className="flex flex-1 items-center gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search tenants, users, settings..."
-                className="w-full rounded-lg bg-purple-900/20 pl-10 pr-4 py-2 text-sm text-purple-100 placeholder-purple-400 border border-purple-700/30 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="w-full rounded-lg bg-gray-900/20 pl-10 pr-4 py-2 text-sm text-gray-100 placeholder-gray-400 border border-gray-700/30 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
@@ -185,12 +185,12 @@ export default function SuperAdminLayout({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="rounded-lg p-2 text-purple-400 hover:bg-purple-900/20 transition-colors"
+              className="rounded-lg p-2 text-gray-400 hover:bg-gray-900/20 transition-colors"
             >
               {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
             
-            <button className="relative rounded-lg p-2 text-purple-400 hover:bg-purple-900/20 transition-colors">
+            <button className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-900/20 transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             </button>
@@ -198,31 +198,31 @@ export default function SuperAdminLayout({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10 border-2 border-purple-500">
+                  <Avatar className="h-10 w-10 border-2 border-blue-500">
                     <AvatarImage src={user?.avatar} alt={user?.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-purple-600 to-indigo-600 text-white">
+                    <AvatarFallback className="bg-gradient-to-br from-gray-600 to-slate-600 text-white">
                       {user?.name?.charAt(0) || 'SA'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-purple-950 border-purple-800" align="end">
-                <DropdownMenuLabel className="text-purple-100">
+              <DropdownMenuContent className="w-56 bg-gray-950 border-gray-800" align="end">
+                <DropdownMenuLabel className="text-gray-100">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{user?.name || 'Super Admin'}</p>
-                    <p className="text-xs text-purple-400">{user?.email}</p>
+                    <p className="text-xs text-gray-400">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-purple-800" />
-                <DropdownMenuItem className="text-purple-100 hover:bg-purple-900 hover:text-white">
+                <DropdownMenuSeparator className="bg-gray-800" />
+                <DropdownMenuItem className="text-gray-100 hover:bg-gray-900 hover:text-white">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-purple-100 hover:bg-purple-900 hover:text-white">
+                <DropdownMenuItem className="text-gray-100 hover:bg-gray-900 hover:text-white">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-purple-800" />
+                <DropdownMenuSeparator className="bg-gray-800" />
                 <DropdownMenuItem 
                   onClick={logout}
                   className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
@@ -235,9 +235,11 @@ export default function SuperAdminLayout({
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-indigo-950/50 min-h-screen">
-          {children}
+        {/* Main content area */}
+        <main className="flex-1 bg-gradient-to-br from-gray-950 via-gray-900 to-slate-950 min-h-screen">
+          <div className="p-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
