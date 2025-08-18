@@ -1,12 +1,14 @@
 // app/user/settings/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Bell,
@@ -150,90 +152,6 @@ const appearanceFormSchema = z.object({
   compactMode: z.boolean(),
 });
 
-// Mock user data
-const userData = {
-  id: "user-001",
-  name: "Thabo Mokoena",
-  email: "thabo.mokoena@zimako.co.za",
-  phone: "+27 73 123 4567",
-  jobTitle: "Senior Debt Collection Agent",
-  avatar: "/avatars/thabo.png",
-  bio: "Experienced debt collection professional with 8+ years in the financial services industry. Specialized in high-value debt recovery and negotiation.",
-  language: "en",
-  timezone: "Africa/Johannesburg",
-  role: "agent",
-  team: "Financial Services",
-  joinDate: "2022-05-15",
-  lastActive: "2025-03-09T14:30:00",
-  twoFactorEnabled: true,
-  notifications: {
-    emailNotifications: true,
-    smsNotifications: true,
-    pushNotifications: false,
-    paymentReminders: true,
-    newDebtorAssignments: true,
-    campaignUpdates: true,
-    systemAnnouncements: true,
-    teamMessages: true,
-  },
-  appearance: {
-    theme: "system",
-    fontSize: "medium",
-    colorScheme: "default",
-    reducedMotion: false,
-    compactMode: false,
-  },
-  stats: {
-    assignedDebtors: 412,
-    activeCampaigns: 3,
-    collectionRate: 32,
-    totalCollected: 4250000,
-    callsMade: 1876,
-    successfulCalls: 945,
-  },
-  apiKeys: [
-    {
-      id: "key-001",
-      name: "Mobile App",
-      key: "••••••••••••••••",
-      created: "2024-11-10T09:00:00",
-      lastUsed: "2025-03-08T16:45:00",
-    },
-    {
-      id: "key-002",
-      name: "Personal Integration",
-      key: "••••••••••••••••",
-      created: "2025-01-22T14:30:00",
-      lastUsed: "2025-03-07T11:20:00",
-    },
-  ],
-  sessions: [
-    {
-      id: "session-001",
-      device: "Windows PC - Chrome",
-      ip: "196.25.XX.XX",
-      location: "Johannesburg, South Africa",
-      lastActive: "2025-03-09T14:30:00",
-      current: true,
-    },
-    {
-      id: "session-002",
-      device: "iPhone 15 - Safari",
-      ip: "105.12.XX.XX",
-      location: "Pretoria, South Africa",
-      lastActive: "2025-03-09T08:15:00",
-      current: false,
-    },
-    {
-      id: "session-003",
-      device: "MacBook Pro - Firefox",
-      ip: "196.25.XX.XX",
-      location: "Johannesburg, South Africa",
-      lastActive: "2025-03-08T19:45:00",
-      current: false,
-    },
-  ],
-};
 
 // Format date
 const formatDate = (dateString: string) => {
@@ -271,18 +189,34 @@ export default function SettingsPage() {
     useState(false);
   const [newApiKeyName, setNewApiKeyName] = useState("");
   const [generatedApiKey, setGeneratedApiKey] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get user data from hook
+  const {
+    profile,
+    stats,
+    apiKeys,
+    sessions,
+    isLoading,
+    error,
+    updateProfile,
+    changePassword,
+    createApiKey,
+    revokeApiKey,
+    endSession
+  } = useUserProfile();
 
   // Profile form
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone,
-      jobTitle: userData.jobTitle,
-      bio: userData.bio,
-      language: userData.language,
-      timezone: userData.timezone,
+      name: "",
+      email: "",
+      phone: "",
+      jobTitle: "",
+      bio: "",
+      language: "en",
+      timezone: "Africa/Johannesburg",
     },
   });
 
@@ -300,14 +234,14 @@ export default function SettingsPage() {
   const notificationForm = useForm<z.infer<typeof notificationFormSchema>>({
     resolver: zodResolver(notificationFormSchema),
     defaultValues: {
-      emailNotifications: userData.notifications.emailNotifications,
-      smsNotifications: userData.notifications.smsNotifications,
-      pushNotifications: userData.notifications.pushNotifications,
-      paymentReminders: userData.notifications.paymentReminders,
-      newDebtorAssignments: userData.notifications.newDebtorAssignments,
-      campaignUpdates: userData.notifications.campaignUpdates,
-      systemAnnouncements: userData.notifications.systemAnnouncements,
-      teamMessages: userData.notifications.teamMessages,
+      emailNotifications: true,
+      smsNotifications: true,
+      pushNotifications: false,
+      paymentReminders: true,
+      newDebtorAssignments: true,
+      campaignUpdates: true,
+      systemAnnouncements: true,
+      teamMessages: true,
     },
   });
 
@@ -315,68 +249,230 @@ export default function SettingsPage() {
   const appearanceForm = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues: {
-      theme: userData.appearance.theme as "light" | "dark" | "system",
-      fontSize: userData.appearance.fontSize as "small" | "medium" | "large",
-      colorScheme: userData.appearance.colorScheme as
+      theme: "system" as "light" | "dark" | "system",
+      fontSize: "medium" as "small" | "medium" | "large",
+      colorScheme: "default" as
         | "default"
         | "blue"
         | "green"
         | "purple"
         | "orange",
-      reducedMotion: userData.appearance.reducedMotion,
-      compactMode: userData.appearance.compactMode,
+      reducedMotion: false,
+      compactMode: false,
     },
   });
 
+  // Update forms when profile data loads
+  useEffect(() => {
+    if (profile) {
+      profileForm.reset({
+        name: profile.full_name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        jobTitle: profile.job_title || "",
+        bio: profile.bio || "",
+        language: profile.language || "en",
+        timezone: profile.timezone || "Africa/Johannesburg",
+      });
+
+      if (profile.notification_preferences) {
+        notificationForm.reset(profile.notification_preferences);
+      }
+
+      if (profile.appearance_preferences) {
+        appearanceForm.reset(profile.appearance_preferences);
+      }
+    }
+  }, [profile, profileForm, notificationForm, appearanceForm]);
+
   // Form submission handlers
-  const onProfileSubmit = (data: z.infer<typeof profileFormSchema>) => {
-    console.log("Profile form submitted:", data);
-    setShowSuccessAlert(true);
-    setTimeout(() => setShowSuccessAlert(false), 3000);
+  const onProfileSubmit = async (data: z.infer<typeof profileFormSchema>) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await updateProfile({
+        full_name: data.name,
+        email: data.email,
+        phone: data.phone,
+        job_title: data.jobTitle,
+        bio: data.bio,
+        language: data.language,
+        timezone: data.timezone,
+      });
+
+      if (result.success) {
+        toast.success("Profile updated successfully!");
+        setShowSuccessAlert(true);
+        setTimeout(() => setShowSuccessAlert(false), 3000);
+      } else {
+        toast.error(result.error || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const onSecuritySubmit = (data: z.infer<typeof securityFormSchema>) => {
-    console.log("Security form submitted:", data);
-    setShowSuccessAlert(true);
-    setTimeout(() => setShowSuccessAlert(false), 3000);
-    securityForm.reset({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+  const onSecuritySubmit = async (data: z.infer<typeof securityFormSchema>) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await changePassword(data.currentPassword, data.newPassword);
+
+      if (result.success) {
+        toast.success("Password changed successfully!");
+        setShowSuccessAlert(true);
+        setTimeout(() => setShowSuccessAlert(false), 3000);
+        securityForm.reset({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        toast.error(result.error || "Failed to change password");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const onNotificationSubmit = (
+  const onNotificationSubmit = async (
     data: z.infer<typeof notificationFormSchema>
   ) => {
-    console.log("Notification form submitted:", data);
-    setShowSuccessAlert(true);
-    setTimeout(() => setShowSuccessAlert(false), 3000);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await updateProfile({
+        notification_preferences: data,
+      });
+
+      if (result.success) {
+        toast.success("Notification preferences updated!");
+        setShowSuccessAlert(true);
+        setTimeout(() => setShowSuccessAlert(false), 3000);
+      } else {
+        toast.error(result.error || "Failed to update notifications");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const onAppearanceSubmit = (data: z.infer<typeof appearanceFormSchema>) => {
-    console.log("Appearance form submitted:", data);
-    setTheme(data.theme);
-    setShowSuccessAlert(true);
-    setTimeout(() => setShowSuccessAlert(false), 3000);
+  const onAppearanceSubmit = async (data: z.infer<typeof appearanceFormSchema>) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await updateProfile({
+        appearance_preferences: data,
+      });
+
+      if (result.success) {
+        setTheme(data.theme);
+        toast.success("Appearance preferences updated!");
+        setShowSuccessAlert(true);
+        setTimeout(() => setShowSuccessAlert(false), 3000);
+      } else {
+        toast.error(result.error || "Failed to update appearance");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Generate API key
-  const handleGenerateApiKey = () => {
+  const handleGenerateApiKey = async () => {
     if (!newApiKeyName) return;
 
-    // Generate a random API key (this is just for demonstration)
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < 32; i++) {
-      result += characters.charAt(
-        Math.floor(Math.random() * characters.length)
-      );
+    try {
+      const result = await createApiKey(newApiKeyName);
+      
+      if (result.success && result.key) {
+        setGeneratedApiKey(result.key);
+        toast.success("API key created successfully!");
+      } else {
+        toast.error(result.error || "Failed to create API key");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
     }
-
-    setGeneratedApiKey(result);
   };
+
+  // Handle API key revoke
+  const handleRevokeApiKey = async (keyId: string) => {
+    try {
+      const result = await revokeApiKey(keyId);
+      
+      if (result.success) {
+        toast.success("API key revoked successfully!");
+      } else {
+        toast.error(result.error || "Failed to revoke API key");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  // Handle session end
+  const handleEndSession = async (sessionId: string) => {
+    try {
+      const result = await endSession(sessionId);
+      
+      if (result.success) {
+        toast.success("Session ended successfully!");
+      } else {
+        toast.error(result.error || "Failed to end session");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-none py-6 space-y-6 px-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="w-full max-w-none py-6 space-y-6 px-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if no profile data
+  if (!profile) {
+    return (
+      <div className="w-full max-w-none py-6 space-y-6 px-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">No profile data available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-none py-6 space-y-6 px-6">
@@ -389,15 +485,15 @@ export default function SettingsPage() {
         </div>
         <div className="flex items-center space-x-2">
           <Avatar className="h-10 w-10 border">
-            <AvatarImage src={userData.avatar} alt={userData.name} />
+            <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
             <AvatarFallback>
-              {userData.name.substring(0, 2).toUpperCase()}
+              {profile.full_name?.substring(0, 2).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{userData.name}</div>
+            <div className="font-medium">{profile.full_name}</div>
             <div className="text-sm text-muted-foreground">
-              {userData.email}
+              {profile.email}
             </div>
           </div>
         </div>
@@ -489,7 +585,7 @@ export default function SettingsPage() {
                     Assigned Debtors
                   </span>
                   <span className="font-medium">
-                    {userData.stats.assignedDebtors}
+                    {stats?.assignedDebtors || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -497,7 +593,7 @@ export default function SettingsPage() {
                     Active Campaigns
                   </span>
                   <span className="font-medium">
-                    {userData.stats.activeCampaigns}
+                    {stats?.activeCampaigns || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -505,7 +601,7 @@ export default function SettingsPage() {
                     Collection Rate
                   </span>
                   <span className="font-medium">
-                    {userData.stats.collectionRate}%
+                    {stats?.collectionRate || 0}%
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -513,7 +609,7 @@ export default function SettingsPage() {
                     Total Collected
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(userData.stats.totalCollected)}
+                    {formatCurrency(stats?.totalCollected || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -521,7 +617,7 @@ export default function SettingsPage() {
                     Calls Made
                   </span>
                   <span className="font-medium">
-                    {userData.stats.callsMade}
+                    {stats?.callsMade || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -529,7 +625,7 @@ export default function SettingsPage() {
                     Successful Calls
                   </span>
                   <span className="font-medium">
-                    {userData.stats.successfulCalls}
+                    {stats?.successfulCalls || 0}
                   </span>
                 </div>
               </div>
@@ -575,11 +671,11 @@ export default function SettingsPage() {
                       <div className="flex flex-col items-center space-y-2">
                         <Avatar className="h-24 w-24 border">
                           <AvatarImage
-                            src={userData.avatar}
-                            alt={userData.name}
+                            src={profile.avatar_url}
+                            alt={profile.full_name}
                           />
                           <AvatarFallback>
-                            {userData.name.substring(0, 2).toUpperCase()}
+                            {profile.full_name?.substring(0, 2).toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <Button variant="outline" size="sm">
@@ -842,22 +938,22 @@ export default function SettingsPage() {
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="twoFactor"
-                            checked={userData.twoFactorEnabled}
+                            checked={profile.two_factor_enabled || false}
                           />
                           <Label htmlFor="twoFactor">
-                            {userData.twoFactorEnabled ? "Enabled" : "Disabled"}
+                            {profile.two_factor_enabled ? "Enabled" : "Disabled"}
                           </Label>
                         </div>
                       </div>
-                      {userData.twoFactorEnabled && (
+                      {profile.two_factor_enabled && (
                         <Button variant="outline">Reconfigure 2FA</Button>
                       )}
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit">
+                      <Button type="submit" disabled={isSubmitting}>
                         <Save className="mr-2 h-4 w-4" />
-                        Save Changes
+                        {isSubmitting ? "Saving..." : "Save Changes"}
                       </Button>
                     </div>
                   </form>
@@ -1076,9 +1172,9 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit">
+                      <Button type="submit" disabled={isSubmitting}>
                         <Save className="mr-2 h-4 w-4" />
-                        Save Changes
+                        {isSubmitting ? "Saving..." : "Save Changes"}
                       </Button>
                     </div>
                   </form>
@@ -1348,44 +1444,53 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {userData.apiKeys.map((apiKey) => (
-                    <div
-                      key={apiKey.id}
-                      className="flex items-center justify-between p-4 border rounded-md"
-                    >
-                      <div>
-                        <div className="font-medium">{apiKey.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Created: {formatDate(apiKey.created)} • Last used:{" "}
-                          {formatDate(apiKey.lastUsed)}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-mono bg-muted p-1 rounded">
-                          {apiKey.key}
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Revoke
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                  {apiKeys.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No API keys created yet
                     </div>
-                  ))}
+                  ) : (
+                    apiKeys.map((apiKey) => (
+                      <div
+                        key={apiKey.id}
+                        className="flex items-center justify-between p-4 border rounded-md"
+                      >
+                        <div>
+                          <div className="font-medium">{apiKey.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            Created: {formatDate(apiKey.created)} • Last used:{" "}
+                            {formatDate(apiKey.lastUsed)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-mono bg-muted p-1 rounded">
+                            {apiKey.key}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Rename
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleRevokeApiKey(apiKey.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Revoke
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1402,13 +1507,18 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  {userData.sessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className={`flex items-start justify-between p-4 border rounded-md ${
-                        session.current ? "bg-primary/5 border-primary/20" : ""
-                      }`}
-                    >
+                  {sessions.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No active sessions found
+                    </div>
+                  ) : (
+                    sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className={`flex items-start justify-between p-4 border rounded-md ${
+                          session.current ? "bg-primary/5 border-primary/20" : ""
+                        }`}
+                      >
                       <div className="flex gap-4">
                         <div className="mt-1">
                           {session.device.includes("Windows") ? (
@@ -1494,12 +1604,14 @@ export default function SettingsPage() {
                           variant="outline"
                           size="sm"
                           className="text-red-600"
+                          onClick={() => handleEndSession(session.id)}
                         >
                           End Session
                         </Button>
                       )}
                     </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
