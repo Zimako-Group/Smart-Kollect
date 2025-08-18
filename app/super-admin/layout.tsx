@@ -21,7 +21,8 @@ import {
   Search,
   Moon,
   Sun,
-  Sparkles
+  Sparkles,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,6 +42,7 @@ const navigation = [
   { name: 'Tenants', href: '/super-admin/tenants', icon: Building2 },
   { name: 'Users', href: '/super-admin/users', icon: Users },
   { name: 'Analytics', href: '/super-admin/analytics', icon: BarChart3 },
+  { name: 'AI Monitor', href: '/super-admin/ai-monitor', icon: Brain },
   { name: 'System', href: '/super-admin/system', icon: Database },
   { name: 'Security', href: '/super-admin/security', icon: Shield },
   { name: 'Global Settings', href: '/super-admin/settings', icon: Settings },
