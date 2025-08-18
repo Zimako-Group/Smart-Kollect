@@ -174,9 +174,23 @@ class UserProfileService {
       }
 
       if (enabled) {
-        // Enable 2FA - generate QR code
+        // Get current hostname to determine service name
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : 'smartkollect.co.za';
+        let serviceName = 'SmartKollect';
+        
+        // Customize service name based on subdomain
+        if (hostname.includes('mahikeng')) {
+          serviceName = 'SmartKollect Mahikeng';
+        } else if (hostname.includes('triplem')) {
+          serviceName = 'SmartKollect Triple M';
+        } else if (hostname.includes('smartkollect')) {
+          serviceName = 'SmartKollect';
+        }
+        
+        // Enable 2FA - generate QR code with custom service name
         const { data, error } = await this.supabase.auth.mfa.enroll({
-          factorType: 'totp'
+          factorType: 'totp',
+          friendlyName: serviceName
         });
 
         if (error) {
