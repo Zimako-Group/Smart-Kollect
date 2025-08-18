@@ -82,8 +82,8 @@ export const useUserProfile = () => {
     return result;
   };
 
-  const verify2FA = async (factorId: string, challengeId: string, code: string) => {
-    return await userProfileService.verify2FA(factorId, challengeId, code);
+  const verify2FA = async (factorId: string, code: string) => {
+    return await userProfileService.verify2FA(factorId, code);
   };
 
   const createApiKey = async (name: string) => {

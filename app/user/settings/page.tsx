@@ -194,7 +194,6 @@ export default function SettingsPage() {
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [factorId, setFactorId] = useState("");
-  const [challengeId, setChallengeId] = useState("");
 
   // Get user data from hook
   const {
@@ -452,8 +451,9 @@ export default function SettingsPage() {
       try {
         const result = await toggle2FA(true);
         
-        if (result.success && result.qrCode) {
+        if (result.success && result.qrCode && result.factorId) {
           setQrCode(result.qrCode);
+          setFactorId(result.factorId);
           setIs2FADialogOpen(true);
         } else {
           toast.error(result.error || "Failed to enable 2FA");
@@ -479,19 +479,25 @@ export default function SettingsPage() {
 
   // Handle 2FA verification
   const handle2FAVerification = async () => {
-    if (!verificationCode || !factorId || !challengeId) {
+    if (!verificationCode || !factorId) {
       toast.error("Please enter the verification code");
       return;
     }
 
+    if (verificationCode.length !== 6) {
+      toast.error("Verification code must be 6 digits");
+      return;
+    }
+
     try {
-      const result = await verify2FA(factorId, challengeId, verificationCode);
+      const result = await verify2FA(factorId, verificationCode);
       
       if (result.success) {
         toast.success("2FA enabled successfully!");
         setIs2FADialogOpen(false);
         setVerificationCode("");
         setQrCode("");
+        setFactorId("");
       } else {
         toast.error(result.error || "Invalid verification code");
       }
@@ -1828,8 +1834,10 @@ export default function SettingsPage() {
                 id="verification-code"
                 placeholder="Enter 6-digit code"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                 maxLength={6}
+                pattern="[0-9]*"
+                inputMode="numeric"
               />
               <p className="text-sm text-muted-foreground">
                 Enter the 6-digit code from your authenticator app.
@@ -1843,6 +1851,7 @@ export default function SettingsPage() {
                 setIs2FADialogOpen(false);
                 setVerificationCode("");
                 setQrCode("");
+                setFactorId("");
               }}
             >
               Cancel

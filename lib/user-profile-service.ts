@@ -166,7 +166,7 @@ class UserProfileService {
     }
   }
 
-  async toggle2FA(enabled: boolean): Promise<{ success: boolean; error?: string; qrCode?: string }> {
+  async toggle2FA(enabled: boolean): Promise<{ success: boolean; error?: string; qrCode?: string; factorId?: string }> {
     try {
       const { data: user } = await this.supabase.auth.getUser();
       if (!user.user?.id) {
@@ -184,12 +184,10 @@ class UserProfileService {
           return { success: false, error: error.message };
         }
 
-        // Update profile to reflect 2FA status
-        await this.updateUserProfile(user.user.id, { two_factor_enabled: true });
-
         return { 
           success: true, 
-          qrCode: data.totp?.qr_code 
+          qrCode: data.totp?.qr_code,
+          factorId: data.id
         };
       } else {
         // Disable 2FA - unenroll all factors
@@ -212,11 +210,27 @@ class UserProfileService {
     }
   }
 
-  async verify2FA(factorId: string, challengeId: string, code: string): Promise<{ success: boolean; error?: string }> {
+  async verify2FA(factorId: string, code: string): Promise<{ success: boolean; error?: string }> {
     try {
+      const { data: user } = await this.supabase.auth.getUser();
+      if (!user.user?.id) {
+        return { success: false, error: 'No authenticated user found' };
+      }
+
+      // Create a challenge first
+      const { data: challenge, error: challengeError } = await this.supabase.auth.mfa.challenge({
+        factorId
+      });
+
+      if (challengeError) {
+        console.error('Error creating 2FA challenge:', challengeError);
+        return { success: false, error: challengeError.message };
+      }
+
+      // Verify the code with the challenge
       const { data, error } = await this.supabase.auth.mfa.verify({
         factorId,
-        challengeId,
+        challengeId: challenge.id,
         code
       });
 
@@ -224,6 +238,9 @@ class UserProfileService {
         console.error('Error verifying 2FA:', error);
         return { success: false, error: error.message };
       }
+
+      // Update profile to reflect 2FA status
+      await this.updateUserProfile(user.user.id, { two_factor_enabled: true });
 
       return { success: true };
     } catch (error) {
