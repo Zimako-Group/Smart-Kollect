@@ -190,6 +190,11 @@ export default function SettingsPage() {
   const [newApiKeyName, setNewApiKeyName] = useState("");
   const [generatedApiKey, setGeneratedApiKey] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [is2FADialogOpen, setIs2FADialogOpen] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [factorId, setFactorId] = useState("");
+  const [challengeId, setChallengeId] = useState("");
 
   // Get user data from hook
   const {
@@ -201,6 +206,8 @@ export default function SettingsPage() {
     error,
     updateProfile,
     changePassword,
+    toggle2FA,
+    verify2FA,
     createApiKey,
     revokeApiKey,
     endSession
@@ -432,6 +439,61 @@ export default function SettingsPage() {
         toast.success("Session ended successfully!");
       } else {
         toast.error(result.error || "Failed to end session");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  // Handle 2FA toggle
+  const handle2FAToggle = async (enabled: boolean) => {
+    if (enabled) {
+      // Enable 2FA - show setup dialog
+      try {
+        const result = await toggle2FA(true);
+        
+        if (result.success && result.qrCode) {
+          setQrCode(result.qrCode);
+          setIs2FADialogOpen(true);
+        } else {
+          toast.error(result.error || "Failed to enable 2FA");
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+      }
+    } else {
+      // Disable 2FA
+      try {
+        const result = await toggle2FA(false);
+        
+        if (result.success) {
+          toast.success("2FA disabled successfully!");
+        } else {
+          toast.error(result.error || "Failed to disable 2FA");
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  };
+
+  // Handle 2FA verification
+  const handle2FAVerification = async () => {
+    if (!verificationCode || !factorId || !challengeId) {
+      toast.error("Please enter the verification code");
+      return;
+    }
+
+    try {
+      const result = await verify2FA(factorId, challengeId, verificationCode);
+      
+      if (result.success) {
+        toast.success("2FA enabled successfully!");
+        setIs2FADialogOpen(false);
+        setVerificationCode("");
+        setQrCode("");
+      } else {
+        toast.error(result.error || "Invalid verification code");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -939,6 +1001,7 @@ export default function SettingsPage() {
                           <Switch
                             id="twoFactor"
                             checked={profile.two_factor_enabled || false}
+                            onCheckedChange={handle2FAToggle}
                           />
                           <Label htmlFor="twoFactor">
                             {profile.two_factor_enabled ? "Enabled" : "Disabled"}
@@ -1738,6 +1801,55 @@ export default function SettingsPage() {
                 Done
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Setup Dialog */}
+      <Dialog open={is2FADialogOpen} onOpenChange={setIs2FADialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              Scan the QR code with your authenticator app and enter the verification code.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {qrCode && (
+              <div className="flex justify-center">
+                <div className="p-4 bg-white rounded-lg">
+                  <img src={qrCode} alt="2FA QR Code" className="w-48 h-48" />
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="verification-code">Verification Code</Label>
+              <Input
+                id="verification-code"
+                placeholder="Enter 6-digit code"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                maxLength={6}
+              />
+              <p className="text-sm text-muted-foreground">
+                Enter the 6-digit code from your authenticator app.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIs2FADialogOpen(false);
+                setVerificationCode("");
+                setQrCode("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handle2FAVerification} disabled={!verificationCode}>
+              Verify & Enable
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

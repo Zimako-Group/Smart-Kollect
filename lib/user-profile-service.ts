@@ -133,6 +133,23 @@ class UserProfileService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
+      // First verify current password by attempting to sign in
+      const { data: user } = await this.supabase.auth.getUser();
+      if (!user.user?.email) {
+        return { success: false, error: 'No authenticated user found' };
+      }
+
+      // Verify current password
+      const { error: signInError } = await this.supabase.auth.signInWithPassword({
+        email: user.user.email,
+        password: currentPassword
+      });
+
+      if (signInError) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      // Update to new password
       const { error } = await this.supabase.auth.updateUser({
         password: newPassword
       });
@@ -145,6 +162,72 @@ class UserProfileService {
       return { success: true };
     } catch (error) {
       console.error('Unexpected error changing password:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  }
+
+  async toggle2FA(enabled: boolean): Promise<{ success: boolean; error?: string; qrCode?: string }> {
+    try {
+      const { data: user } = await this.supabase.auth.getUser();
+      if (!user.user?.id) {
+        return { success: false, error: 'No authenticated user found' };
+      }
+
+      if (enabled) {
+        // Enable 2FA - generate QR code
+        const { data, error } = await this.supabase.auth.mfa.enroll({
+          factorType: 'totp'
+        });
+
+        if (error) {
+          console.error('Error enabling 2FA:', error);
+          return { success: false, error: error.message };
+        }
+
+        // Update profile to reflect 2FA status
+        await this.updateUserProfile(user.user.id, { two_factor_enabled: true });
+
+        return { 
+          success: true, 
+          qrCode: data.totp?.qr_code 
+        };
+      } else {
+        // Disable 2FA - unenroll all factors
+        const { data: factors } = await this.supabase.auth.mfa.listFactors();
+        
+        if (factors?.totp && factors.totp.length > 0) {
+          for (const factor of factors.totp) {
+            await this.supabase.auth.mfa.unenroll({ factorId: factor.id });
+          }
+        }
+
+        // Update profile to reflect 2FA status
+        await this.updateUserProfile(user.user.id, { two_factor_enabled: false });
+
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Unexpected error toggling 2FA:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  }
+
+  async verify2FA(factorId: string, challengeId: string, code: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await this.supabase.auth.mfa.verify({
+        factorId,
+        challengeId,
+        code
+      });
+
+      if (error) {
+        console.error('Error verifying 2FA:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Unexpected error verifying 2FA:', error);
       return { success: false, error: 'An unexpected error occurred' };
     }
   }

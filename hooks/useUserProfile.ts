@@ -66,6 +66,26 @@ export const useUserProfile = () => {
     return await userProfileService.changePassword(currentPassword, newPassword);
   };
 
+  const toggle2FA = async (enabled: boolean) => {
+    if (!user?.id) return { success: false, error: 'No user found' };
+
+    const result = await userProfileService.toggle2FA(enabled);
+    
+    if (result.success) {
+      // Refresh profile data to update 2FA status
+      const updatedProfile = await userProfileService.getUserProfile(user.id);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
+    }
+    
+    return result;
+  };
+
+  const verify2FA = async (factorId: string, challengeId: string, code: string) => {
+    return await userProfileService.verify2FA(factorId, challengeId, code);
+  };
+
   const createApiKey = async (name: string) => {
     if (!user?.id) return { success: false, error: 'No user found' };
 
@@ -111,6 +131,8 @@ export const useUserProfile = () => {
     error,
     updateProfile,
     changePassword,
+    toggle2FA,
+    verify2FA,
     createApiKey,
     revokeApiKey,
     endSession,
