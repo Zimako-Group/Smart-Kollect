@@ -28,9 +28,9 @@ import { Button } from '@/components/ui/button';
 const stats = [
   {
     name: 'Total Tenants',
-    value: '12',
-    change: '+2',
-    changeType: 'increase',
+    value: '2',
+    change: '0',
+    changeType: 'neutral',
     icon: Building2,
     color: 'from-purple-600 to-indigo-600',
     bgColor: 'bg-purple-500/10',
@@ -38,8 +38,8 @@ const stats = [
   },
   {
     name: 'Active Users',
-    value: '248',
-    change: '+18',
+    value: '25',
+    change: '+5',
     changeType: 'increase',
     icon: Users,
     color: 'from-blue-600 to-cyan-600',
@@ -73,37 +73,19 @@ const tenants = [
     id: 1, 
     name: 'Mahikeng Municipality', 
     subdomain: 'mahikeng',
-    users: 45, 
+    users: 15, 
     status: 'active',
-    revenue: 'R450K',
+    revenue: 'R180K',
     health: 98
   },
   { 
     id: 2, 
-    name: 'OBS Corporation', 
-    subdomain: 'obs',
+    name: 'TripleM Corporation', 
+    subdomain: 'triplem',
     users: 10, 
     status: 'active',
     revenue: 'R120K',
     health: 95
-  },
-  { 
-    id: 3, 
-    name: 'City Power Johannesburg', 
-    subdomain: 'citypower',
-    users: 78, 
-    status: 'active',
-    revenue: 'R890K',
-    health: 92
-  },
-  { 
-    id: 4, 
-    name: 'Ekurhuleni Metro', 
-    subdomain: 'ekurhuleni',
-    users: 56, 
-    status: 'pending',
-    revenue: 'R0',
-    health: 0
   }
 ];
 
