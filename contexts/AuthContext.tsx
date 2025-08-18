@@ -26,7 +26,8 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requires2FA?: boolean; factorId?: string }>;
+  verify2FA: (factorId: string, code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkPermission: (permission: string) => boolean;
 };
@@ -181,7 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Login function with rate limiting protection
+  // Login function with rate limiting protection and 2FA support
   const login = async (email: string, password: string) => {
     // If there's already a pending auth request, return it
     if (pendingAuthRequest.current) {
@@ -234,6 +235,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: 'Invalid login credentials' };
       }
       
+      // Check if user has 2FA enabled
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      
+      if (factors?.totp && factors.totp.length > 0) {
+        // User has 2FA enabled, require verification
+        console.log('[AUTH] 2FA required for user');
+        return { 
+          success: false, 
+          requires2FA: true, 
+          factorId: factors.totp[0].id 
+        };
+      }
+      
       console.log('[AUTH] Login successful, fetching user profile');
       const userProfile = await fetchUserProfile(data.user.id);
       
@@ -264,8 +278,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       pendingAuthRequest.current = null;
     }
-    
-    // No need to return authPromise as we're handling the login directly
+  };
+
+  // 2FA verification function
+  const verify2FA = async (factorId: string, code: string) => {
+    try {
+      console.log('[AUTH] Starting 2FA verification');
+      setIsLoading(true);
+      
+      const supabase = getSupabaseClient();
+      
+      // Create a challenge
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId
+      });
+      
+      if (challengeError) {
+        console.error('[AUTH] 2FA challenge error:', challengeError);
+        return { success: false, error: challengeError.message };
+      }
+      
+      // Verify the code
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code
+      });
+      
+      if (error) {
+        console.error('[AUTH] 2FA verification error:', error);
+        return { success: false, error: error.message };
+      }
+      
+      // Get the authenticated user
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (!userData.user) {
+        return { success: false, error: 'Authentication failed' };
+      }
+      
+      // Fetch user profile
+      const userProfile = await fetchUserProfile(userData.user.id);
+      
+      if (!userProfile) {
+        await supabase.auth.signOut();
+        return { success: false, error: 'User profile not found' };
+      }
+      
+      setUser(userProfile);
+      
+      // Redirect to appropriate dashboard
+      setTimeout(() => {
+        redirectBasedOnRole(userProfile.role);
+      }, 50);
+      
+      return { success: true };
+    } catch (err: any) {
+      console.error('[AUTH] Unexpected 2FA verification error:', err);
+      return { success: false, error: 'An unexpected error occurred' };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Logout function
@@ -358,6 +431,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     isAuthenticated: !!user,
     login,
+    verify2FA,
     logout,
     checkPermission,
   };
