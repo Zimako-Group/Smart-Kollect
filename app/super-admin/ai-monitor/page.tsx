@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { getSupabaseClient } from '@/lib/supabaseClient';
+import { getSupabaseClient, getSupabaseAdminClient } from '@/lib/supabaseClient';
 
 interface AIFeedback {
   id: string;
@@ -93,6 +93,7 @@ export default function AIMonitorPage() {
       setLoading(true);
       
       const supabase = getSupabaseClient();
+      const adminClient = getSupabaseAdminClient();
       
       // Fetch feedback data first
       const { data: feedbackData, error: feedbackError } = await supabase
@@ -108,23 +109,23 @@ export default function AIMonitorPage() {
 
       console.log('Raw feedback data:', feedbackData);
 
-      // Fetch agent names separately
+      // Fetch agent and tenant names using API route with admin access
       const agentIds = [...new Set(feedbackData?.map((f: any) => f.agent_id) || [])];
-      const { data: agentsData } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .in('id', agentIds);
-
-      // Fetch tenant names separately  
-      const tenantIds = [...new Set(feedbackData?.map((f: any) => f.tenant_id) || [])];
-      const { data: tenantData } = await supabase
-        .from('tenants')
-        .select('id, name')
-        .in('id', tenantIds);
+      const tenantSubdomains = [...new Set(feedbackData?.map((f: any) => f.tenant_id) || [])];
+      
+      console.log('Agent IDs to fetch:', agentIds);
+      console.log('Tenant subdomains to fetch:', tenantSubdomains);
+      
+      const response = await fetch(`/api/ai-feedback-data?agentIds=${agentIds.join(',')}&tenantSubdomains=${tenantSubdomains.join(',')}`);
+      const { agents: agentsData, tenants: tenantData, errors } = await response.json();
+      
+      console.log('Agents data:', agentsData);
+      console.log('Tenant data:', tenantData);
+      console.log('API errors:', errors);
 
       // Create lookup maps
-      const agentMap = new Map(agentsData?.map((agent: any) => [agent.id, agent.name]) || []);
-      const tenantMap = new Map(tenantData?.map((tenant: any) => [tenant.id, tenant.name]) || []);
+      const agentMap = new Map(agentsData?.map((agent: any) => [agent.id, agent.full_name]) || []);
+      const tenantMap = new Map(tenantData?.map((tenant: any) => [tenant.subdomain, tenant.name]) || []);
 
       const processedFeedback: AIFeedback[] = feedbackData?.map((item: any) => ({
         ...item,
