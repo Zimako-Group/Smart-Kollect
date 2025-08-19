@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getAdminDashboardMetrics, getTenantAgentPerformance } from "@/lib/admin-dashboard-service";
 import { getNotifications } from "@/lib/notification-service";
-import { getCollectionPerformanceData, getConsolidatedPaymentsData, type CollectionPerformanceData, type ConsolidatedPaymentData } from "@/lib/performance-service";
+import { getCollectionPerformanceData, getConsolidatedPaymentsData, getConsolidatedPaymentStats, type CollectionPerformanceData, type ConsolidatedPaymentData, type ConsolidatedPaymentStats } from "@/lib/performance-service";
 import {
   Activity,
   AlertCircle,
@@ -143,6 +143,12 @@ export default function AdminDashboard() {
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [performanceData, setPerformanceData] = useState<CollectionPerformanceData[]>([]);
   const [consolidatedPaymentsData, setConsolidatedPaymentsData] = useState<ConsolidatedPaymentData[]>([]);
+  const [consolidatedPaymentStats, setConsolidatedPaymentStats] = useState<ConsolidatedPaymentStats>({
+    totalCollections: 0,
+    currentMonth: 0,
+    currentMonthDisplay: 'N/A',
+    monthlyAverage: 0
+  });
   const [loadingPerformanceData, setLoadingPerformanceData] = useState(true);
 
   // Use the fetched agent profiles as agents data
@@ -412,6 +418,10 @@ export default function AdminDashboard() {
       try {
         const data = await getConsolidatedPaymentsData();
         setConsolidatedPaymentsData(data);
+        
+        // Fetch consolidated payment statistics
+        const stats = await getConsolidatedPaymentStats();
+        setConsolidatedPaymentStats(stats);
       } catch (error) {
         console.error("Error fetching consolidated payments data:", error);
       }
@@ -990,7 +1000,9 @@ export default function AdminDashboard() {
                 <div className="text-xs text-white/50 mb-1">
                   Total Collections
                 </div>
-                <div className="text-xs font-semibold">R93,153,328.86</div>
+                <div className="text-xs font-semibold">
+                  R{consolidatedPaymentStats.totalCollections.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
                 <div className="text-xs mt-1 flex items-center text-green-400">
                   <ArrowUp size={12} className="mr-1" />
                   <span>100% of total</span>
@@ -999,9 +1011,11 @@ export default function AdminDashboard() {
 
               <div className="bg-white/5 rounded-lg p-4 border border-white/5">
                 <div className="text-xs text-white/50 mb-1">Current Month</div>
-                <div className="text-xs font-semibold">R27,612,881,25</div>
+                <div className="text-xs font-semibold">
+                  R{consolidatedPaymentStats.currentMonth.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
-                  <span>July 2025</span>
+                  <span>{consolidatedPaymentStats.currentMonthDisplay}</span>
                 </div>
               </div>
 
@@ -1009,299 +1023,17 @@ export default function AdminDashboard() {
                 <div className="text-xs text-white/50 mb-1">
                   Monthly Average
                 </div>
-                <div className="text-xs font-semibold">R22,824,303.47</div>
+                <div className="text-xs font-semibold">
+                  R{consolidatedPaymentStats.monthlyAverage.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
                 <div className="text-xs mt-1 flex items-center text-white/50">
-                  <span>Based On 4 Months</span>
+                  <span>Based on active months</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Campaign Details Modal */}
-      {showCampaignDetails && selectedCampaign && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-black/50 backdrop-blur-md z-10">
-              <h3 className="text-xl font-semibold text-white flex items-center gap-3">
-                <div className="h-8 w-1 rounded-full bg-gradient-to-b from-secondary to-secondary/50"></div>
-                Campaign Details
-              </h3>
-              <button
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                onClick={() => setShowCampaignDetails(false)}
-              >
-                <X size={20} className="text-white/70" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Campaign Header */}
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 bg-black/30 rounded-full flex items-center justify-center border border-white/10">
-                  <Briefcase className="h-8 w-8 text-secondary" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    {selectedCampaign.name}
-                  </h2>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span
-                      className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30`}
-                    >
-                      {selectedCampaign.status}
-                    </span>
-                    <span
-                      className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                ${
-                  selectedCampaign.priority === "High"
-                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                    : selectedCampaign.priority === "Medium"
-                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                    : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                }`}
-                    >
-                      {selectedCampaign.priority} Priority
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Campaign Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <div className="text-sm text-white/50 mb-1">Collected</div>
-                  <div className="text-2xl font-bold text-white">
-                    R{(selectedCampaign.collected || 0).toLocaleString()}
-                  </div>
-                  <div className="mt-2 w-full bg-white/10 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        (selectedCampaign.progress || 0) < 40
-                          ? "bg-red-500"
-                          : (selectedCampaign.progress || 0) < 70
-                          ? "bg-yellow-500"
-                          : "bg-green-500"
-                      }`}
-                      style={{ width: `${selectedCampaign.progress || 0}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-white/50 mt-1">
-                    {selectedCampaign.progress}% of target
-                  </div>
-                </div>
-
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <div className="text-sm text-white/50 mb-1">Target</div>
-                  <div className="text-2xl font-bold text-white">
-                    R{(selectedCampaign.target || 0).toLocaleString()}
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-white/50">
-                    <Target size={14} className="text-secondary" />
-                    <span>
-                      R
-                      {(
-                        (selectedCampaign.target || 0) -
-                        (selectedCampaign.collected || 0)
-                      ).toLocaleString()}{" "}
-                      remaining
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <div className="text-sm text-white/50 mb-1">Timeline</div>
-                  <div className="text-2xl font-bold text-white flex items-center">
-                    <Calendar size={18} className="mr-2 text-secondary" />
-                    {selectedCampaign.endDate}
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-white/50">
-                    <Clock size={14} className="text-secondary" />
-                    <span>
-                      R
-                      {(
-                        (selectedCampaign.target || 0) -
-                        (selectedCampaign.collected || 0)
-                      ).toLocaleString()}{" "}
-                      remaining
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Campaign Description */}
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <h4 className="text-md font-semibold text-white mb-2">
-                  Description
-                </h4>
-                <p className="text-white/70">{selectedCampaign.description}</p>
-              </div>
-
-              {/* Client Information */}
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <h4 className="text-md font-semibold text-white mb-3">
-                  Client Information
-                </h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm text-white/50">Contact:</div>
-                    <div className="text-white">
-                      {selectedCampaign.clientContact}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 text-sm text-white/50">Email:</div>
-                    <div className="text-white">
-                      {selectedCampaign.clientEmail}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assigned Agents */}
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-md font-semibold text-white">
-                    Assigned Agents
-                  </h4>
-                  <button
-                    className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-white text-xs rounded-lg flex items-center gap-1 transition-all"
-                    onClick={() => {
-                      setShowAssignModal(true);
-                      setShowCampaignDetails(false);
-                    }}
-                  >
-                    <UserPlus size={14} />
-                    Assign Agents
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {(selectedCampaign.assignedAgents || []).map(
-                    (agent, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 bg-white/5 rounded-lg"
-                      >
-                        <div className="h-8 w-8 bg-black/30 rounded-full flex items-center justify-center border border-white/10 text-xs font-medium">
-                          {agent.charAt(0)}
-                        </div>
-                        <div className="text-sm text-white">{agent}</div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Assign Agents Modal */}
-      {showAssignModal && selectedCampaign && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-black/50 backdrop-blur-md z-10">
-              <h3 className="text-xl font-semibold text-white flex items-center gap-3">
-                <div className="h-8 w-1 rounded-full bg-gradient-to-b from-secondary to-secondary/50"></div>
-                Assign Agents to {selectedCampaign.name}
-              </h3>
-              <button
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                onClick={() => setShowAssignModal(false)}
-              >
-                <X size={20} className="text-white/70" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className="mb-4">
-                <div className="text-sm text-white/70 mb-2">
-                  Select agents to assign to this campaign:
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search agents..."
-                    className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-secondary/50"
-                  />
-                  <Search
-                    size={18}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent mb-6">
-                {availableAgents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
-                      selectedAgents.some((a) => a.id === agent.id)
-                        ? "bg-secondary/20 border-secondary/50"
-                        : "bg-white/5 border-white/10 hover:bg-white/10"
-                    }`}
-                    onClick={() => toggleAgentSelection(agent)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-black/30 rounded-full flex items-center justify-center border border-white/10 text-sm font-medium">
-                        {agent.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-white">
-                          {agent.name}
-                        </div>
-                        <div className="text-xs text-white/50">
-                          <span
-                            className={`
-                      ${
-                        agent.performance === "High"
-                          ? "text-green-400"
-                          : agent.performance === "Medium"
-                          ? "text-yellow-400"
-                          : "text-red-400"
-                      }
-                    `}
-                          >
-                            {agent.performance} Performance
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className={`h-5 w-5 rounded-full flex items-center justify-center ${
-                        selectedAgents.some((a) => a.id === agent.id)
-                          ? "bg-secondary text-white"
-                          : "bg-white/10"
-                      }`}
-                    >
-                      {selectedAgents.some((a) => a.id === agent.id) && (
-                        <CheckCircle size={14} />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-white/10 pt-4">
-                <button
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm rounded-lg transition-all"
-                  onClick={() => setShowAssignModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-white text-sm rounded-lg flex items-center gap-2 transition-all"
-                  onClick={handleAssignAgents}
-                  disabled={selectedAgents.length === 0}
-                >
-                  <UserPlus size={16} />
-                  Assign {selectedAgents.length} Agents
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Activity Feed and Notifications */}
       <div className="space-y-6">
         {/* Notifications */}

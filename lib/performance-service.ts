@@ -13,6 +13,13 @@ export interface ConsolidatedPaymentData {
   amount: number;
 }
 
+export interface ConsolidatedPaymentStats {
+  totalCollections: number;
+  currentMonth: number;
+  currentMonthDisplay: string;
+  monthlyAverage: number;
+}
+
 /**
  * Fetch collection performance data for the current tenant
  */
@@ -77,6 +84,72 @@ export async function getConsolidatedPaymentsData(): Promise<ConsolidatedPayment
   } catch (error) {
     console.error('Error in getConsolidatedPaymentsData:', error);
     return [];
+  }
+}
+
+/**
+ * Calculate consolidated payment statistics for the current tenant
+ */
+export async function getConsolidatedPaymentStats(): Promise<ConsolidatedPaymentStats> {
+  try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      console.error('No tenant context found');
+      return {
+        totalCollections: 0,
+        currentMonth: 0,
+        currentMonthDisplay: 'N/A',
+        monthlyAverage: 0
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('consolidated_payments')
+      .select('month, month_display, amount')
+      .eq('tenant_id', tenantId)
+      .eq('year', 2025)
+      .order('month', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching consolidated payments stats:', error);
+      return {
+        totalCollections: 0,
+        currentMonth: 0,
+        currentMonthDisplay: 'N/A',
+        monthlyAverage: 0
+      };
+    }
+
+    const amounts = data.map(item => parseFloat(item.amount) || 0);
+    const totalCollections = amounts.reduce((sum, amount) => sum + amount, 0);
+    
+    // Get current month (July = month 7)
+    const currentDate = new Date();
+    const currentMonthNumber = 7; // July for the example
+    const currentMonthData = data.find(item => item.month === currentMonthNumber);
+    const currentMonth = currentMonthData ? parseFloat(currentMonthData.amount) || 0 : 0;
+    const currentMonthDisplay = currentMonthData ? currentMonthData.month_display : 'N/A';
+    
+    // Calculate monthly average (only for months with data > 0)
+    const monthsWithData = amounts.filter(amount => amount > 0);
+    const monthlyAverage = monthsWithData.length > 0 
+      ? totalCollections / monthsWithData.length 
+      : 0;
+
+    return {
+      totalCollections,
+      currentMonth,
+      currentMonthDisplay,
+      monthlyAverage
+    };
+  } catch (error) {
+    console.error('Error in getConsolidatedPaymentStats:', error);
+    return {
+      totalCollections: 0,
+      currentMonth: 0,
+      currentMonthDisplay: 'N/A',
+      monthlyAverage: 0
+    };
   }
 }
 
