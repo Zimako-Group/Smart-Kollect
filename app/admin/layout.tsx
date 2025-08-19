@@ -310,7 +310,7 @@ export default function AdminLayout({
         {/* Header */}
         <header className="bg-black/20 backdrop-blur-md border-b border-white/5 shadow-sm z-10">
           <div className="px-6 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-medium text-white">Mahikeng Local Municipality</h1>
+            <h1 className="text-xl font-medium text-white">Admin Dashboard</h1>
             
             <div className="flex items-center space-x-5">
               {/* Notifications */}

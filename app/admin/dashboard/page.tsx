@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { getAdminDashboardMetrics } from "@/lib/admin-dashboard-service";
+import { getAdminDashboardMetrics, getTenantAgentPerformance } from "@/lib/admin-dashboard-service";
 import { getNotifications } from "@/lib/notification-service";
+import { getCollectionPerformanceData, getConsolidatedPaymentsData, type CollectionPerformanceData, type ConsolidatedPaymentData } from "@/lib/performance-service";
 import {
   Activity,
   AlertCircle,
@@ -111,32 +112,7 @@ interface Agent {
   ptpsValue?: number;
 }
 
-// Mock data - replace with actual API calls
-const performanceData = [
-  { name: "Jan", collections: 0, target: 20000000 },
-  { name: "Feb", collections: 0, target: 20000000 },
-  { name: "Mar", collections: 0, target: 20000000 },
-  { name: "Apr", collections: 16633251.62, target: 20000000 },
-  { name: "May", collections: 29475034, target: 20000000 },
-  { name: "Jun", collections: 25756766.28, target: 20000000 },
-  { name: "Jul", collections: 27612881.25, target: 20000000 },
-  { name: "Aug", collections: 0, target: 20000000 },
-];
-
-
-
-// Monthly consolidated payments data (Month-To-Date)
-const consolidatedPaymentsData = [
-  { month: "Apr 2025", amount: 16633251.62 },
-  { month: "May 2025", amount: 29475034.23 },
-  { month: "Jun 2025", amount: 25756766.28 },
-  { month: "Jul 2025", amount: 27612881.25 },
-  { month: "Aug 2025", amount: 0 },
-  { month: "Sep 2025", amount: 0 },
-  { month: "Oct 2025", amount: 0 },
-  { month: "Nov 2025", amount: 0 },
-  { month: "Dec 2025", amount: 0 },
-];
+// Data will be fetched from database
 
 const COLORS = ["#0088FE", "#FFBB28", "#00C49F", "#FF8042"];
 
@@ -165,6 +141,9 @@ export default function AdminDashboard() {
   const [loadingAgents, setLoadingAgents] = useState(true);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const [performanceData, setPerformanceData] = useState<CollectionPerformanceData[]>([]);
+  const [consolidatedPaymentsData, setConsolidatedPaymentsData] = useState<ConsolidatedPaymentData[]>([]);
+  const [loadingPerformanceData, setLoadingPerformanceData] = useState(true);
 
   // Use the fetched agent profiles as agents data
   const agents: Agent[] = availableAgents;
@@ -415,8 +394,33 @@ export default function AdminDashboard() {
       }
     };
 
+    // Fetch performance data
+    const fetchPerformanceData = async () => {
+      try {
+        setLoadingPerformanceData(true);
+        const data = await getCollectionPerformanceData();
+        setPerformanceData(data);
+      } catch (error) {
+        console.error("Error fetching performance data:", error);
+      } finally {
+        setLoadingPerformanceData(false);
+      }
+    };
+
+    // Fetch consolidated payments data
+    const fetchConsolidatedPayments = async () => {
+      try {
+        const data = await getConsolidatedPaymentsData();
+        setConsolidatedPaymentsData(data);
+      } catch (error) {
+        console.error("Error fetching consolidated payments data:", error);
+      }
+    };
+
     fetchNotifications();
     fetchAgentAllocations();
+    fetchPerformanceData();
+    fetchConsolidatedPayments();
   }, []);
 
   // Separate useEffect to update the selected agent when needed
