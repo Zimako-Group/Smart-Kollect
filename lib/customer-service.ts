@@ -1,4 +1,6 @@
+// Customer service utilities
 import { supabase } from './supabaseClient';
+import { getCurrentTenantId } from './tenant-context';
 
 export interface Customer {
   id: string;
@@ -73,6 +75,11 @@ export async function getAllCustomers(
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<{ customers: Customer[], totalCount: number, error: string | null }> {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return { customers: [], totalCount: 0, error: 'No tenant context found' };
+    }
+
     // Calculate the range for pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
@@ -80,7 +87,8 @@ export async function getAllCustomers(
     // First get the total count
     const countQuery = supabase
       .from('Debtors')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId);
     const { count, error: countError } = await countQuery;
       
     if (countError) {
@@ -92,6 +100,7 @@ export async function getAllCustomers(
     const { data, error } = await supabase
       .from('Debtors')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order(sortBy, { ascending: sortOrder === 'asc' })
       .range(from, to);
       

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { getAgentAccountMetrics } from "@/lib/agent-accounts";
+import { getAdminDashboardMetrics } from "@/lib/admin-dashboard-service";
 import { getNotifications } from "@/lib/notification-service";
 import {
   Activity,
@@ -171,6 +171,8 @@ export default function AdminDashboard() {
   const [onlineAgents, setOnlineAgents] = useState<Set<string>>(new Set());
   const [agentProfiles, setAgentProfiles] = useState<any[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(true);
+  const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
 
   // Agents data will be fetched from the database
   const agents: Agent[] = [];
@@ -200,18 +202,41 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // Set total collections to 0 since we removed hardcoded data
-    // Real collections data should come from the database
-    setTotalCollections(0);
+    // Fetch tenant-specific dashboard metrics
+    const fetchDashboardMetrics = async () => {
+      try {
+        setLoadingMetrics(true);
+        const metrics = await getAdminDashboardMetrics();
+        setDashboardMetrics(metrics);
+        setTotalCollections(metrics.totalCollections);
+      } catch (error) {
+        console.error("Error fetching dashboard metrics:", error);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    };
 
     // Fetch agent profiles
     const fetchAgentProfiles = async () => {
       try {
         setLoadingAgents(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get current user's tenant
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.tenant_id) return;
+
         const { data: profiles, error } = await supabase
           .from("profiles")
           .select("id, full_name, email, role, status, avatar_url")
-          .eq("role", "agent");
+          .eq("role", "agent")
+          .eq("tenant_id", profile.tenant_id);
 
         if (error) {
           console.error("Error fetching agent profiles:", error);
@@ -361,17 +386,6 @@ export default function AdminDashboard() {
 
     fetchNotifications();
     fetchAgentAllocations();
-    fetchAgentProfiles();
-
-    // Setup presence tracking
-    const cleanupPresence = setupPresence();
-
-    // Cleanup on unmount
-    return () => {
-      if (cleanupPresence) {
-        cleanupPresence.then((cleanup) => cleanup && cleanup());
-      }
-    };
   }, []);
 
   // Separate useEffect to update the selected agent when needed

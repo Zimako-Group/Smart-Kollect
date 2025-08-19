@@ -1,5 +1,6 @@
 // Agent allocated accounts utilities
 import { supabase, getSupabaseClient } from './supabaseClient';
+import { getCurrentTenantId } from './tenant-context';
 
 // Types for allocated accounts and database responses
 export interface Account {
@@ -116,10 +117,12 @@ export async function fetchAgentAllocatedAccounts(agentId: string): Promise<Acco
     try {
       const result = await retrySupabaseOperation(async () => {
         const freshClient = getSupabaseClient();
+        const tenantId = await getCurrentTenantId();
         return await freshClient
           .from('Debtors')
           .select('*')
-          .in('id', accountIds);
+          .in('id', accountIds)
+          .eq('tenant_id', tenantId);
       });
       
       debtors = result.data;
