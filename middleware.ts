@@ -105,6 +105,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   
+  // Always allow static files and API routes
+  if (pathname.startsWith('/_next') || 
+      pathname.startsWith('/api/') ||
+      pathname.includes('.') ||
+      pathname === '/favicon.ico') {
+    console.log('[RBAC-MIDDLEWARE] Static/API route, allowing access:', pathname);
+    return NextResponse.next();
+  }
+  
   // Extract subdomain to determine if this is main domain or tenant subdomain
   const subdomain = extractSubdomain(hostname);
   const isMainDomain = !subdomain || subdomain === 'www';
@@ -115,25 +124,13 @@ export async function middleware(req: NextRequest) {
     isMainDomain
   });
   
-  // If this is the main domain (smartkollect.co.za), allow all marketing pages
+  // If this is the main domain (smartkollect.co.za), allow all marketing pages without authentication
   if (isMainDomain) {
-    const isMarketingRoute = pathname === '/' || 
-                           pathname.startsWith('/marketing/') ||
-                           pathname.startsWith('/privacy-policy') ||
-                           pathname.startsWith('/terms-and-conditions') ||
-                           pathname.startsWith('/popi-act') ||
-                           pathname.startsWith('/_next') ||
-                           pathname.includes('.') ||
-                           pathname.startsWith('/api/auth') ||
-                           pathname.startsWith('/login');
-    
-    if (isMarketingRoute) {
-      console.log('[RBAC-MIDDLEWARE] Main domain marketing route, allowing access:', pathname);
-      return NextResponse.next();
-    }
+    console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing marketing access:', pathname);
+    return NextResponse.next();
   }
   
-  // Check if this is a public route that doesn't need authentication
+  // For tenant subdomains, check if this is a public route
   const isPublicRoute = ROUTE_PERMISSIONS.public.some(route => 
     pathname.startsWith(route) || pathname.includes(route) || pathname === route
   );
