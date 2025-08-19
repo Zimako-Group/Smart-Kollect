@@ -317,7 +317,7 @@ export default function AdminDashboard() {
 
         if (!profile?.tenant_id) return;
 
-        const notificationsData = await getNotifications("admin", profile.tenant_id, 5);
+        const notificationsData = await getNotifications("admin", undefined, 5);
         setNotifications(notificationsData);
       } catch (error) {
         console.error("Error fetching notifications:", error);

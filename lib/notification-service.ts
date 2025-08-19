@@ -16,14 +16,29 @@ export interface Notification {
 }
 
 /**
- * Creates a notification in the system
+ * Creates a notification in the system with tenant context
  */
-export const createNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'read'>) => {
+export const createNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'read'> & { tenant_id?: string }) => {
   try {
+    // Get current user's tenant if not provided
+    let tenantId = notification.tenant_id;
+    if (!tenantId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', user.id)
+          .single();
+        tenantId = profile?.tenant_id;
+      }
+    }
+
     const { data, error } = await supabase
       .from('Notifications')
       .insert({
         ...notification,
+        tenant_id: tenantId,
         read: false,
       })
       .select();
@@ -87,10 +102,23 @@ export const createActivityNotification = async (
 };
 
 /**
- * Fetches notifications for a specific role with optional tenant filtering
+ * Fetches notifications for a specific role with tenant filtering
  */
 export const getNotifications = async (role: 'admin' | 'agent', tenantIdOrAgentName?: string, limit = 10) => {
   try {
+    // Get current user's tenant context
+    const { data: { user } } = await supabase.auth.getUser();
+    let userTenantId = null;
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+      userTenantId = profile?.tenant_id;
+    }
+
     let query = supabase
       .from('Notifications')
       .select('*')
@@ -98,13 +126,15 @@ export const getNotifications = async (role: 'admin' | 'agent', tenantIdOrAgentN
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    // If agent role, filter by agent name (backward compatibility)
+    // Filter by tenant if user has tenant context
+    if (userTenantId) {
+      query = query.eq('tenant_id', userTenantId);
+    }
+
+    // If agent role, also filter by agent name (backward compatibility)
     if (role === 'agent' && tenantIdOrAgentName) {
       query = query.eq('agent_name', tenantIdOrAgentName);
     }
-
-    // For admin role, we could add tenant filtering here if notifications table has tenant_id
-    // For now, notifications are global but we can filter by related data
 
     const { data, error } = await query;
 
