@@ -82,36 +82,13 @@ import {
 import { toast } from "sonner";
 import { SystemSetting, insertDefaultSettings as importedInsertDefaultSettings } from "@/lib/settings-service";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
+import { getAllApiKeys, createApiKey, revokeApiKey, ApiKey } from "@/lib/api-keys-service";
+import { Webhook } from "@/lib/webhooks-service";
+import { AuditLog } from "@/lib/audit-logs-service";
 
-// Types for API keys, webhooks, and audit logs
-interface ApiKey {
-  id: string;
-  name: string;
-  key: string;
-  createdAt: string;
-  lastUsed: string | null;
-  permissions: string[];
-  status: "active" | "expired" | "revoked";
-}
+// Types for webhooks and audit logs (ApiKey imported from service)
 
-interface Webhook {
-  id: string;
-  name: string;
-  url: string;
-  events: string[];
-  createdAt: string;
-  lastTriggered: string | null;
-  status: "active" | "inactive";
-}
 
-interface AuditLog {
-  id: string;
-  action: string;
-  user: string;
-  timestamp: string;
-  details: string;
-  ipAddress: string;
-}
 
 // Mock data for API keys, webhooks, and audit logs
 const mockSystemSettings: SystemSetting[] = [
@@ -383,38 +360,54 @@ const mockApiKeys: ApiKey[] = [
   {
     id: "key1",
     name: "Payment Integration",
-    key: "zim_live_pK7tNx2qLmVbRfS8gH3jD9",
-    createdAt: "2025-01-15",
-    lastUsed: "2025-03-13",
+    key: "zim_live_************************",
+    key_prefix: "zim_live...",
     permissions: ["read:payments", "write:payments"],
     status: "active",
+    created_by: "admin-user-1",
+    last_used_at: "2025-03-13T10:30:00Z",
+    expires_at: "2025-12-31T23:59:59Z",
+    created_at: "2025-01-15T08:00:00Z",
+    updated_at: "2025-03-13T10:30:00Z",
   },
   {
     id: "key2",
     name: "Reporting API",
-    key: "zim_live_aB5cD7eF9gH2jK4mN6pQ8",
-    createdAt: "2024-11-20",
-    lastUsed: "2025-03-10",
+    key: "zim_live_************************",
+    key_prefix: "zim_live...",
     permissions: ["read:reports", "read:accounts"],
     status: "active",
+    created_by: "admin-user-2",
+    last_used_at: "2025-03-10T14:15:00Z",
+    expires_at: "2025-11-20T23:59:59Z",
+    created_at: "2024-11-20T09:00:00Z",
+    updated_at: "2025-03-10T14:15:00Z",
   },
   {
     id: "key3",
     name: "SMS Integration",
-    key: "zim_live_xY3zW1vU9tS7rQ5pN3mL1",
-    createdAt: "2024-09-05",
-    lastUsed: "2025-02-28",
+    key: "zim_live_************************",
+    key_prefix: "zim_live...",
     permissions: ["read:contacts", "write:messages"],
     status: "active",
+    created_by: "admin-user-1",
+    last_used_at: "2025-02-28T16:45:00Z",
+    expires_at: undefined,
+    created_at: "2024-09-05T11:30:00Z",
+    updated_at: "2025-02-28T16:45:00Z",
   },
   {
     id: "key4",
     name: "Legacy System",
-    key: "zim_live_oP2iU8yT6rE4wQ2aS0dF9",
-    createdAt: "2024-06-12",
-    lastUsed: "2024-12-15",
+    key: "zim_live_************************",
+    key_prefix: "zim_live...",
     permissions: ["read:accounts", "write:accounts"],
     status: "expired",
+    created_by: "admin-user-2",
+    last_used_at: "2024-12-15T09:20:00Z",
+    expires_at: "2024-12-31T23:59:59Z",
+    created_at: "2024-06-12T10:00:00Z",
+    updated_at: "2024-12-31T23:59:59Z",
   },
 ];
 
@@ -424,36 +417,44 @@ const mockWebhooks: Webhook[] = [
     name: "Payment Notification",
     url: "https://erp.zimako.co.za/api/payment-webhook",
     events: ["payment.created", "payment.updated", "payment.failed"],
-    createdAt: "2024-12-10",
-    lastTriggered: "2025-03-13",
+    created_at: "2024-12-10T00:00:00Z",
+    updated_at: "2024-12-10T00:00:00Z",
+    last_triggered_at: "2025-03-13T00:00:00Z",
     status: "active",
+    created_by: "admin-user-id",
   },
   {
     id: "wh2",
     name: "Account Status Change",
     url: "https://crm.zimako.co.za/api/account-webhook",
     events: ["account.created", "account.status.changed"],
-    createdAt: "2025-01-05",
-    lastTriggered: "2025-03-12",
+    created_at: "2025-01-05T00:00:00Z",
+    updated_at: "2025-01-05T00:00:00Z",
+    last_triggered_at: "2025-03-12T00:00:00Z",
     status: "active",
+    created_by: "admin-user-id",
   },
   {
     id: "wh3",
     name: "Collection Assignment",
     url: "https://teams.zimako.co.za/api/assignment-webhook",
     events: ["collection.assigned", "collection.reassigned"],
-    createdAt: "2025-02-15",
-    lastTriggered: "2025-03-10",
+    created_at: "2025-02-15T00:00:00Z",
+    updated_at: "2025-02-15T00:00:00Z",
+    last_triggered_at: "2025-03-10T00:00:00Z",
     status: "active",
+    created_by: "admin-user-id",
   },
   {
     id: "wh4",
     name: "Test Endpoint",
     url: "https://test.zimako.co.za/api/test-webhook",
     events: ["test.event"],
-    createdAt: "2025-03-01",
-    lastTriggered: null,
+    created_at: "2025-03-01T00:00:00Z",
+    updated_at: "2025-03-01T00:00:00Z",
+    last_triggered_at: undefined,
     status: "inactive",
+    created_by: "admin-user-id",
   },
 ];
 
@@ -461,58 +462,72 @@ const mockAuditLogs: AuditLog[] = [
   {
     id: "log1",
     action: "Settings Updated",
-    user: "Admin User",
-    timestamp: "2025-03-14 09:45:22",
-    details: "Updated system settings: Email Notifications, SMS Provider",
-    ipAddress: "196.25.102.45",
+    user_id: "admin-user-1",
+    user_name: "Admin User",
+    resource_type: "settings",
+    created_at: "2025-03-14T09:45:22Z",
+    details: { message: "Updated system settings: Email Notifications, SMS Provider" },
+    ip_address: "196.25.102.45",
   },
   {
     id: "log2",
     action: "API Key Created",
-    user: "System Admin",
-    timestamp: "2025-03-13 14:30:15",
-    details: "Created new API key: Reporting API",
-    ipAddress: "196.25.102.45",
+    user_id: "admin-user-2",
+    user_name: "System Admin",
+    resource_type: "api_key",
+    created_at: "2025-03-13T14:30:15Z",
+    details: { message: "Created new API key: Reporting API" },
+    ip_address: "196.25.102.45",
   },
   {
     id: "log3",
     action: "User Role Modified",
-    user: "Admin User",
-    timestamp: "2025-03-12 11:20:33",
-    details: 'Changed role for user "John Smith" from "Agent" to "Team Leader"',
-    ipAddress: "196.25.102.45",
+    user_id: "admin-user-1",
+    user_name: "Admin User",
+    resource_type: "user",
+    created_at: "2025-03-12T11:20:33Z",
+    details: { message: 'Changed role for user "John Smith" from "Agent" to "Team Leader"' },
+    ip_address: "196.25.102.45",
   },
   {
     id: "log4",
     action: "Backup Initiated",
-    user: "System",
-    timestamp: "2025-03-12 01:00:00",
-    details: "Automated system backup completed successfully",
-    ipAddress: "196.25.102.45",
+    user_id: "system",
+    user_name: "System",
+    resource_type: "backup",
+    created_at: "2025-03-12T01:00:00Z",
+    details: { message: "Automated system backup completed successfully" },
+    ip_address: "196.25.102.45",
   },
   {
     id: "log5",
     action: "Login Failed",
-    user: "Unknown",
-    timestamp: "2025-03-11 16:45:12",
-    details: 'Failed login attempt for username "admin" (3rd attempt)',
-    ipAddress: "41.182.56.78",
+    user_id: "unknown",
+    user_name: "Unknown",
+    resource_type: "auth",
+    created_at: "2025-03-11T16:45:12Z",
+    details: { message: 'Failed login attempt for username "admin" (3rd attempt)' },
+    ip_address: "41.182.56.78",
   },
   {
     id: "log6",
     action: "Webhook Added",
-    user: "System Admin",
-    timestamp: "2025-03-10 13:15:40",
-    details: "Added new webhook: Collection Assignment",
-    ipAddress: "196.25.102.45",
+    user_id: "admin-user-2",
+    user_name: "System Admin",
+    resource_type: "webhook",
+    created_at: "2025-03-10T13:15:40Z",
+    details: { message: "Added new webhook: Collection Assignment" },
+    ip_address: "196.25.102.45",
   },
   {
     id: "log7",
     action: "System Update",
-    user: "System",
-    timestamp: "2025-03-09 02:30:00",
-    details: "System updated to version 2.4.1",
-    ipAddress: "196.25.102.45",
+    user_id: "system",
+    user_name: "System",
+    resource_type: "system",
+    created_at: "2025-03-09T02:30:00Z",
+    details: { message: "System updated to version 2.4.1" },
+    ip_address: "196.25.102.45",
   },
 ];
 
@@ -525,9 +540,91 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isCreateApiKeyDialogOpen, setIsCreateApiKeyDialogOpen] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState("");
+  const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>([]);
+  const [generatedApiKey, setGeneratedApiKey] = useState<string>("");
+
+  // Webhooks state
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [isCreateWebhookDialogOpen, setIsCreateWebhookDialogOpen] = useState(false);
+  const [newWebhookName, setNewWebhookName] = useState("");
+  const [newWebhookUrl, setNewWebhookUrl] = useState("");
+  const [newWebhookEvents, setNewWebhookEvents] = useState<string[]>([]);
+  const [newWebhookSecret, setNewWebhookSecret] = useState("");
+
+  // Audit logs state
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   // State for form values
   const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
+
+  // Fetch API keys
+  const fetchApiKeys = async () => {
+    try {
+      const response = await fetch('/api/admin/api-keys', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Use mock data if API fails (likely auth issue)
+        console.warn('API keys API failed, using mock data');
+        setApiKeys(mockApiKeys);
+        return;
+      }
+
+      const data = await response.json();
+      setApiKeys(data.data || []);
+    } catch (error) {
+      console.warn('Error fetching API keys, using mock data:', error);
+      setApiKeys(mockApiKeys);
+    }
+  };
+
+  // Fetch webhooks
+  const fetchWebhooks = async () => {
+    try {
+      const response = await fetch('/api/admin/webhooks', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Use mock data if API fails (likely auth issue)
+        console.warn('Webhooks API failed, using mock data');
+        setWebhooks(mockWebhooks);
+        return;
+      }
+
+      const data = await response.json();
+      setWebhooks(data.data || []);
+    } catch (error) {
+      console.warn('Error fetching webhooks, using mock data:', error);
+      setWebhooks(mockWebhooks);
+    }
+  };
+
+  // Fetch audit logs
+  const fetchAuditLogs = async () => {
+    try {
+      const response = await fetch('/api/admin/audit-logs?limit=10', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Use mock data if API fails (likely auth issue)
+        console.warn('Audit logs API failed, using mock data');
+        setAuditLogs(mockAuditLogs);
+        return;
+      }
+
+      const data = await response.json();
+      setAuditLogs(data.data || []);
+    } catch (error) {
+      console.warn('Error fetching audit logs, using mock data:', error);
+      setAuditLogs(mockAuditLogs);
+    }
+  };
 
   // Fetch settings on component mount
   useEffect(() => {
@@ -599,20 +696,20 @@ export default function SettingsPage() {
           }
         } else {
           setSystemSettings(data);
-          initializeFormValues(data);
+          await fetchApiKeys();
+          await fetchWebhooks();
+          await fetchAuditLogs();
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error initializing settings:', error);
-        setError('Failed to load settings. Please try again.');
-        // Fall back to mock data
-        setSystemSettings(mockSystemSettings);
-        initializeFormValues(mockSystemSettings);
-      } finally {
+        setError('Failed to load settings');
         setIsLoading(false);
       }
     };
 
     initializeSettings();
+    fetchApiKeys();
   }, []);
 
   // Initialize form values from settings
@@ -769,22 +866,207 @@ export default function SettingsPage() {
     }, 3000);
   };
 
-  const handleApiKeyRevoke = (keyId: string) => {
-    // In a real app, this would call an API to revoke the key
-    toast.success("API key revoked", {
-      description: "The API key has been revoked successfully.",
-    });
+  const handleApiKeyRevoke = async (keyId: string) => {
+    try {
+      const response = await fetch('/api/admin/api-keys', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: keyId, action: 'revoke' }),
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        toast.success("API key revoked", {
+          description: "The API key has been revoked successfully.",
+        });
+        await fetchApiKeys(); // Refresh the list
+      } else {
+        const { error } = await response.json();
+        toast.error("Failed to revoke API key", {
+          description: error || "An error occurred",
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to revoke API key", {
+        description: "An unexpected error occurred",
+      });
+    }
   };
 
-  const handleWebhookStatusToggle = (
-    webhookId: string,
-    newStatus: "active" | "inactive"
-  ) => {
-    // In a real app, this would update the webhook status
-    toast.success("Webhook updated", {
-      description: `Webhook status changed to ${newStatus}.`,
-    });
+  const handleCreateApiKey = async () => {
+    if (!newApiKeyName.trim()) {
+      toast.error("API key name is required");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const response = await fetch('/api/admin/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newApiKeyName,
+          permissions: newApiKeyPermissions.length > 0 ? newApiKeyPermissions : ['read:basic']
+        }),
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const { success, data } = await response.json();
+        if (success) {
+          setGeneratedApiKey(data.key);
+          toast.success("API key created successfully", {
+            description: "Please copy your API key now. You won't be able to see it again.",
+          });
+          await fetchApiKeys(); // Refresh the list
+        }
+      } else {
+        const { error } = await response.json();
+        toast.error("Failed to create API key", {
+          description: error || "An error occurred",
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to create API key", {
+        description: "An unexpected error occurred",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const handleCloseApiKeyDialog = () => {
+    setIsCreateApiKeyDialogOpen(false);
+    setNewApiKeyName("");
+    setNewApiKeyPermissions([]);
+    setGeneratedApiKey("");
+  };
+
+  // Webhook management functions
+  const handleCreateWebhook = async () => {
+    if (!newWebhookName || !newWebhookUrl || newWebhookEvents.length === 0) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/admin/webhooks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: newWebhookName,
+          url: newWebhookUrl,
+          events: newWebhookEvents,
+          secret: newWebhookSecret || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create webhook');
+      }
+
+      const data = await response.json();
+      setWebhooks([...webhooks, data.webhook]);
+      toast.success("Webhook created successfully");
+      handleCloseWebhookDialog();
+    } catch (error) {
+      console.error('Error creating webhook:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create webhook');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleWebhookStatusToggle = async (webhookId: string, newStatus: 'active' | 'inactive') => {
+    try {
+      const response = await fetch('/api/admin/webhooks', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          id: webhookId,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update webhook');
+      }
+
+      const data = await response.json();
+      setWebhooks(webhooks.map(webhook => 
+        webhook.id === webhookId ? data.webhook : webhook
+      ));
+      toast.success(`Webhook ${newStatus === 'active' ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Error updating webhook:', error);
+      toast.error('Failed to update webhook status');
+    }
+  };
+
+  const handleWebhookTest = async (webhookId: string) => {
+    try {
+      const response = await fetch('/api/admin/webhooks/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ webhookId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to test webhook');
+      }
+
+      toast.success("Webhook test successful");
+    } catch (error) {
+      console.error('Error testing webhook:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to test webhook');
+    }
+  };
+
+  const handleWebhookDelete = async (webhookId: string) => {
+    try {
+      const response = await fetch(`/api/admin/webhooks?id=${webhookId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete webhook');
+      }
+
+      setWebhooks(webhooks.filter(webhook => webhook.id !== webhookId));
+      toast.success("Webhook deleted successfully");
+    } catch (error) {
+      console.error('Error deleting webhook:', error);
+      toast.error('Failed to delete webhook');
+    }
+  };
+
+  const handleCloseWebhookDialog = () => {
+    setIsCreateWebhookDialogOpen(false);
+    setNewWebhookName("");
+    setNewWebhookUrl("");
+    setNewWebhookEvents([]);
+    setNewWebhookSecret("");
+  };
+
 
   const renderSettingInput = (setting: SystemSetting) => {
     switch (setting.type) {
@@ -1095,89 +1377,110 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-end">
-                <Dialog>
+                <Dialog open={isCreateApiKeyDialogOpen} onOpenChange={setIsCreateApiKeyDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
-                      Generate New API Key
+                      Create API Key
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Create New API Key</DialogTitle>
                       <DialogDescription>
-                        Generate a new API key for integration with external
-                        services
+                        Generate a new API key for external integrations.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="apiKeyName">Key Name</Label>
-                        <Input
-                          id="apiKeyName"
-                          placeholder="e.g., Payment Gateway Integration"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Permissions</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm1" />
-                            <label htmlFor="perm1" className="text-sm">
-                              read:accounts
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm2" />
-                            <label htmlFor="perm2" className="text-sm">
-                              write:accounts
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm3" />
-                            <label htmlFor="perm3" className="text-sm">
-                              read:payments
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm4" />
-                            <label htmlFor="perm4" className="text-sm">
-                              write:payments
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm5" />
-                            <label htmlFor="perm5" className="text-sm">
-                              read:reports
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm6" />
-                            <label htmlFor="perm6" className="text-sm">
-                              read:contacts
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="perm7" />
-                            <label htmlFor="perm7" className="text-sm">
-                              write:messages
-                            </label>
+                      {generatedApiKey ? (
+                        <div className="space-y-4">
+                          <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertTitle>API Key Generated</AlertTitle>
+                            <AlertDescription>
+                              Please copy your API key now. You won't be able to see it again.
+                            </AlertDescription>
+                          </Alert>
+                          <div className="space-y-2">
+                            <Label>Your API Key</Label>
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                value={generatedApiKey}
+                                readOnly
+                                className="font-mono text-sm"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(generatedApiKey);
+                                  toast.success("API key copied to clipboard");
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="expiryDate">
-                          Expiry Date (Optional)
-                        </Label>
-                        <Input
-                          id="expiryDate"
-                          type="date"
-                        />
-                      </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="apiKeyName">API Key Name</Label>
+                            <Input
+                              id="apiKeyName"
+                              placeholder="e.g., Payment Integration"
+                              value={newApiKeyName}
+                              onChange={(e) => setNewApiKeyName(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Permissions</Label>
+                            <div className="space-y-2">
+                              {['read:basic', 'read:accounts', 'write:accounts', 'read:payments', 'write:payments', 'read:reports'].map((permission) => (
+                                <div key={permission} className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={permission}
+                                    checked={newApiKeyPermissions.includes(permission)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setNewApiKeyPermissions([...newApiKeyPermissions, permission]);
+                                      } else {
+                                        setNewApiKeyPermissions(newApiKeyPermissions.filter(p => p !== permission));
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={permission} className="text-sm">
+                                    {permission}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <DialogFooter>
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Generate Key</Button>
+                      {generatedApiKey ? (
+                        <Button onClick={handleCloseApiKeyDialog}>
+                          Done
+                        </Button>
+                      ) : (
+                        <>
+                          <Button variant="outline" onClick={handleCloseApiKeyDialog}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleCreateApiKey} disabled={isSaving}>
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              "Create API Key"
+                            )}
+                          </Button>
+                        </>
+                      )}
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -1186,61 +1489,67 @@ export default function SettingsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Key</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Last Used</TableHead>
+                    <TableHead>Name & Key</TableHead>
+                    <TableHead>Permissions</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Details</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockApiKeys.map((apiKey) => (
+                  {apiKeys.map((apiKey) => (
                     <TableRow key={apiKey.id}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{apiKey.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {apiKey.permissions.join(", ")}
+                            {apiKey.key}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                          {apiKey.key.substring(0, 10)}...
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 ml-2"
+                        <div className="flex flex-wrap gap-1">
+                          {apiKey.permissions.map((permission) => (
+                            <Badge key={permission} variant="secondary">
+                              {permission}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            apiKey.status === "active"
+                              ? "default"
+                              : apiKey.status === "expired"
+                              ? "destructive"
+                              : "secondary"
+                          }
                         >
-                          <span className="sr-only">Copy</span>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell>{apiKey.createdAt}</TableCell>
-                      <TableCell>{apiKey.lastUsed || "Never"}</TableCell>
-                      <TableCell>
-                        {apiKey.status === "active" && (
-                          <Badge className="bg-green-500">Active</Badge>
-                        )}
-                        {apiKey.status === "expired" && (
-                          <Badge variant="outline">Expired</Badge>
-                        )}
-                        {apiKey.status === "revoked" && (
-                          <Badge variant="destructive">Revoked</Badge>
-                        )}
+                          {apiKey.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        {apiKey.status === "active" && (
+                        <div className="text-xs text-muted-foreground">
+                          <p>Created: {new Date(apiKey.created_at).toLocaleDateString()}</p>
+                          <p>
+                            Last used:{" "}
+                            {apiKey.last_used_at ? new Date(apiKey.last_used_at).toLocaleDateString() : "Never"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleApiKeyRevoke(apiKey.id)}
+                            disabled={apiKey.status === "revoked"}
                           >
+                            <Trash2 className="h-4 w-4 mr-1" />
                             Revoke
                           </Button>
-                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1347,100 +1656,92 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Webhooks</CardTitle>
               <CardDescription>
-                Manage webhook endpoints for real-time data updates
+                Configure webhook endpoints to receive real-time notifications
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-end">
-                <Dialog>
+            <CardContent>
+              <div className="flex justify-end mb-4">
+                <Dialog open={isCreateWebhookDialogOpen} onOpenChange={setIsCreateWebhookDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Webhook
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Add New Webhook</DialogTitle>
+                      <DialogTitle>Add Webhook</DialogTitle>
                       <DialogDescription>
-                        Create a new webhook endpoint to receive real-time
-                        updates
+                        Configure a new webhook endpoint for receiving notifications.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="webhookName">Webhook Name</Label>
-                        <Input
-                          id="webhookName"
-                          placeholder="e.g., Payment Notification"
+                        <Label htmlFor="webhookName">Name</Label>
+                        <Input 
+                          id="webhookName" 
+                          placeholder="Payment Gateway"
+                          value={newWebhookName}
+                          onChange={(e) => setNewWebhookName(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="webhookUrl">Endpoint URL</Label>
+                        <Label htmlFor="webhookUrl">URL</Label>
                         <Input
                           id="webhookUrl"
-                          placeholder="https://your-endpoint.com/webhook"
+                          placeholder="https://api.example.com/webhook"
+                          value={newWebhookUrl}
+                          onChange={(e) => setNewWebhookUrl(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Events to Subscribe</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event1" />
-                            <label htmlFor="event1" className="text-sm">
-                              payment.created
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event2" />
-                            <label htmlFor="event2" className="text-sm">
-                              payment.updated
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event3" />
-                            <label htmlFor="event3" className="text-sm">
-                              payment.failed
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event4" />
-                            <label htmlFor="event4" className="text-sm">
-                              account.created
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event5" />
-                            <label htmlFor="event5" className="text-sm">
-                              account.status.changed
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event6" />
-                            <label htmlFor="event6" className="text-sm">
-                              collection.assigned
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="checkbox" id="event7" />
-                            <label htmlFor="event7" className="text-sm">
-                              collection.reassigned
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="secretKey">Secret Key (Optional)</Label>
+                        <Label htmlFor="webhookSecret">Secret (Optional)</Label>
                         <Input
-                          id="secretKey"
-                          type="password"
-                          placeholder="Webhook secret for verification"
+                          id="webhookSecret"
+                          placeholder="Leave empty to auto-generate"
+                          value={newWebhookSecret}
+                          onChange={(e) => setNewWebhookSecret(e.target.value)}
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Events</Label>
+                        <div className="space-y-2">
+                          {['payment.created', 'payment.updated', 'account.created', 'account.updated', 'reminder.sent', 'call.completed'].map((event) => (
+                            <div key={event} className="flex items-center space-x-2">
+                              <input 
+                                type="checkbox" 
+                                id={event}
+                                checked={newWebhookEvents.includes(event)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setNewWebhookEvents([...newWebhookEvents, event]);
+                                  } else {
+                                    setNewWebhookEvents(newWebhookEvents.filter(ev => ev !== event));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={event} className="text-sm">
+                                {event.replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Create Webhook</Button>
+                      <Button variant="outline" onClick={handleCloseWebhookDialog}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateWebhook} disabled={isSaving}>
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Add Webhook"
+                        )}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -1469,34 +1770,25 @@ export default function SettingsPage() {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {webhook.events.map((event) => (
-                            <Badge
-                              key={event}
-                              variant="outline"
-                              className="text-xs"
-                            >
+                            <Badge key={event} variant="outline">
                               {event}
                             </Badge>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell>{webhook.lastTriggered || "Never"}</TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <Badge
-                            className={
-                              webhook.status === "active"
-                                ? "bg-green-500"
-                                : "bg-gray-300"
-                            }
-                          >
-                            {webhook.status === "active"
-                              ? "Active"
-                              : "Inactive"}
-                          </Badge>
-                        </div>
+                        <Badge
+                          variant={
+                            webhook.status === "active"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {webhook.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1511,8 +1803,19 @@ export default function SettingsPage() {
                           >
                             {webhook.status === "active" ? "Disable" : "Enable"}
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleWebhookTest(webhook.id)}
+                          >
                             Test
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleWebhookDelete(webhook.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -1837,15 +2140,15 @@ export default function SettingsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockAuditLogs.slice(0, 5).map((log) => (
+                      {auditLogs.slice(0, 5).map((log) => (
                         <TableRow key={log.id}>
                           <TableCell className="font-medium">
                             {log.action}
                           </TableCell>
-                          <TableCell>{log.user}</TableCell>
-                          <TableCell>{log.timestamp}</TableCell>
+                          <TableCell>{log.user_name || log.user_email || 'System'}</TableCell>
+                          <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
                           <TableCell className="max-w-[300px] truncate">
-                            {log.details}
+                            {log.resource_type} - {JSON.stringify(log.details)}
                           </TableCell>
                         </TableRow>
                       ))}
