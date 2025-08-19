@@ -15,13 +15,12 @@ import {
   Phone,
   PlayCircle,
   Shield,
+  Star,
   Users,
   Workflow,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { LoginModal } from "@/components/auth/LoginModal";
-import SupabaseConnectionTest from '@/components/SupabaseConnectionTest';
-import { MahikengAIButton } from "@/components/MahikengAIButton";
 
 const features = [
   {
@@ -178,27 +177,24 @@ export default function Home() {
               />
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a
-                href="#features"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105 relative group"
+              <Link
+                href="/marketing/about"
+                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105"
               >
-                Features
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a
-                href="#pricing"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105 relative group"
+                About
+              </Link>
+              <Link
+                href="/marketing/pricing"
+                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105"
               >
                 Pricing
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a
-                href="#testimonials"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105 relative group"
+              </Link>
+              <Link
+                href="/marketing/contact"
+                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-105"
               >
-                Testimonials
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
+                Contact
+              </Link>
               <Button
                 onClick={() => setIsLoginModalOpen(true)}
                 className="btn-glow bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
@@ -436,6 +432,188 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 bg-gradient-to-r from-primary/5 via-secondary/5 to-tertiary/5">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Choose Your <span className="gradient-text">Perfect Plan</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Flexible pricing options designed to scale with your business. 
+              From small teams to enterprise organizations.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Starter Plan */}
+            <Card className="group card-hover glass-effect p-8 border-white/10 hover:border-primary/30 transition-all duration-500 relative">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-8 w-8 text-primary group-hover:text-secondary transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors duration-300">
+                  Starter
+                </h3>
+                <p className="text-muted-foreground mb-6">Perfect for small teams</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold gradient-text">R2,500</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Up to 10 agents</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Basic automation</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Standard reporting</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Email support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>5GB storage</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="w-full bg-gradient-to-r from-primary/80 to-secondary/80 hover:from-primary hover:to-secondary transition-all duration-300"
+                >
+                  Get Started
+                </Button>
+              </div>
+            </Card>
+
+            {/* Professional Plan */}
+            <Card className="group card-hover glass-effect p-8 border-primary/30 hover:border-primary/50 transition-all duration-500 relative scale-105">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-full text-sm font-semibold">
+                  Most Popular
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-secondary/20 to-tertiary/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <BarChart3 className="h-8 w-8 text-secondary group-hover:text-tertiary transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2 group-hover:text-secondary transition-colors duration-300">
+                  Professional
+                </h3>
+                <p className="text-muted-foreground mb-6">For growing businesses</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold gradient-text">R7,500</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Up to 50 agents</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Advanced automation</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>AI-powered analytics</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Priority support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>50GB storage</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Custom integrations</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="w-full bg-gradient-to-r from-secondary to-tertiary hover:from-secondary/80 hover:to-tertiary/80 transition-all duration-300"
+                >
+                  Start Free Trial
+                </Button>
+              </div>
+            </Card>
+
+            {/* Enterprise Plan */}
+            <Card className="group card-hover glass-effect p-8 border-white/10 hover:border-tertiary/30 transition-all duration-500 relative">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-tertiary/20 to-primary/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="h-8 w-8 text-tertiary group-hover:text-primary transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2 group-hover:text-tertiary transition-colors duration-300">
+                  Enterprise
+                </h3>
+                <p className="text-muted-foreground mb-6">For large organizations</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold gradient-text">Custom</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Unlimited agents</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Full automation suite</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Advanced AI features</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>24/7 dedicated support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>Unlimited storage</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-3" />
+                    <span>White-label options</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => setIsLoginModalOpen(true)}
+                  variant="outline"
+                  className="w-full border-tertiary/40 text-tertiary hover:bg-tertiary/20 hover:border-tertiary/60 transition-all duration-300"
+                >
+                  Contact Sales
+                </Button>
+              </div>
+            </Card>
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-4">
+              All plans include 30-day free trial • No setup fees • Cancel anytime
+            </p>
+            <div className="flex justify-center items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-green-400" />
+                <span>POPI Act Compliant</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-blue-400" />
+                <span>Bank-Grade Security</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 px-4">
         <div className="container mx-auto">
@@ -646,8 +824,6 @@ export default function Home() {
         onClose={() => setIsLoginModalOpen(false)}
       />
       
-      {/* Mahikeng AI Floating Button */}
-      <MahikengAIButton />
     </div>
   );
 }

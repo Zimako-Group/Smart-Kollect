@@ -9,8 +9,24 @@ const isBuildTime = () => {
 
 // RBAC Route Configuration
 const ROUTE_PERMISSIONS = {
-  // Public routes - no authentication required
-  public: ['/login', '/', '/api/auth', '/_next', '/favicon.ico', '/sounds', '.mp3', '.svg'],
+  // Public routes - no authentication required (marketing pages)
+  public: [
+    '/login', 
+    '/', 
+    '/marketing/about', 
+    '/marketing/pricing', 
+    '/marketing/contact', 
+    '/privacy-policy', 
+    '/terms-and-conditions', 
+    '/popi-act',
+    '/api/auth', 
+    '/_next', 
+    '/favicon.ico', 
+    '/sounds', 
+    '.mp3', 
+    '.svg',
+    '/images'
+  ],
   
   // Agent routes - requires 'agent' role
   agent: ['/user'],
