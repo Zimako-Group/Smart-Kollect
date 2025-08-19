@@ -91,10 +91,11 @@ import { extractSubdomain } from '@/lib/tenant-service';
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
+  const hostname = req.headers.get('host') || '';
   
   console.log('[RBAC-MIDDLEWARE] Processing:', {
     pathname,
-    hostname: req.headers.get('host'),
+    hostname,
     method: req.method
   });
   
@@ -102,6 +103,34 @@ export async function middleware(req: NextRequest) {
   if (isBuildTime()) {
     console.log('[RBAC-MIDDLEWARE] Skipping - build time');
     return NextResponse.next();
+  }
+  
+  // Extract subdomain to determine if this is main domain or tenant subdomain
+  const subdomain = extractSubdomain(hostname);
+  const isMainDomain = !subdomain || subdomain === 'www';
+  
+  console.log('[RBAC-MIDDLEWARE] Domain check:', {
+    hostname,
+    subdomain,
+    isMainDomain
+  });
+  
+  // If this is the main domain (smartkollect.co.za), allow all marketing pages
+  if (isMainDomain) {
+    const isMarketingRoute = pathname === '/' || 
+                           pathname.startsWith('/marketing/') ||
+                           pathname.startsWith('/privacy-policy') ||
+                           pathname.startsWith('/terms-and-conditions') ||
+                           pathname.startsWith('/popi-act') ||
+                           pathname.startsWith('/_next') ||
+                           pathname.includes('.') ||
+                           pathname.startsWith('/api/auth') ||
+                           pathname.startsWith('/login');
+    
+    if (isMarketingRoute) {
+      console.log('[RBAC-MIDDLEWARE] Main domain marketing route, allowing access:', pathname);
+      return NextResponse.next();
+    }
   }
   
   // Check if this is a public route that doesn't need authentication
