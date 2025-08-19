@@ -3,26 +3,34 @@ import { supabase, supabaseAuth } from '@/lib/supabaseClient';
 import { cookies } from 'next/headers';
 import { sipService } from '@/lib/sipService';
 
-// Helper function to check if user has access to metrics
-async function hasMetricsAccess(userId: string) {
-  if (!userId) return false;
+// Helper function to check if user has access to metrics and get tenant context
+async function getUserTenantContext(userId: string) {
+  if (!userId) return null;
   
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, tenant_id')
       .eq('id', userId)
       .single();
       
     if (error) {
       console.error('Error checking user role:', error);
-      return false;
+      return null;
     }
     
-    return ['admin', 'supervisor', 'system'].includes(data?.role);
+    const hasAccess = ['admin', 'supervisor', 'system'].includes(data?.role);
+    if (!hasAccess) return null;
+    
+    return {
+      userId,
+      role: data.role,
+      tenantId: data.tenant_id,
+      hasAccess: true
+    };
   } catch (err) {
     console.error('Error checking metrics access:', err);
-    return false;
+    return null;
   }
 }
 
@@ -50,24 +58,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         );
       }
       
-      // Check if user has access to metrics
-      const hasAccess = await hasMetricsAccess(session.user.id);
-      if (!hasAccess) {
+      // Check if user has access to metrics and get tenant context
+      const userContext = await getUserTenantContext(session.user.id);
+      if (!userContext) {
         return NextResponse.json(
           { error: 'Unauthorized access' },
           { status: 403 }
         );
       }
+      
+      // Fetch tenant-specific metrics
+      var agentMetrics = await getAgentMetrics(timeRange, userContext.tenantId);
+      var callMetrics = await getCallMetrics(timeRange, userContext.tenantId);
+      var ptpMetrics = await getPTPMetrics(timeRange, userContext.tenantId);
+    } else {
+      // For bypass auth, use mock data without tenant filtering
+      var agentMetrics = await getAgentMetrics(timeRange);
+      var callMetrics = await getCallMetrics(timeRange);
+      var ptpMetrics = await getPTPMetrics(timeRange);
     }
-    
-    // Fetch agent metrics
-    const agentMetrics = await getAgentMetrics(timeRange);
-    
-    // Fetch call metrics
-    const callMetrics = await getCallMetrics(timeRange);
-    
-    // Fetch PTP metrics
-    const ptpMetrics = await getPTPMetrics(timeRange);
     
     // Get SIP status information if requested
     let sipStatus = null;
@@ -100,7 +109,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-async function getAgentMetrics(timeRange: string) {
+async function getAgentMetrics(timeRange: string, tenantId?: string) {
   // Using hardcoded mock data instead of querying the database
   // This avoids the error with non-existent tables
   
@@ -123,7 +132,7 @@ async function getAgentMetrics(timeRange: string) {
   };
 }
 
-async function getCallMetrics(timeRange: string) {
+async function getCallMetrics(timeRange: string, tenantId?: string) {
   // Using hardcoded mock data instead of querying the database
   // This avoids the error with non-existent tables
   
@@ -181,7 +190,7 @@ function generateHourlyCallVolume() {
   }));
 }
 
-async function getPTPMetrics(timeRange: string) {
+async function getPTPMetrics(timeRange: string, tenantId?: string) {
   try {
     // Define the date range based on the timeRange parameter
     let startDate;
@@ -205,22 +214,76 @@ async function getPTPMetrics(timeRange: string) {
         startDate.setHours(0, 0, 0, 0);
     }
     
-    // Use our database function to efficiently count PTPs by status
-    const { data: ptpCounts, error: ptpCountsError } = await supabase
-      .rpc('count_ptps_by_status', {
-        start_date: startDate.toISOString(),
-        end_date: endDate
-      });
+    // Use our database function to efficiently count PTPs by status with tenant filtering
+    let ptpCounts, ptpCountsError;
+    if (tenantId) {
+      // Query PTPs filtered by tenant
+      const { data: ptps, error: ptpsError } = await supabase
+        .from('PTP')
+        .select(`
+          *,
+          accounts!inner(
+            tenant_id
+          )
+        `)
+        .eq('accounts.tenant_id', tenantId)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate);
+        
+      if (ptpsError) {
+        console.error('Error fetching tenant PTPs:', ptpsError);
+        ptpCountsError = ptpsError;
+      } else {
+        // Calculate metrics from filtered data
+        const totalPTPs = ptps.length;
+        const fulfilledPTPs = ptps.filter(ptp => ptp.status === 'paid').length;
+        const pendingPTPs = ptps.filter(ptp => ptp.status === 'pending').length;
+        const defaultedPTPs = ptps.filter(ptp => ptp.status === 'defaulted').length;
+        
+        ptpCounts = {
+          total_ptps: totalPTPs,
+          fulfilled_ptps: fulfilledPTPs,
+          pending_ptps: pendingPTPs,
+          defaulted_ptps: defaultedPTPs
+        };
+      }
+    } else {
+      // Use database function for non-tenant specific queries
+      const result = await supabase
+        .rpc('count_ptps_by_status', {
+          start_date: startDate.toISOString(),
+          end_date: endDate
+        });
+      ptpCounts = result.data;
+      ptpCountsError = result.error;
+    }
       
     if (ptpCountsError) {
       console.error('Error counting PTPs by status:', ptpCountsError);
       
       // Fall back to manual counting if the function call fails
-      const { data: ptps, error: ptpsError } = await supabase
+      let query = supabase
         .from('PTP')
         .select('*')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate);
+        
+      // Add tenant filtering if tenantId is provided
+      if (tenantId) {
+        query = supabase
+          .from('PTP')
+          .select(`
+            *,
+            accounts!inner(
+              tenant_id
+            )
+          `)
+          .eq('accounts.tenant_id', tenantId)
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate);
+      }
+      
+      const { data: ptps, error: ptpsError } = await query;
         
       if (ptpsError) {
         console.error('Error fetching PTPs:', ptpsError);

@@ -87,9 +87,9 @@ export const createActivityNotification = async (
 };
 
 /**
- * Fetches notifications for a specific role
+ * Fetches notifications for a specific role with optional tenant filtering
  */
-export const getNotifications = async (role: 'admin' | 'agent', agentName?: string, limit = 10) => {
+export const getNotifications = async (role: 'admin' | 'agent', tenantIdOrAgentName?: string, limit = 10) => {
   try {
     let query = supabase
       .from('Notifications')
@@ -98,10 +98,13 @@ export const getNotifications = async (role: 'admin' | 'agent', agentName?: stri
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    // If agent role, filter by agent name
-    if (role === 'agent' && agentName) {
-      query = query.eq('agent_name', agentName);
+    // If agent role, filter by agent name (backward compatibility)
+    if (role === 'agent' && tenantIdOrAgentName) {
+      query = query.eq('agent_name', tenantIdOrAgentName);
     }
+
+    // For admin role, we could add tenant filtering here if notifications table has tenant_id
+    // For now, notifications are global but we can filter by related data
 
     const { data, error } = await query;
 

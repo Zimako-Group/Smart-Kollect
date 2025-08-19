@@ -154,15 +154,7 @@ export default function AdminDashboard() {
   const [agentAllocations, setAgentAllocations] = useState<{
     [key: string]: number;
   }>({});
-  const [availableAgents, setAvailableAgents] = useState([
-    { id: 1, name: "Thabo Mokoena", performance: "High" },
-    { id: 2, name: "Lerato Ndlovu", performance: "Medium" },
-    { id: 3, name: "Sipho Nkosi", performance: "High" },
-    { id: 4, name: "Nomsa Dlamini", performance: "Medium" },
-    { id: 5, name: "Bongani Khumalo", performance: "Low" },
-    { id: 6, name: "Zanele Mbeki", performance: "High" },
-    { id: 7, name: "Mandla Zuma", performance: "Medium" },
-  ]);
+  const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [selectedAgents, setSelectedAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showAgentDetails, setShowAgentDetails] = useState(false);
@@ -174,8 +166,8 @@ export default function AdminDashboard() {
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
 
-  // Agents data will be fetched from the database
-  const agents: Agent[] = [];
+  // Use the fetched agent profiles as agents data
+  const agents: Agent[] = availableAgents;
 
   const handleAssignAgents = () => {
     // In a real app, you would save this to your database
@@ -244,6 +236,15 @@ export default function AdminDashboard() {
         }
 
         setAgentProfiles(profiles || []);
+        
+        // Convert profiles to Agent format for availableAgents
+        const agents = profiles?.map((profile, index) => ({
+          id: index + 1,
+          name: profile.full_name || profile.email,
+          performance: "Medium" // Default performance, could be calculated from actual data
+        })) || [];
+        
+        setAvailableAgents(agents);
       } catch (error) {
         console.error("Error fetching agent profiles:", error);
       } finally {
@@ -304,7 +305,19 @@ export default function AdminDashboard() {
     const fetchNotifications = async () => {
       setLoadingNotifications(true);
       try {
-        const notificationsData = await getNotifications("admin", undefined, 5);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get current user's tenant
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.tenant_id) return;
+
+        const notificationsData = await getNotifications("admin", profile.tenant_id, 5);
         setNotifications(notificationsData);
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -320,10 +333,28 @@ export default function AdminDashboard() {
           "Fetching agent allocations from agent_allocations table..."
         );
 
-        // Query the agent_allocations table directly
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get current user's tenant
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.tenant_id) return;
+
+        // Query the agent_allocations table with tenant filtering
         const { data, error } = await supabase
           .from("agent_allocations")
-          .select("agent_id, allocated_at, status");
+          .select(`
+            agent_id, 
+            allocated_at, 
+            status,
+            profiles!inner(tenant_id)
+          `)
+          .eq('profiles.tenant_id', profile.tenant_id);
 
         if (error) {
           throw error;
