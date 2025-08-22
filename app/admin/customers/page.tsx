@@ -141,7 +141,9 @@ export default function AdminCustomersPage() {
 
   // Handle filter changes
   const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Convert "all" values back to empty strings for the API
+    const filterValue = value === "all" ? "" : value;
+    setFilters(prev => ({ ...prev, [key]: filterValue }));
     setCurrentPage(1);
   }, []);
 
@@ -365,24 +367,24 @@ export default function AdminCustomersPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Select value={filters.riskLevel} onValueChange={(value) => handleFilterChange('riskLevel', value)}>
+            <Select value={filters.riskLevel || undefined} onValueChange={(value) => handleFilterChange('riskLevel', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Risk Level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Risk Levels</SelectItem>
+                <SelectItem value="all">All Risk Levels</SelectItem>
                 <SelectItem value="high">High Risk</SelectItem>
                 <SelectItem value="medium">Medium Risk</SelectItem>
                 <SelectItem value="low">Low Risk</SelectItem>
               </SelectContent>
             </Select>
             
-            <Select value={filters.accountType} onValueChange={(value) => handleFilterChange('accountType', value)}>
+            <Select value={filters.accountType || undefined} onValueChange={(value) => handleFilterChange('accountType', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Account Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="RESIDENTIAL">Residential</SelectItem>
                 <SelectItem value="BUSINESS MLM">Business</SelectItem>
                 <SelectItem value="GOVERNMENT">Government</SelectItem>
