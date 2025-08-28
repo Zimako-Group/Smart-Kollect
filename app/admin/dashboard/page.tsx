@@ -926,15 +926,7 @@ export default function AdminDashboard() {
                       },
                     },
                     dataLabels: {
-                      enabled: true,
-                      formatter: function (val) {
-                        return val === 0 ? "" : "R" + val.toLocaleString();
-                      },
-                      offsetY: -20,
-                      style: {
-                        fontSize: "12px",
-                        colors: ["#fff"],
-                      },
+                      enabled: false,
                     },
                     xaxis: {
                       categories: consolidatedPaymentsData.map(
