@@ -427,6 +427,8 @@ export default function AdminDashboard() {
       }
     };
 
+    fetchDashboardMetrics();
+    fetchAgentProfiles();
     fetchNotifications();
     fetchAgentAllocations();
     fetchPerformanceData();
