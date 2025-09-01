@@ -190,6 +190,314 @@ export default function DocumentationPage() {
         Note over A: Agent reviews insights<br/>Makes informed decisions<br/>Takes recommended actions
   `;
 
+  const projectStructureDiagram = `
+    graph TD
+        A[Smart-Kollect] --> B[app/]
+        A --> C[components/]
+        A --> D[contexts/]
+        A --> E[hooks/]
+        A --> F[lib/]
+        A --> G[public/]
+        A --> H[types/]
+        
+        B --> B1[admin/]
+        B --> B2[api/]
+        B --> B3[user/]
+        B --> B4[marketing/]
+        B --> B5[layout.tsx]
+        B --> B6[page.tsx]
+        
+        C --> C1[auth/]
+        C --> C2[dashboard/]
+        C --> C3[settings/]
+        C --> C4[ui/]
+        C --> C5[GlobalDialer.tsx]
+        C --> C6[MinimizedDialer.tsx]
+        
+        D --> D1[AuthContext.tsx]
+        D --> D2[DialerContext.tsx]
+        D --> D3[FloatingButtonContext.tsx]
+        
+        F --> F1[redux/]
+        F --> F2[services/]
+        F --> F3[supabase/]
+        
+        F1 --> F1A[features/]
+        F1 --> F1B[store.ts]
+        F1 --> F1C[provider.tsx]
+        
+        F1A --> F1A1[accountsSlice.ts]
+        F1A --> F1A2[userSlice.ts]
+        F1A --> F1A3[dialerSlice.ts]
+        
+        classDef rootClass fill:#3b82f6,stroke:#1e40af,stroke-width:3px,color:#ffffff
+        classDef folderClass fill:#7c3aed,stroke:#5b21b6,stroke-width:2px,color:#ffffff
+        classDef fileClass fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
+        classDef reduxClass fill:#dc2626,stroke:#991b1b,stroke-width:2px,color:#ffffff
+        classDef contextClass fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+        
+        class A rootClass
+        class B,C,D,E,F,G,H,B1,B2,B3,B4,C1,C2,C3,C4,F1,F2,F3,F1A folderClass
+        class B5,B6,C5,C6 fileClass
+        class D1,D2,D3 contextClass
+        class F1B,F1C,F1A1,F1A2,F1A3 reduxClass
+  `;
+
+  const frontendArchitectureDiagram = `
+    graph TB
+        subgraph "Presentation Layer"
+            A[React Components] --> B[UI Library]
+            A --> C[Layout Components]
+            A --> D[Feature Components]
+            B --> E[shadcn/ui]
+            B --> F[Tailwind CSS]
+        end
+        
+        subgraph "Business Logic Layer"
+            G[Custom Hooks] --> H[State Management]
+            G --> I[Service Layer]
+            H --> J[Redux Toolkit]
+            H --> K[React Context]
+            I --> L[API Services]
+            I --> M[Utility Functions]
+        end
+        
+        subgraph "Data Layer"
+            N[Data Sources] --> O[Supabase Client]
+            N --> P[Real-time Subscriptions]
+            N --> Q[Local Storage]
+            O --> R[Database Operations]
+            P --> S[Live Updates]
+        end
+        
+        subgraph "External Integrations"
+            T[BuzzBox API] --> U[Telephony]
+            V[Infobip SMS] --> W[Messaging]
+            X[Anthropic Claude] --> Y[AI Analysis]
+        end
+        
+        A --> G
+        G --> N
+        N --> T
+        N --> V
+        N --> X
+        
+        classDef presentationClass fill:#7c3aed,stroke:#5b21b6,stroke-width:2px,color:#ffffff
+        classDef businessClass fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+        classDef dataClass fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
+        classDef externalClass fill:#dc2626,stroke:#991b1b,stroke-width:2px,color:#ffffff
+        
+        class A,B,C,D,E,F presentationClass
+        class G,H,I,J,K,L,M businessClass
+        class N,O,P,Q,R,S dataClass
+        class T,U,V,W,X,Y externalClass
+  `;
+
+  const componentAnalysisDiagram = `
+    graph TD
+        A[RootLayout]
+        
+        A --- B[Layout Layer]
+        B --- B1[Sidebar]
+        B --- B2[Header]
+        B --- B3[Footer]
+        
+        B1 --- B1A[Navigation Menu]
+        B2 --- B2A[User Profile]
+        B2 --- B2B[Notifications]
+        
+        A --- C[Feature Layer]
+        C --- C1[CustomerDashboard]
+        C --- C2[CallManager]
+        C --- C3[PTPCreator]
+        C --- C4[MetricsViewer]
+        
+        C1 --- C1A[Customer Profile]
+        C1 --- C1B[Account Details]
+        C2 --- C2A[Active Call Interface]
+        C2 --- C2B[Call History]
+        C3 --- C3A[Payment Form]
+        C3 --- C3B[SMS Confirmation]
+        C4 --- C4A[Performance Charts]
+        C4 --- C4B[Real-time Stats]
+        
+        A --- D[Shared Layer]
+        D --- D1[DataTable]
+        D --- D2[Modal]
+        D --- D3[Form]
+        D --- D4[LoadingSpinner]
+        
+        D1 --- D1A[Pagination]
+        D1 --- D1B[Sorting]
+        D1 --- D1C[Filtering]
+        D2 --- D2A[Confirmation Dialog]
+        D2 --- D2B[Form Dialog]
+        D3 --- D3A[Input Fields]
+        D3 --- D3B[Validation]
+        D4 --- D4A[Skeleton Loader]
+        
+        A --- E[Communication Layer]
+        E --- E1[GlobalDialer]
+        E --- E2[MinimizedDialer]
+        E --- E3[SMSComposer]
+        
+        E1 --- E1A[Dialer Interface]
+        E1 --- E1B[Call Controls]
+        E2 --- E2A[Quick Actions]
+        E3 --- E3A[Template Selector]
+        E3 --- E3B[Message Preview]
+        
+        classDef rootClass fill:#1f2937,stroke:#374151,stroke-width:3px,color:#ffffff
+        classDef layerClass fill:#4b5563,stroke:#6b7280,stroke-width:2px,color:#ffffff
+        classDef layoutClass fill:#7c3aed,stroke:#5b21b6,stroke-width:2px,color:#ffffff
+        classDef featureClass fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+        classDef sharedClass fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
+        classDef commClass fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+        
+        class A rootClass
+        class B,C,D,E layerClass
+        class B1,B2,B3,B1A,B2A,B2B layoutClass
+        class C1,C2,C3,C4,C1A,C1B,C2A,C2B,C3A,C3B,C4A,C4B featureClass
+        class D1,D2,D3,D4,D1A,D1B,D1C,D2A,D2B,D3A,D3B,D4A sharedClass
+        class E1,E2,E3,E1A,E1B,E2A,E3A,E3B commClass
+  `;
+
+  const stateManagementDiagram = `
+    graph TD
+        A[Application State]
+        
+        A --- B[Redux Toolkit Store]
+        A --- C[React Context]
+        
+        B --- B1[Global State]
+        B1 --- B1A[accountsSlice]
+        B1 --- B1B[userSlice]
+        B1 --- B1C[dialerSlice]
+        
+        B1A --- B1A1[Customer Data]
+        B1A --- B1A2[Account History]
+        B1A --- B1A3[Payment Records]
+        
+        B1B --- B1B1[User Profile]
+        B1B --- B1B2[Authentication]
+        B1B --- B1B3[Permissions]
+        
+        B1C --- B1C1[Active Calls]
+        B1C --- B1C2[Call History]
+        B1C --- B1C3[Dialer State]
+        
+        C --- C1[AuthContext]
+        C --- C2[DialerContext]
+        C --- C3[FloatingButtonContext]
+        
+        C1 --- C1A[Login State]
+        C1 --- C1B[Session Management]
+        C1 --- C1C[Tenant Context]
+        
+        C2 --- C2A[Call Controls]
+        C2 --- C2B[Phone Interface]
+        C2 --- C2C[Real-time Updates]
+        
+        C3 --- C3A[Button Visibility]
+        C3 --- C3B[Action Handlers]
+        C3 --- C3C[Position State]
+        
+        D[Components]
+        D --- D1[useSelector]
+        D --- D2[useDispatch]
+        D --- D3[useContext]
+        
+        D1 --> B1
+        D2 --> B1
+        D3 --> C1
+        D3 --> C2
+        D3 --> C3
+        
+        classDef rootClass fill:#1f2937,stroke:#374151,stroke-width:3px,color:#ffffff
+        classDef reduxClass fill:#764abc,stroke:#5a2d91,stroke-width:2px,color:#ffffff
+        classDef contextClass fill:#61dafb,stroke:#21a1c4,stroke-width:2px,color:#ffffff
+        classDef sliceClass fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+        classDef dataClass fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
+        classDef componentClass fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+        
+        class A rootClass
+        class B,B1 reduxClass
+        class C contextClass
+        class B1A,B1B,B1C sliceClass
+        class B1A1,B1A2,B1A3,B1B1,B1B2,B1B3,B1C1,B1C2,B1C3,C1,C2,C3,C1A,C1B,C1C,C2A,C2B,C2C,C3A,C3B,C3C dataClass
+        class D,D1,D2,D3 componentClass
+  `;
+
+  const routingLayoutDiagram = `
+    flowchart TD
+        A[Next.js App Router]
+        
+        A --> B[Root Layout]
+        B --> B1[app/layout.tsx]
+        B1 --> B1A[Providers Setup]
+        B1 --> B1B[Global Styles]
+        B1 --> B1C[Metadata Config]
+        
+        A --> C[Route Structure]
+        C --> C1[Admin Routes]
+        C --> C2[API Routes]
+        C --> C3[User Routes]
+        C --> C4[Marketing Routes]
+        C --> C5[Documentation]
+        
+        C1 --> C1A[Admin Layout]
+        C1A --> C1A1[Sidebar Navigation]
+        C1A --> C1A2[Header Bar]
+        C1A --> C1A3[Protected Routes]
+        
+        C1 --> C1B[Admin Pages]
+        C1B --> C1B1[Dashboard]
+        C1B --> C1B2[Customers]
+        C1B --> C1B3[Campaigns]
+        C1B --> C1B4[Accounts]
+        C1B --> C1B5[Settings]
+        
+        C2 --> C2A[API Endpoints]
+        C2A --> C2A1[PTP API]
+        C2A --> C2A2[Metrics API]
+        C2A --> C2A3[SMS API]
+        C2A --> C2A4[Profile API]
+        
+        C3 --> C3A[User Layout]
+        C3A --> C3A1[Public Header]
+        C3A --> C3A2[User Navigation]
+        
+        C4 --> C4A[Marketing Layout]
+        C4A --> C4A1[Landing Pages]
+        C4A --> C4A2[Feature Pages]
+        
+        A --> D[Middleware]
+        D --> D1[Tenant Detection]
+        D --> D2[Authentication Check]
+        D --> D3[Route Protection]
+        
+        D1 --> D1A[Subdomain Parsing]
+        D1 --> D1B[Tenant Context]
+        D2 --> D2A[Session Validation]
+        D2 --> D2B[User Permissions]
+        D3 --> D3A[Role-based Access]
+        D3 --> D3B[Redirect Logic]
+        
+        classDef rootClass fill:#1f2937,stroke:#374151,stroke-width:3px,color:#ffffff
+        classDef layoutClass fill:#7c3aed,stroke:#5b21b6,stroke-width:2px,color:#ffffff
+        classDef routeClass fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+        classDef pageClass fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff
+        classDef middlewareClass fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#ffffff
+        classDef apiClass fill:#dc2626,stroke:#991b1b,stroke-width:2px,color:#ffffff
+        
+        class A rootClass
+        class B,B1,C1A,C3A,C4A layoutClass
+        class C,C1,C2,C3,C4,C5 routeClass
+        class B1A,B1B,B1C,C1A1,C1A2,C1A3,C1B1,C1B2,C1B3,C1B4,C1B5,C3A1,C3A2,C4A1,C4A2 pageClass
+        class D,D1,D2,D3,D1A,D1B,D2A,D2B,D3A,D3B middlewareClass
+        class C1B,C2A,C2A1,C2A2,C2A3,C2A4 apiClass
+  `;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
@@ -250,6 +558,7 @@ export default function DocumentationPage() {
                     { id: 'overview', label: 'Overview', icon: FileText },
                     { id: 'multi-tenant', label: 'Multi-Tenant', icon: Users },
                     { id: 'architecture', label: 'Architecture', icon: Layers },
+                    { id: 'frontend-architecture', label: 'Frontend Architecture', icon: Brain },
                     { id: 'features', label: 'Features', icon: Zap },
                     { id: 'api', label: 'API Reference', icon: Code },
                     { id: 'integration', label: 'Integrations', icon: Settings },
@@ -489,6 +798,701 @@ export default function DocumentationPage() {
                       </div>
                     </TabsContent>
                   </Tabs>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Frontend Architecture Section */}
+            <section id="frontend-architecture" className="scroll-mt-8">
+              <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-slate-200 flex items-center gap-2">
+                    <Brain className="h-6 w-6 text-cyan-400" />
+                    Frontend Architecture
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-slate-300 text-lg leading-relaxed">
+                    SmartKollect's frontend is built with Next.js 15 and follows modern React patterns with TypeScript, 
+                    providing a scalable, maintainable, and performant user interface.
+                  </p>
+
+                  <Accordion type="multiple" className="w-full">
+                    <AccordionItem value="table-of-contents" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Table of Contents
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-2">
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                          <ul className="space-y-2 text-slate-300">
+                            {[
+                              "Introduction",
+                              "Project Structure", 
+                              "Core Components",
+                              "Architecture Overview",
+                              "Detailed Component Analysis",
+                              "State Management Strategy",
+                              "Routing and Layout Organization",
+                              "UI Component Library",
+                              "Context API Usage",
+                              "Data Fetching and Performance"
+                            ].map((item, idx) => (
+                              <li key={idx} className="flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-cyan-400" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="introduction" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Introduction
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <p className="text-slate-300 mb-4">
+                            The SmartKollect frontend architecture is designed for scalability, maintainability, and performance. 
+                            Built on Next.js 15 with TypeScript, it leverages modern React patterns and best practices.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-cyan-900/30 to-cyan-800/30 border border-cyan-700/30">
+                              <h4 className="font-semibold text-cyan-300 mb-2">Modern Stack</h4>
+                              <p className="text-slate-400 text-sm">Next.js 15, React 18, TypeScript, Tailwind CSS</p>
+                            </div>
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-900/30 to-blue-800/30 border border-blue-700/30">
+                              <h4 className="font-semibold text-blue-300 mb-2">Performance First</h4>
+                              <p className="text-slate-400 text-sm">Server-side rendering, code splitting, optimized bundles</p>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="project-structure" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Project Structure
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h4 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                            <Layers className="h-5 w-5 text-cyan-400" />
+                            SmartKollect Project Architecture
+                          </h4>
+                          <Mermaid chart={projectStructureDiagram} />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Code className="h-4 w-4 text-green-400" />
+                              Diagram Sources
+                            </h5>
+                            <ul className="space-y-1 text-slate-400 text-sm font-mono">
+                              <li>• app/layout.tsx</li>
+                              <li>• contexts/AuthContext.tsx</li>
+                              <li>• lib/redux/store.ts</li>
+                            </ul>
+                          </div>
+                          
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-blue-400" />
+                              Section Sources
+                            </h5>
+                            <ul className="space-y-1 text-slate-400 text-sm font-mono">
+                              <li>• app/layout.tsx</li>
+                              <li>• contexts/AuthContext.tsx</li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h5 className="font-semibold text-slate-200 mb-3">Directory Structure Details</h5>
+                          <pre className="text-xs text-slate-300 overflow-x-auto">
+                            <code>{`├── app/                    # Next.js App Router
+│   ├── admin/             # Admin dashboard pages
+│   ├── api/               # API routes
+│   ├── user/              # User-facing pages
+│   ├── marketing/         # Marketing pages
+│   ├── layout.tsx         # Root layout component
+│   └── page.tsx           # Home page
+├── components/            # Reusable components
+│   ├── auth/             # Authentication components
+│   ├── dashboard/        # Dashboard components
+│   ├── settings/         # Settings components
+│   ├── ui/               # UI library components
+│   ├── GlobalDialer.tsx  # Global dialer component
+│   └── MinimizedDialer.tsx # Minimized dialer view
+├── contexts/             # React Context providers
+│   ├── AuthContext.tsx   # Authentication context
+│   ├── DialerContext.tsx # Dialer state management
+│   └── FloatingButtonContext.tsx # Floating button state
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility libraries
+│   ├── redux/           # Redux store configuration
+│   │   ├── features/    # Redux slices
+│   │   │   ├── accountsSlice.ts
+│   │   │   ├── userSlice.ts
+│   │   │   └── dialerSlice.ts
+│   │   ├── store.ts     # Redux store setup
+│   │   └── provider.tsx # Redux provider
+│   ├── services/        # API service layers
+│   └── supabase/        # Database client
+├── public/               # Static assets
+└── types/                # TypeScript type definitions`}</code>
+                          </pre>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="core-components" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Core Components
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[
+                            {
+                              name: "Dashboard Components",
+                              description: "Real-time metrics, charts, and monitoring interfaces",
+                              files: ["AgentPerformanceTable.tsx", "CallAnalyticsVisualization.tsx", "MetricsDashboard.tsx"]
+                            },
+                            {
+                              name: "Authentication",
+                              description: "Login, registration, and session management",
+                              files: ["LoginModal.tsx", "AuthContext.tsx", "ProtectedRoute.tsx"]
+                            },
+                            {
+                              name: "Customer Management",
+                              description: "Customer profiles, account management, and interactions",
+                              files: ["CustomerProfile.tsx", "AccountDetails.tsx", "InteractionHistory.tsx"]
+                            },
+                            {
+                              name: "Communication",
+                              description: "Call management, SMS, and email interfaces",
+                              files: ["CallInterface.tsx", "SMSComposer.tsx", "EmailTemplates.tsx"]
+                            }
+                          ].map((component, idx) => (
+                            <div key={idx} className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                              <h4 className="font-semibold text-slate-200 mb-2">{component.name}</h4>
+                              <p className="text-slate-400 text-sm mb-3">{component.description}</p>
+                              <div className="space-y-1">
+                                {component.files.map((file, fileIdx) => (
+                                  <div key={fileIdx} className="text-xs text-slate-500 font-mono">{file}</div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="architecture-overview" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Architecture Overview
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h4 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                            <Layers className="h-5 w-5 text-purple-400" />
+                            Frontend Architecture Flow
+                          </h4>
+                          <Mermaid chart={frontendArchitectureDiagram} />
+                        </div>
+                        
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="text-center p-4 rounded-lg bg-gradient-to-r from-purple-900/30 to-purple-800/30 border border-purple-700/30">
+                              <h4 className="font-semibold text-purple-300 mb-2">Presentation Layer</h4>
+                              <p className="text-slate-400 text-sm">React components, UI library, styling</p>
+                            </div>
+                            <div className="text-center p-4 rounded-lg bg-gradient-to-r from-blue-900/30 to-blue-800/30 border border-blue-700/30">
+                              <h4 className="font-semibold text-blue-300 mb-2">Business Logic</h4>
+                              <p className="text-slate-400 text-sm">Custom hooks, services, state management</p>
+                            </div>
+                            <div className="text-center p-4 rounded-lg bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-700/30">
+                              <h4 className="font-semibold text-green-300 mb-2">Data Layer</h4>
+                              <p className="text-slate-400 text-sm">API clients, caching, real-time subscriptions</p>
+                            </div>
+                          </div>
+                          <p className="text-slate-300">
+                            The architecture follows a layered approach with clear separation between presentation, 
+                            business logic, and data access layers, ensuring maintainability and testability.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Brain className="h-4 w-4 text-cyan-400" />
+                              Layer Interactions
+                            </h5>
+                            <ul className="space-y-2 text-slate-400 text-sm">
+                              <li>• Components consume custom hooks</li>
+                              <li>• Hooks manage state and services</li>
+                              <li>• Services interact with data sources</li>
+                              <li>• External APIs provide specialized functionality</li>
+                            </ul>
+                          </div>
+                          
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Zap className="h-4 w-4 text-yellow-400" />
+                              Key Benefits
+                            </h5>
+                            <ul className="space-y-2 text-slate-400 text-sm">
+                              <li>• Clear separation of concerns</li>
+                              <li>• Reusable business logic</li>
+                              <li>• Testable architecture</li>
+                              <li>• Scalable component structure</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="detailed-analysis" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Detailed Component Analysis
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h4 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                            <Brain className="h-5 w-5 text-blue-400" />
+                            Component Hierarchy & Relationships
+                          </h4>
+                          <Mermaid chart={componentAnalysisDiagram} />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Layers className="h-4 w-4 text-purple-400" />
+                              Layout Components
+                            </h5>
+                            <p className="text-slate-400 text-sm mb-3">Root layout, navigation, and structural components</p>
+                            <div className="flex flex-wrap gap-2">
+                              {["RootLayout", "Sidebar", "Header", "Footer"].map((example, exIdx) => (
+                                <Badge key={exIdx} variant="outline" className="border-purple-600 text-purple-300 bg-purple-600/10">
+                                  {example}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Zap className="h-4 w-4 text-blue-400" />
+                              Feature Components
+                            </h5>
+                            <p className="text-slate-400 text-sm mb-3">Business logic components for specific features</p>
+                            <div className="flex flex-wrap gap-2">
+                              {["CustomerDashboard", "CallManager", "PTPCreator", "MetricsViewer"].map((example, exIdx) => (
+                                <Badge key={exIdx} variant="outline" className="border-blue-600 text-blue-300 bg-blue-600/10">
+                                  {example}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Settings className="h-4 w-4 text-green-400" />
+                              Shared Components
+                            </h5>
+                            <p className="text-slate-400 text-sm mb-3">Reusable components across the application</p>
+                            <div className="flex flex-wrap gap-2">
+                              {["DataTable", "Modal", "Form", "LoadingSpinner"].map((example, exIdx) => (
+                                <Badge key={exIdx} variant="outline" className="border-green-600 text-green-300 bg-green-600/10">
+                                  {example}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-orange-400" />
+                              Communication Components
+                            </h5>
+                            <p className="text-slate-400 text-sm mb-3">Call management, SMS, and messaging interfaces</p>
+                            <div className="flex flex-wrap gap-2">
+                              {["GlobalDialer", "MinimizedDialer", "SMSComposer"].map((example, exIdx) => (
+                                <Badge key={exIdx} variant="outline" className="border-orange-600 text-orange-300 bg-orange-600/10">
+                                  {example}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                          <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-cyan-400" />
+                            Component Relationships
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-400">
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">Composition Patterns</h6>
+                              <ul className="space-y-1">
+                                <li>• Layout components wrap feature components</li>
+                                <li>• Feature components consume shared components</li>
+                                <li>• Communication components integrate globally</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">Data Flow</h6>
+                              <ul className="space-y-1">
+                                <li>• Props flow down the component tree</li>
+                                <li>• Events bubble up through callbacks</li>
+                                <li>• Global state managed via Redux/Context</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="state-management" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        State Management Strategy
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h4 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                            <Settings className="h-5 w-5 text-purple-400" />
+                            State Management Architecture
+                          </h4>
+                          <Mermaid chart={stateManagementDiagram} />
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                                <Database className="h-4 w-4 text-purple-400" />
+                                Redux Toolkit
+                              </h4>
+                              <ul className="space-y-2 text-slate-400 text-sm">
+                                <li>• Global application state</li>
+                                <li>• User authentication state</li>
+                                <li>• Dashboard metrics cache</li>
+                                <li>• Real-time data synchronization</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-cyan-400" />
+                                React Context
+                              </h4>
+                              <ul className="space-y-2 text-slate-400 text-sm">
+                                <li>• Theme and UI preferences</li>
+                                <li>• Tenant context</li>
+                                <li>• Dialer state management</li>
+                                <li>• Floating button context</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Code className="h-4 w-4 text-blue-400" />
+                              Redux Slices
+                            </h5>
+                            <div className="space-y-2">
+                              {["accountsSlice", "userSlice", "dialerSlice"].map((slice, idx) => (
+                                <Badge key={idx} variant="outline" className="border-blue-600 text-blue-300 bg-blue-600/10 block text-center">
+                                  {slice}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-cyan-400" />
+                              Context Providers
+                            </h5>
+                            <div className="space-y-2">
+                              {["AuthContext", "DialerContext", "FloatingButtonContext"].map((context, idx) => (
+                                <Badge key={idx} variant="outline" className="border-cyan-600 text-cyan-300 bg-cyan-600/10 block text-center">
+                                  {context}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Zap className="h-4 w-4 text-orange-400" />
+                              React Hooks
+                            </h5>
+                            <div className="space-y-2">
+                              {["useSelector", "useDispatch", "useContext"].map((hook, idx) => (
+                                <Badge key={idx} variant="outline" className="border-orange-600 text-orange-300 bg-orange-600/10 block text-center">
+                                  {hook}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                          <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                            <Brain className="h-4 w-4 text-green-400" />
+                            State Management Patterns
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-400">
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">Redux for Global State</h6>
+                              <ul className="space-y-1">
+                                <li>• Complex data that needs to be shared</li>
+                                <li>• Application-wide state management</li>
+                                <li>• Time-travel debugging capabilities</li>
+                                <li>• Predictable state updates</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">Context for Local State</h6>
+                              <ul className="space-y-1">
+                                <li>• Component-specific state</li>
+                                <li>• UI state and preferences</li>
+                                <li>• Authentication state</li>
+                                <li>• Theme and configuration</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="routing-layout" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Routing and Layout Organization
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <h4 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                            <Globe className="h-5 w-5 text-blue-400" />
+                            Next.js App Router Architecture
+                          </h4>
+                          <Mermaid chart={routingLayoutDiagram} />
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <p className="text-slate-300 mb-4">
+                            Using Next.js App Router for file-based routing with nested layouts and middleware for tenant isolation.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-orange-900/30 to-orange-800/30 border border-orange-700/30">
+                              <h4 className="font-semibold text-orange-300 mb-2">Route Structure</h4>
+                              <ul className="text-slate-400 text-sm space-y-1">
+                                <li>• /admin/* - Admin dashboard</li>
+                                <li>• /api/* - API endpoints</li>
+                                <li>• /user/* - User-facing pages</li>
+                                <li>• /marketing/* - Marketing pages</li>
+                                <li>• /documentation - Documentation</li>
+                              </ul>
+                            </div>
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-teal-900/30 to-teal-800/30 border border-teal-700/30">
+                              <h4 className="font-semibold text-teal-300 mb-2">Layout Hierarchy</h4>
+                              <ul className="text-slate-400 text-sm space-y-1">
+                                <li>• Root layout with providers</li>
+                                <li>• Admin layout with sidebar</li>
+                                <li>• User layout with public header</li>
+                                <li>• Marketing layout for landing pages</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Layers className="h-4 w-4 text-purple-400" />
+                              Layout Files
+                            </h5>
+                            <div className="space-y-2">
+                              {["app/layout.tsx", "Admin Layout", "User Layout", "Marketing Layout"].map((layout, idx) => (
+                                <Badge key={idx} variant="outline" className="border-purple-600 text-purple-300 bg-purple-600/10 block text-center">
+                                  {layout}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Code className="h-4 w-4 text-red-400" />
+                              API Routes
+                            </h5>
+                            <div className="space-y-2">
+                              {["/ptp", "/metrics", "/sms", "/analyze-profile"].map((route, idx) => (
+                                <Badge key={idx} variant="outline" className="border-red-600 text-red-300 bg-red-600/10 block text-center">
+                                  {route}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                            <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-orange-400" />
+                              Middleware
+                            </h5>
+                            <div className="space-y-2">
+                              {["Tenant Detection", "Authentication", "Route Protection"].map((middleware, idx) => (
+                                <Badge key={idx} variant="outline" className="border-orange-600 text-orange-300 bg-orange-600/10 block text-center">
+                                  {middleware}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                          <h5 className="font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-cyan-400" />
+                            Routing Features
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-400">
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">File-based Routing</h6>
+                              <ul className="space-y-1">
+                                <li>• Automatic route generation</li>
+                                <li>• Nested layouts support</li>
+                                <li>• Dynamic route segments</li>
+                                <li>• Route groups and parallel routes</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h6 className="font-medium text-slate-300 mb-2">Middleware Integration</h6>
+                              <ul className="space-y-1">
+                                <li>• Subdomain-based tenant detection</li>
+                                <li>• Authentication middleware</li>
+                                <li>• Role-based route protection</li>
+                                <li>• Automatic redirects</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="ui-library" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        UI Component Library
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <p className="text-slate-300 mb-4">
+                            Built on shadcn/ui with Tailwind CSS for consistent, accessible, and customizable components.
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                              "Button", "Card", "Dialog", "Form", "Input", "Select", "Table", "Tabs",
+                              "Accordion", "Alert", "Badge", "Checkbox", "Dropdown", "Modal", "Toast", "Tooltip"
+                            ].map((component, idx) => (
+                              <div key={idx} className="p-2 text-center rounded bg-slate-800/50 border border-slate-600/30">
+                                <span className="text-slate-300 text-sm">{component}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="context-usage" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Context API Usage
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="space-y-4">
+                          {[
+                            {
+                              name: "AuthContext",
+                              purpose: "User authentication and session management",
+                              provides: ["user", "login", "logout", "isAuthenticated"]
+                            },
+                            {
+                              name: "DialerContext", 
+                              purpose: "Call management and telephony state",
+                              provides: ["activeCall", "callHistory", "dialNumber", "endCall"]
+                            },
+                            {
+                              name: "FloatingButtonContext",
+                              purpose: "Global floating action button state",
+                              provides: ["isVisible", "actions", "position", "toggle"]
+                            }
+                          ].map((context, idx) => (
+                            <div key={idx} className="bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
+                              <h4 className="font-semibold text-slate-200 mb-2">{context.name}</h4>
+                              <p className="text-slate-400 text-sm mb-3">{context.purpose}</p>
+                              <div className="flex flex-wrap gap-2">
+                                {context.provides.map((item, itemIdx) => (
+                                  <Badge key={itemIdx} variant="outline" className="border-slate-600 text-slate-300 text-xs">
+                                    {item}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="data-fetching" className="border-slate-600">
+                      <AccordionTrigger className="text-slate-200 hover:text-white">
+                        Data Fetching and Performance
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-600/30">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold text-slate-200 mb-3">Data Fetching Strategy</h4>
+                              <ul className="space-y-2 text-slate-400 text-sm">
+                                <li>• Server-side rendering (SSR)</li>
+                                <li>• Static generation (SSG)</li>
+                                <li>• Client-side fetching with SWR</li>
+                                <li>• Real-time subscriptions</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-200 mb-3">Performance Optimizations</h4>
+                              <ul className="space-y-2 text-slate-400 text-sm">
+                                <li>• Code splitting and lazy loading</li>
+                                <li>• Image optimization</li>
+                                <li>• Bundle analysis and optimization</li>
+                                <li>• Caching strategies</li>
+                              </ul>
+                            </div>
+                          </div>
+                          <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-700/30">
+                            <h4 className="font-semibold text-green-300 mb-2">Performance Metrics</h4>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                              <div>
+                                <div className="text-lg font-bold text-green-400">95+</div>
+                                <div className="text-xs text-slate-400">Lighthouse Score</div>
+                              </div>
+                              <div>
+                                <div className="text-lg font-bold text-green-400">&lt;1s</div>
+                                <div className="text-xs text-slate-400">First Paint</div>
+                              </div>
+                              <div>
+                                <div className="text-lg font-bold text-green-400">&lt;2s</div>
+                                <div className="text-xs text-slate-400">Interactive</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </CardContent>
               </Card>
             </section>
