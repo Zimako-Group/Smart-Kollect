@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { deletePTP } from "@/lib/ptp-service";
+import { getPTPUpdateStats } from "@/lib/ptp-auto-update-service";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import {
@@ -79,6 +80,10 @@ export default function PTPPage() {
   const [ptps, setPtps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // State for auto-update stats
+  const [autoUpdateStats, setAutoUpdateStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  
   // State for delete confirmation dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [ptpToDelete, setPtpToDelete] = useState<any>(null);
@@ -113,75 +118,6 @@ export default function PTPPage() {
 
     getCurrentUser();
   }, []);
-
-  // Function to mark a PTP as fulfilled
-  const markAsFulfilled = async (ptpId: string, ptpType: string) => {
-    try {
-      // Show loading toast
-      toast.loading('Updating PTP status...');
-      
-      // Determine which table to update based on PTP type
-      const table = ptpType === 'manual' ? 'ManualPTP' : 'PTP';
-      
-      // Update the PTP status in the database
-      const { data, error } = await supabaseAdmin
-        .from(table)
-        .update({ status: 'paid' })
-        .eq('id', ptpId)
-        .select()
-        .single();
-      
-      if (error) {
-        toast.dismiss();
-        toast.error(`Failed to update PTP: ${error.message}`);
-        console.error('Error updating PTP status:', error);
-        return;
-      }
-      
-      // Update the local state
-      setPtps(prevPtps => 
-        prevPtps.map(ptp => 
-          ptp.id === ptpId ? { ...ptp, status: 'paid' } : ptp
-        )
-      );
-      
-      toast.dismiss();
-      toast.success('PTP marked as fulfilled');
-      
-      // Create account activity for the fulfilled PTP
-      try {
-        await fetch('/api/account-activity', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            accountId: data.debtor_id,
-            activityType: 'status_change',
-            activitySubtype: 'ptp_fulfilled',
-            description: 'Promise to Pay fulfilled',
-            amount: data.amount,
-            createdBy: currentUserId,
-            metadata: {
-              ptpId: data.id,
-              previousStatus: 'pending',
-              newStatus: 'paid',
-              paymentMethod: data.payment_method,
-              fulfilledAt: new Date().toISOString()
-            }
-          }),
-        });
-      } catch (activityError) {
-        console.error('Error creating account activity:', activityError);
-        // Don't throw here to prevent breaking the main flow
-      }
-      
-    } catch (error: any) {
-      toast.dismiss();
-      toast.error(`Error: ${error.message}`);
-      console.error('Error marking PTP as fulfilled:', error);
-    }
-  };
 
   // Function to handle showing the delete confirmation dialog
   const handleDeletePTP = (ptp: any, e: React.MouseEvent) => {
@@ -318,6 +254,27 @@ export default function PTPPage() {
       fetchPTPs();
     }
   }, [currentUserId]);
+
+  // Fetch auto-update statistics
+  useEffect(() => {
+    const fetchAutoUpdateStats = async () => {
+      if (!currentUserId) return;
+      
+      setStatsLoading(true);
+      try {
+        const stats = await getPTPUpdateStats();
+        setAutoUpdateStats(stats);
+      } catch (error) {
+        console.error('Error fetching auto-update stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    if (currentUserId) {
+      fetchAutoUpdateStats();
+    }
+  }, [currentUserId, ptps]); // Re-fetch when PTPs change
   
   // Filter PTPs based on search term and active tab
   const filteredPTPs = useMemo(() => {
@@ -450,23 +407,25 @@ export default function PTPPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-xs text-green-400">
+              <div className="flex items-center gap-1 text-xs text-blue-400">
                 <ArrowUp className="h-3 w-3" />
                 <span>12% from last month</span>
               </div>
               <Badge variant="outline" className="bg-blue-950/40 text-blue-400 border-blue-800/50">
-                Mar 2025
+                Active
               </Badge>
             </div>
             <div className="mt-4">
               <div className="flex justify-between text-xs mb-2">
-                <span className="text-slate-400">Growth rate</span>
-                <span className="font-medium text-slate-300">78%</span>
+                <span className="text-slate-400">Auto-updated today</span>
+                <span className="font-medium text-slate-300">
+                  {statsLoading ? '...' : (autoUpdateStats?.autoUpdatedToday || 0)}
+                </span>
               </div>
               <div className="h-2.5 w-full bg-slate-800/80 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full shadow-[0_0_6px_rgba(59,130,246,0.3)]"
-                  style={{ width: "78%" }}
+                  style={{ width: "75%" }}
                 ></div>
               </div>
             </div>
@@ -1065,17 +1024,6 @@ export default function PTPPage() {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {ptp.status === 'pending' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-slate-400 hover:text-green-300 hover:bg-green-900/30"
-                              onClick={() => markAsFulfilled(ptp.id, ptp.ptp_type)}
-                              title="Mark as fulfilled"
-                            >
-                              <CheckCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
                           <Button
                             variant="ghost"
                             size="sm"

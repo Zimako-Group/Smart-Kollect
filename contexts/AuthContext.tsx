@@ -75,37 +75,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Redirect based on user role - wrapped in useCallback to prevent recreation on each render
-  const redirectBasedOnRole = useCallback((role: UserRole, currentPath?: string) => {
+  const redirectBasedOnRole = useCallback((role: UserRole, currentPath?: string, forceRedirect: boolean = false) => {
     console.log("[AUTH] redirectBasedOnRole called with role:", role);
     console.log("[AUTH] Current window location:", window.location.href);
     console.log("[AUTH] Current path:", currentPath);
+    console.log("[AUTH] Force redirect:", forceRedirect);
+    
+    // Get the current path from window location if not provided
+    const actualCurrentPath = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
     
     // Check if user is already on a valid page for their role
     const isOnValidPage = () => {
-      if (!currentPath) currentPath = window.location.pathname;
-      
       switch (role) {
         case 'super_admin':
-          return currentPath.startsWith('/super-admin');
+          return actualCurrentPath.startsWith('/super-admin');
         case 'admin':
-          return currentPath.startsWith('/admin');
+          return actualCurrentPath.startsWith('/admin');
         case 'system':
-          return currentPath.startsWith('/metrics-dashboard');
+          return actualCurrentPath.startsWith('/metrics-dashboard');
         case 'agent':
-          return currentPath.startsWith('/user');
+          return actualCurrentPath.startsWith('/user');
         case 'manager':
-          return currentPath.startsWith('/manager');
+          return actualCurrentPath.startsWith('/manager');
         case 'supervisor':
-          return currentPath.startsWith('/supervisor');
+          return actualCurrentPath.startsWith('/supervisor');
         case 'indigent clerk':
-          return currentPath.startsWith('/indigent-clerk');
+          return actualCurrentPath.startsWith('/indigent-clerk');
         default:
           return false;
       }
     };
     
-    // Only redirect if user is not already on a valid page
-    if (isOnValidPage()) {
+    // Only redirect if user is not already on a valid page OR if force redirect is true
+    if (isOnValidPage() && !forceRedirect) {
       console.log("[AUTH] User already on valid page for role, skipping redirect");
       return;
     }
@@ -267,7 +269,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Only redirect during login, not during page refresh/initialization
       console.log('[AUTH] Login successful, redirecting to appropriate dashboard');
       setTimeout(() => {
-        redirectBasedOnRole(userProfile.role);
+        redirectBasedOnRole(userProfile.role, undefined, true);
       }, 50);
       
       return { success: true };
@@ -329,7 +331,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Redirect to appropriate dashboard
       setTimeout(() => {
-        redirectBasedOnRole(userProfile.role);
+        redirectBasedOnRole(userProfile.role, undefined, true);
       }, 50);
       
       return { success: true };

@@ -103,6 +103,7 @@ export async function createPaymentFileUpload(
 
 /**
  * Process payment file records and insert into PaymentHistory table
+ * This will automatically trigger PTP status updates via database triggers
  */
 export async function processPaymentFileRecords(
   uploadBatchId: string,
@@ -115,10 +116,12 @@ export async function processPaymentFileRecords(
   };
 
   console.log(`Processing ${records.length} payment records for batch ${uploadBatchId}`);
+  console.log('Note: PTP status updates will be automatically triggered by database triggers');
 
   for (const record of records) {
     try {
       // Call the database function to process each record
+      // The auto_update_ptp_status trigger will automatically update PTPs when PaymentHistory records are inserted
       const { data, error } = await supabaseAdmin.rpc('process_payment_file_record', {
         p_upload_batch_id: uploadBatchId,
         p_account_no: record.ACCOUNT_NO,
@@ -137,6 +140,7 @@ export async function processPaymentFileRecords(
         results.errors.push(`Account ${record.ACCOUNT_NO}: ${error.message}`);
       } else if (data === true) {
         results.successful++;
+        console.log(`Successfully processed payment for account ${record.ACCOUNT_NO} - PTPs will be auto-updated`);
       } else {
         results.failed++;
         results.errors.push(`Account ${record.ACCOUNT_NO}: Debtor not found`);
