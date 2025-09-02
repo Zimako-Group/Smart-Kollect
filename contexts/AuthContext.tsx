@@ -379,11 +379,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Check for active session directly from Supabase
         const supabase = getSupabaseClient();
+        
+        // Skip auth check if we're on server-side or client is not properly initialized
+        if (typeof window === 'undefined' || !supabase.auth) {
+          console.log('[AUTH] Skipping auth check - not in browser or client not ready');
+          setIsLoading(false);
+          return;
+        }
+        
         const { data, error } = await supabase.auth.getUser();
         
         if (error) {
           console.error('[AUTH] Session error:', error.message);
-          setUser(null);
+          // Only set user to null if it's a real auth error, not initialization issues
+          if (error.message !== 'Auth session missing!' || mounted) {
+            setUser(null);
+          }
           return;
         }
         

@@ -103,9 +103,15 @@ const customStorage = {
 };
 
 export const getSupabaseClient = (): SupabaseClient => {
-  // Return empty client during build time or server-side rendering
+  // Return a mock client during build time or server-side rendering
   if (typeof window === 'undefined') {
-    return {} as SupabaseClient;
+    return {
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: null } }),
+        signOut: () => Promise.resolve({ error: null })
+      }
+    } as any;
   }
   
   if (!_supabaseInstance) {

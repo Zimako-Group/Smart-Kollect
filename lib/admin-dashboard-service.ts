@@ -56,7 +56,7 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
       .from('payment_records')
       .select('amount')
       .eq('tenant_id', tenantId)
-      .gte('payment_date', startOfMonth.toISOString());
+      .gte('created_at', startOfMonth.toISOString());
 
     const monthlyCollections = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
 

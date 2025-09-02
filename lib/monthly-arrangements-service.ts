@@ -7,25 +7,59 @@ import { ManualPTP } from './manual-ptp-service';
  * @returns Promise with the agent's name
  */
 async function getAgentName(userId: string | null): Promise<string> {
-  if (!userId) return 'System';
+  if (!userId) {
+    console.log('getAgentName called with null/undefined userId, returning "System"');
+    return 'System';
+  }
+  
+  console.log(`🔍 Looking up agent name for user ID: ${userId}`);
   
   try {
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .select('full_name')
+      .select('full_name, email')
       .eq('id', userId)
       .maybeSingle();
     
     if (error) {
-      console.error('Error fetching agent name:', error);
+      console.error(`❌ Error fetching agent name for ${userId}:`, error);
       return 'Unknown';
     }
     
-    return data?.full_name || 'Unknown';
+    if (!data) {
+      console.log(`❌ No profile found for user ID: ${userId}`);
+      return 'Unknown';
+    }
+    
+    console.log(`📋 Raw profile data for ${userId}:`, JSON.stringify(data, null, 2));
+    
+    let agentName = data.full_name;
+    if (!agentName && data.email) {
+      // Fallback to email username if full_name is not available
+      agentName = data.email.split('@')[0];
+      console.log(`📧 Using email fallback for ${userId}: ${agentName}`);
+    }
+    
+    // Clean up the name by removing extra spaces
+    const finalName = agentName ? agentName.replace(/\s+/g, ' ').trim() : 'Unknown';
+    console.log(`✅ Resolved agent name for ${userId}: "${finalName}"`);
+    return finalName;
   } catch (error) {
-    console.error('Error in getAgentName:', error);
+    console.error(`💥 Exception in getAgentName for ${userId}:`, error);
     return 'Unknown';
   }
+}
+
+/**
+ * Test function to debug agent name extraction
+ * @param userId User ID to test
+ * @returns Promise with test results
+ */
+export async function testAgentNameExtraction(userId: string) {
+  console.log(`🧪 Testing agent name extraction for: ${userId}`);
+  const result = await getAgentName(userId);
+  console.log(`🧪 Test result: "${result}"`);
+  return result;
 }
 
 /**
@@ -156,66 +190,169 @@ export async function generateMonthlyArrangementsReport(month?: number, year?: n
     // We'll need to fetch agent names and debtor information
     const reportData = [];
     
-    // Process ManualPTP records
-    if (manualPTPData && manualPTPData.length > 0) {
-      for (const record of manualPTPData) {
-        // Get agent name for this record
-        const agentName = await getAgentName(record.created_by);
-        
-        // Get debtor information
-        const debtorInfo = await getDebtorInfo(record.debtor_id);
-        
-        reportData.push({
-          id: record.id,
-          source: 'ManualPTP', // Indicate the source table
-          account_number: debtorInfo.accountNumber,
-          customer_name: debtorInfo.name,
-          debtor_id: record.debtor_id,
-          amount: record.amount,
-          date: record.date,
-          payment_method: record.payment_method,
-          notes: record.notes || '',
-          status: record.status,
-          created_by: agentName,
-          created_by_id: record.created_by || null,
-          created_at: record.created_at,
-          updated_at: record.updated_at,
-          sms_sent: record.sms_sent !== undefined ? record.sms_sent : null
+    // Collect all unique user IDs from all tables
+    const allUserIds = new Set<string>();
+    
+    manualPTPData?.forEach(record => {
+      if (record.created_by) allUserIds.add(record.created_by);
+    });
+    
+    ptpData?.forEach(record => {
+      if (record.created_by) allUserIds.add(record.created_by);
+    });
+    
+    // Fetch all agent names in one query
+    console.log(`🔍 Fetching agent names for ${allUserIds.size} unique users...`);
+    const agentNameCache = new Map<string, string>();
+    
+    if (allUserIds.size > 0) {
+      const { data: profilesData, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', Array.from(allUserIds));
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      } else {
+        profilesData?.forEach(profile => {
+          let agentName = 'Unknown';
+          if (profile.full_name) {
+            agentName = profile.full_name.replace(/\s+/g, ' ').trim();
+          } else if (profile.email) {
+            agentName = profile.email.split('@')[0];
+          }
+          agentNameCache.set(profile.id, agentName);
+          console.log(`📋 Cached agent name for ${profile.id}: "${agentName}"`);
         });
       }
+    }
+    
+    // Helper function to get cached agent name
+    const getCachedAgentName = (userId: string | null): string => {
+      if (!userId) return 'System';
+      return agentNameCache.get(userId) || 'Unknown';
+    };
+    
+    // Process ManualPTP records
+    if (manualPTPData && manualPTPData.length > 0) {
+      console.log(`Processing ${manualPTPData.length} ManualPTP records...`);
+      
+      for (const record of manualPTPData) {
+        try {
+          console.log(`Processing ManualPTP record ${record.id} with created_by: ${record.created_by}`);
+          
+          // Get agent name from cache
+          const agentName = getCachedAgentName(record.created_by);
+          console.log(`✅ Agent name resolved to: "${agentName}"`);
+          
+          // Get debtor information
+          const debtorInfo = await getDebtorInfo(record.debtor_id);
+          
+          reportData.push({
+            id: record.id,
+            source: 'ManualPTP', // Indicate the source table
+            account_number: debtorInfo.accountNumber,
+            customer_name: debtorInfo.name,
+            debtor_id: record.debtor_id,
+            amount: record.amount,
+            date: record.date,
+            payment_method: record.payment_method,
+            notes: record.notes || '',
+            status: record.status,
+            created_by: agentName,
+            created_by_id: record.created_by || null,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+            sms_sent: record.sms_sent !== undefined ? record.sms_sent : null
+          });
+        } catch (error) {
+          console.error(`Error processing ManualPTP record ${record.id}:`, error);
+          // Still add the record but with fallback values
+          reportData.push({
+            id: record.id,
+            source: 'ManualPTP',
+            account_number: 'Error',
+            customer_name: 'Error',
+            debtor_id: record.debtor_id,
+            amount: record.amount,
+            date: record.date,
+            payment_method: record.payment_method,
+            notes: record.notes || '',
+            status: record.status,
+            created_by: 'Error Loading',
+            created_by_id: record.created_by || null,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+            sms_sent: record.sms_sent !== undefined ? record.sms_sent : null
+          });
+        }
+      }
+      
+      console.log(`Completed processing ManualPTP records`);
     }
     
     // Process PTP records
     if (ptpData && ptpData.length > 0) {
+      console.log(`Processing ${ptpData.length} PTP records...`);
+      
       for (const record of ptpData) {
-        // Get agent name for this record
-        const agentName = await getAgentName(record.created_by);
-        
-        // Get debtor information
-        const debtorInfo = await getDebtorInfo(record.debtor_id);
-        
-        reportData.push({
-          id: record.id,
-          source: 'PTP', // Indicate the source table
-          account_number: debtorInfo.accountNumber,
-          customer_name: debtorInfo.name,
-          debtor_id: record.debtor_id,
-          amount: record.amount,
-          date: record.date,
-          payment_method: record.payment_method,
-          notes: record.notes || '',
-          status: record.status,
-          created_by: agentName,
-          created_by_id: record.created_by || null,
-          created_at: record.created_at,
-          updated_at: record.updated_at,
-          sms_sent: null // PTP table doesn't have sms_sent field
-        });
+        try {
+          console.log(`Processing PTP record ${record.id} with created_by: ${record.created_by}`);
+          
+          // Get agent name from cache
+          const agentName = getCachedAgentName(record.created_by);
+          console.log(`✅ Agent name resolved to: "${agentName}"`);
+          
+          // Get debtor information
+          const debtorInfo = await getDebtorInfo(record.debtor_id);
+          
+          reportData.push({
+            id: record.id,
+            source: 'PTP', // Indicate the source table
+            account_number: debtorInfo.accountNumber,
+            customer_name: debtorInfo.name,
+            debtor_id: record.debtor_id,
+            amount: record.amount,
+            date: record.date,
+            payment_method: record.payment_method,
+            notes: record.notes || '',
+            status: record.status,
+            created_by: agentName,
+            created_by_id: record.created_by || null,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+            sms_sent: null // PTP table doesn't have sms_sent field
+          });
+        } catch (error) {
+          console.error(`Error processing PTP record ${record.id}:`, error);
+          // Still add the record but with fallback values
+          reportData.push({
+            id: record.id,
+            source: 'PTP',
+            account_number: 'Error',
+            customer_name: 'Error',
+            debtor_id: record.debtor_id,
+            amount: record.amount,
+            date: record.date,
+            payment_method: record.payment_method,
+            notes: record.notes || '',
+            status: record.status,
+            created_by: 'Error Loading',
+            created_by_id: record.created_by || null,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+            sms_sent: null
+          });
+        }
       }
+      
+      console.log(`Completed processing PTP records`);
     }
     
     // Process Settlements records
     if (settlementsData && settlementsData.length > 0) {
+      console.log(`Processing ${settlementsData.length} Settlement records...`);
+      
       for (const record of settlementsData) {
         // Settlements already have agent_name and customer info directly in the table
         reportData.push({
@@ -239,7 +376,13 @@ export async function generateMonthlyArrangementsReport(month?: number, year?: n
           sms_sent: null // Settlements table doesn't have sms_sent field
         });
       }
+      
+      console.log(`Completed processing Settlement records`);
     }
+    
+    // Log a sample of the final report data to verify agent names are resolved
+    console.log('Sample of final report data:');
+    console.log(JSON.stringify(reportData.slice(0, 3), null, 2));
     
     return {
       data: reportData,

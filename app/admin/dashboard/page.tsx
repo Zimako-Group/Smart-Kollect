@@ -331,15 +331,27 @@ export default function AdminDashboard() {
         if (!profile?.tenant_id) return;
 
         // Query the agent_allocations table with tenant filtering
+        // First get all agents for this tenant, then filter allocations
+        const { data: tenantAgents } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('tenant_id', profile.tenant_id);
+
+        if (!tenantAgents || tenantAgents.length === 0) {
+          setAgentAllocations({});
+          return;
+        }
+
+        const agentIds = tenantAgents.map(agent => agent.id);
+
         const { data, error } = await supabase
           .from("agent_allocations")
           .select(`
             agent_id, 
             allocated_at, 
-            status,
-            profiles!inner(tenant_id)
+            status
           `)
-          .eq('profiles.tenant_id', profile.tenant_id);
+          .in('agent_id', agentIds);
 
         if (error) {
           throw error;
