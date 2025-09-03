@@ -121,10 +121,11 @@ export async function middleware(req: NextRequest) {
   console.log('[RBAC-MIDDLEWARE] Domain check:', {
     hostname,
     subdomain,
-    isMainDomain
+    isMainDomain,
+    pathname
   });
   
-  // If this is the main domain (smartkollect.co.za), allow all marketing pages without authentication
+  // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all marketing pages without authentication
   if (isMainDomain) {
     console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing marketing access:', pathname);
     return NextResponse.next();
