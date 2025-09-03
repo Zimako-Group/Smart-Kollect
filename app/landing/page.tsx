@@ -587,59 +587,243 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-muted/30 border-t border-border/50 py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <Link href="/" className="flex items-center mb-6">
-                <Image
-                  src="/images/smartkollect-logo.png"
-                  alt="SmartKollect"
-                  width={140}
-                  height={40}
-                  className="h-10 w-auto"
-                />
-              </Link>
-              <p className="text-muted-foreground mb-6 leading-relaxed max-w-md">
-                Transforming debt collection through intelligent automation and ethical practices.
-                Built for the South African market with POPI compliance at its core.
+      <footer className="relative bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-t border-white/10">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-tertiary/5 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Newsletter Section */}
+          <div className="py-16 border-b border-white/10">
+            <div className="text-center max-w-2xl mx-auto">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                Stay Updated with SmartKollect
+              </h3>
+              <p className="text-gray-300 mb-8">
+                Get the latest insights on debt collection trends, product updates, and industry best practices.
               </p>
-              <div className="space-y-2">
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4 mr-2" />
-                  rofhiwa@zimako.co.za
-                </div>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4 mr-2" />
-                  +27 84 962 6748
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                />
+                <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 px-6 py-3 font-semibold transition-all duration-300 hover:scale-105">
+                  Subscribe
+                </Button>
               </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6">Company</h4>
-              <ul className="space-y-3">
-                <li><Link href="/marketing/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
-                <li><Link href="/marketing/pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link></li>
-                <li><Link href="/marketing/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-6">Legal</h4>
-              <ul className="space-y-3">
-                <li><Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">Terms & Conditions</Link></li>
-                <li><Link href="/popi-act" className="text-muted-foreground hover:text-primary transition-colors">POPI Act</Link></li>
-              </ul>
             </div>
           </div>
           
-          <div className="border-t border-border/50 pt-8">
+          {/* Main Footer Content */}
+          <div className="py-16">
+            <div className="grid md:grid-cols-5 gap-8 mb-12">
+              {/* Company Info */}
+              <div className="md:col-span-2">
+                <Link href="/" className="flex items-center mb-6 group">
+                  <Image
+                    src="/images/smartkollect-logo.png"
+                    alt="SmartKollect"
+                    width={160}
+                    height={45}
+                    className="h-12 w-auto drop-shadow-2xl hover:drop-shadow-3xl transition-all duration-300 group-hover:scale-105"
+                  />
+                </Link>
+                <p className="text-gray-300 mb-6 leading-relaxed max-w-md">
+                  Transforming debt collection through intelligent automation and ethical practices. 
+                  Empowering businesses with AI-driven solutions for better recovery rates and 
+                  seamless compliance management.
+                </p>
+                
+                {/* Social Media Icons */}
+                <div className="flex space-x-4 mb-6">
+                  <div className="w-10 h-10 bg-white/10 hover:bg-primary/30 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 group">
+                    <Mail className="h-5 w-5 text-gray-300 group-hover:text-white" />
+                  </div>
+                  <div className="w-10 h-10 bg-white/10 hover:bg-secondary/30 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 group">
+                    <Phone className="h-5 w-5 text-gray-300 group-hover:text-white" />
+                  </div>
+                  <div className="w-10 h-10 bg-white/10 hover:bg-blue-500/30 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 group">
+                    <svg className="h-5 w-5 text-gray-300 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                    </svg>
+                  </div>
+                  <div className="w-10 h-10 bg-white/10 hover:bg-blue-600/30 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 group">
+                    <svg className="h-5 w-5 text-gray-300 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Product Links */}
+              <div>
+                <h4 className="font-semibold mb-6 text-white flex items-center">
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3 animate-pulse"></div>
+                  Product
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="#features" className="text-gray-300 hover:text-primary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Features
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="/marketing/pricing" className="text-gray-300 hover:text-primary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Pricing
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <a href="#" className="text-gray-300 hover:text-primary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Security
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-gray-300 hover:text-primary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Integrations
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Company Links */}
+              <div>
+                <h4 className="font-semibold mb-6 text-white flex items-center">
+                  <div className="w-2 h-2 bg-secondary rounded-full mr-3 animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                  Company
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <Link href="/marketing/about" className="text-gray-300 hover:text-secondary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      About Us
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <a href="#" className="text-gray-300 hover:text-secondary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Careers
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-gray-300 hover:text-secondary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Blog
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="/marketing/contact" className="text-gray-300 hover:text-secondary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Contact
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Legal Links */}
+              <div>
+                <h4 className="font-semibold mb-6 text-white flex items-center">
+                  <div className="w-2 h-2 bg-tertiary rounded-full mr-3 animate-pulse" style={{animationDelay: '1s'}}></div>
+                  Legal
+                </h4>
+                <ul className="space-y-3">
+                  <li>
+                    <Link href="/popi-act" className="text-gray-300 hover:text-tertiary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      POPI Act
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/terms-and-conditions" className="text-gray-300 hover:text-tertiary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Terms & Conditions
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/privacy-policy" className="text-gray-300 hover:text-tertiary transition-all duration-300 hover:translate-x-1 inline-block group">
+                      Privacy Policy
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">→</span>
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          {/* Contact Information */}
+          <div className="border-t border-white/10 py-12">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="font-semibold mb-6 text-white flex items-center">
+                  <div className="w-2 h-2 bg-gradient-to-r from-primary to-secondary rounded-full mr-3 animate-pulse"></div>
+                  Get in Touch
+                </h4>
+                <address className="text-gray-300 not-italic leading-relaxed">
+                  <div className="mb-3">
+                    <strong className="text-white">Zimako Smart Business Solutions</strong>
+                  </div>
+                  61 Sonop Street,<br />
+                  Horizonview Shopping Centre<br />
+                  Horizon, Roodepoort, 1724<br />
+                  South Africa
+                </address>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-6 text-white flex items-center">
+                  <div className="w-2 h-2 bg-gradient-to-r from-secondary to-tertiary rounded-full mr-3 animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                  Contact Information
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex items-center group">
+                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mr-3 group-hover:bg-primary/30 transition-colors duration-300">
+                      <Mail className="h-4 w-4 text-primary" />
+                    </div>
+                    <a href="mailto:rofhiwa@zimako.co.za" className="text-gray-300 hover:text-primary transition-colors duration-300">
+                      rofhiwa@zimako.co.za
+                    </a>
+                  </div>
+                  <div className="flex items-center group">
+                    <div className="w-8 h-8 bg-secondary/20 rounded-lg flex items-center justify-center mr-3 group-hover:bg-secondary/30 transition-colors duration-300">
+                      <Phone className="h-4 w-4 text-secondary" />
+                    </div>
+                    <a href="tel:+27849626748" className="text-gray-300 hover:text-secondary transition-colors duration-300">
+                      +27 84 962 6748
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom Footer */}
+          <div className="border-t border-white/10 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="text-muted-foreground text-sm mb-4 md:mb-0">
+              <div className="text-gray-400 mb-4 md:mb-0 text-sm">
                 &copy; 2025 SmartKollect by Zimako Smart Business Solutions. All rights reserved.
               </div>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <span>Made with ❤️ in South Africa</span>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <span>Made with</span>
+                  <div className="w-4 h-4 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse"></div>
+                  <span>in South Africa</span>
+                </div>
+                <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <Shield className="h-4 w-4" />
+                    <span>POPI Compliant</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Lock className="h-4 w-4" />
+                    <span>Bank-Grade Security</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
