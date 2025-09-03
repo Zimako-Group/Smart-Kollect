@@ -202,7 +202,11 @@ export function extractSubdomain(hostname: string): string | null {
   
   // Handle www prefix - treat as main domain
   if (host.startsWith('www.')) {
-    return null;
+    const nonWwwHost = host.substring(4); // Remove 'www.'
+    // If it's www.smartkollect.co.za, treat as main domain
+    if (nonWwwHost === 'smartkollect.co.za') {
+      return null;
+    }
   }
   
   // Extract subdomain from production domain

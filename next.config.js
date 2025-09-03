@@ -41,19 +41,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Redirect www to non-www for main domain only
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'www.smartkollect.co.za'
-          }
-        ],
-        destination: 'https://smartkollect.co.za/:path*',
-        permanent: true
-      },
-      // Redirect www to non-www for subdomains
+      // Only redirect www for subdomains, not main domain
       {
         source: '/:path*',
         has: [

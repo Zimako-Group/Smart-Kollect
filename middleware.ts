@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 
 // Helper to check if we're in build time
 const isBuildTime = () => {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return false; // Disable build-time check to prevent issues
 };
 
 // RBAC Route Configuration
@@ -99,12 +99,6 @@ export async function middleware(req: NextRequest) {
     method: req.method
   });
   
-  // Skip middleware during build time
-  if (isBuildTime()) {
-    console.log('[RBAC-MIDDLEWARE] Skipping - build time');
-    return NextResponse.next();
-  }
-  
   // Always allow static files and API routes
   if (pathname.startsWith('/_next') || 
       pathname.startsWith('/api/') ||
@@ -125,16 +119,9 @@ export async function middleware(req: NextRequest) {
     pathname
   });
   
-  // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all marketing pages without authentication
+  // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all access without authentication
   if (isMainDomain) {
-    console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing marketing access:', pathname);
-    
-    // For www.smartkollect.co.za, let Next.js handle the redirect in next.config.js
-    if (hostname.startsWith('www.')) {
-      console.log('[RBAC-MIDDLEWARE] WWW domain detected, letting Next.js handle redirect');
-      return NextResponse.next();
-    }
-    
+    console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing full access:', pathname);
     return NextResponse.next();
   }
   
@@ -145,6 +132,12 @@ export async function middleware(req: NextRequest) {
   
   if (isPublicRoute) {
     console.log('[RBAC-MIDDLEWARE] Public route, allowing access:', pathname);
+    return NextResponse.next();
+  }
+  
+  // Skip middleware during build time
+  if (isBuildTime()) {
+    console.log('[RBAC-MIDDLEWARE] Skipping authentication - build time');
     return NextResponse.next();
   }
   
