@@ -208,19 +208,19 @@ export function extractSubdomain(hostname: string): string | null {
   // Extract subdomain from production domain
   const parts = host.split('.');
   
-  // Check if it's the main domain (smartkollect.co.za)
-  if (parts.length === 3 && parts[1] === 'smartkollect' && parts[2] === 'co.za') {
+  // If it's just smartkollect.co.za (main domain), return null
+  if (parts.length === 3 && parts[0] === 'smartkollect' && parts[1] === 'co' && parts[2] === 'za') {
+    return null;
+  }
+  
+  // Check if it's a subdomain (subdomain.smartkollect.co.za)
+  if (parts.length === 4 && parts[1] === 'smartkollect' && parts[2] === 'co' && parts[3] === 'za') {
     const subdomain = parts[0];
     // Valid subdomains
     const validSubdomains = ['mahikeng', 'triplem'];
     if (validSubdomains.includes(subdomain)) {
       return subdomain;
     }
-  }
-  
-  // If it's just smartkollect.co.za (2 parts), it's the main domain
-  if (parts.length === 3 && parts[0] === 'smartkollect' && parts[1] === 'co' && parts[2] === 'za') {
-    return null;
   }
   
   return null;

@@ -116,7 +116,7 @@ export async function middleware(req: NextRequest) {
   
   // Extract subdomain to determine if this is main domain or tenant subdomain
   const subdomain = extractSubdomain(hostname);
-  const isMainDomain = !subdomain || subdomain === 'www';
+  const isMainDomain = !subdomain;
   
   console.log('[RBAC-MIDDLEWARE] Domain check:', {
     hostname,
@@ -128,6 +128,13 @@ export async function middleware(req: NextRequest) {
   // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all marketing pages without authentication
   if (isMainDomain) {
     console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing marketing access:', pathname);
+    
+    // For www.smartkollect.co.za, let Next.js handle the redirect in next.config.js
+    if (hostname.startsWith('www.')) {
+      console.log('[RBAC-MIDDLEWARE] WWW domain detected, letting Next.js handle redirect');
+      return NextResponse.next();
+    }
+    
     return NextResponse.next();
   }
   
