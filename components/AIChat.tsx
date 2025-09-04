@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,11 +32,26 @@ export function AIChat({ onClose }: AIChatProps) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false); // Start expanded for testing
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Ensure component is mounted before rendering portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Debug log to ensure component is rendering
+  useEffect(() => {
+    console.log('AIChat component mounted and visible');
+    return () => {
+      console.log('AIChat component unmounted');
+    };
+  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -125,41 +141,53 @@ export function AIChat({ onClose }: AIChatProps) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (isMinimized) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50 shadow-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 p-3 cursor-pointer"
-        onClick={() => setIsMinimized(false)}>
-        <div className="relative">
-          <Bot className="h-6 w-6 text-white" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
-        </div>
-      </div>
-    );
+  // Don't render anything on server-side
+  if (!mounted) {
+    return null;
   }
 
-  return (
-    <div className="fixed bottom-4 right-4 z-50 w-96 h-[500px] bg-slate-900 rounded-lg shadow-2xl flex flex-col border border-slate-800">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Bot className="h-6 w-6 text-white" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-          </div>
-          <div>
-            <h3 className="font-semibold text-white">Zimako AI</h3>
-            <p className="text-xs text-blue-100">Online</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20 rounded-full" onClick={() => setIsMinimized(true)}>
-            <Minimize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20 rounded-full" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+  const chatContent = (
+    <>
+      {/* Enhanced backdrop for minimized state */}
+      <div className="fixed inset-0 z-[9999] bg-black/5 backdrop-blur-[1px] pointer-events-none" />
+      
+      <div className="fixed bottom-4 right-4 z-[10000] shadow-2xl rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 p-4 cursor-pointer transform transition-all duration-300 ease-out opacity-100 scale-100 hover:scale-110 ring-2 ring-blue-500/50 hover:ring-4 hover:ring-blue-400/50"
+        onClick={() => setIsMinimized(false)}>
+        <div className="relative">
+          <Bot className="h-7 w-7 text-white" />
+          <span className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full animate-pulse border-2 border-white"></span>
         </div>
       </div>
+    </>
+  );
+
+  const fullChatContent = (
+    <>
+      {/* Enhanced backdrop to ensure visibility and focus */}
+      <div className="fixed inset-0 z-[9999] bg-black/10 backdrop-blur-[2px] pointer-events-none" />
+      
+      <div className="fixed bottom-4 right-4 z-[10000] w-96 h-[500px] bg-slate-900 rounded-lg shadow-2xl flex flex-col border-2 border-slate-700 transform transition-all duration-300 ease-out opacity-100 scale-100 ring-4 ring-blue-500/30 hover:ring-blue-400/40 outline outline-4 outline-red-500/50">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-t-lg shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Bot className="h-6 w-6 text-white" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Zimako AI</h3>
+              <p className="text-xs text-blue-100">Online</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20 rounded-full" onClick={() => setIsMinimized(true)}>
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20 rounded-full" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       
       {/* Chat messages */}
       <ScrollArea className="flex-1 p-4 bg-slate-900">
@@ -256,5 +284,13 @@ export function AIChat({ onClose }: AIChatProps) {
         </div>
       </div>
     </div>
+    </>
   );
+
+  // Use portal to render directly to document.body for proper viewport positioning
+  if (isMinimized) {
+    return createPortal(chatContent, document.body);
+  }
+
+  return createPortal(fullChatContent, document.body);
 }

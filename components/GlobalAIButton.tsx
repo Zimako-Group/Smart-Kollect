@@ -22,21 +22,37 @@ export function GlobalAIButton({ fixed = false }: GlobalAIButtonProps) {
   const [showChatInterface, setShowChatInterface] = useState(false);
 
   const handleStartConversation = () => {
+    console.log('Starting AI conversation - hiding dialog, showing chat interface');
     setShowAIDialog(false);
     setShowChatInterface(true);
   };
 
   const handleCloseChat = () => {
+    console.log('Closing AI chat interface');
     setShowChatInterface(false);
   };
+
+  // Debug log for state changes
+  React.useEffect(() => {
+    console.log('GlobalAIButton state:', { showAIDialog, showChatInterface });
+  }, [showAIDialog, showChatInterface]);
 
   return (
     <>
       {/* Zimako AI Button */}
-      <FloatingAIButton onClick={() => setShowAIDialog(true)} fixed={fixed} />
+      <FloatingAIButton 
+        onClick={() => {
+          console.log('Zimako AI button clicked, showing dialog');
+          setShowAIDialog(true);
+        }} 
+        fixed={fixed} 
+      />
 
       {/* Zimako AI Dialog */}
-      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+      <Dialog open={showAIDialog} onOpenChange={(open) => {
+        console.log('AI Dialog state changing to:', open);
+        setShowAIDialog(open);
+      }}>
         <DialogContent className="sm:max-w-md bg-slate-900 border-slate-800 text-slate-100">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -82,7 +98,12 @@ export function GlobalAIButton({ fixed = false }: GlobalAIButtonProps) {
       </Dialog>
 
       {/* Chat Interface */}
-      {showChatInterface && <AIChat onClose={handleCloseChat} />}
+      {showChatInterface && (
+        <>
+          {console.log('Rendering AIChat component')}
+          <AIChat onClose={handleCloseChat} />
+        </>
+      )}
     </>
   );
 }
