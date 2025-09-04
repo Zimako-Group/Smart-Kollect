@@ -148,8 +148,7 @@ export function AIChat({ onClose }: AIChatProps) {
 
   const chatContent = (
     <>
-      {/* Enhanced backdrop for minimized state */}
-      <div className="fixed inset-0 z-[9999] bg-black/5 backdrop-blur-[1px] pointer-events-none" />
+
       
       <div className="fixed bottom-4 right-4 z-[10000] shadow-2xl rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 p-4 cursor-pointer transform transition-all duration-300 ease-out opacity-100 scale-100 hover:scale-110 ring-2 ring-blue-500/50 hover:ring-4 hover:ring-blue-400/50"
         onClick={() => setIsMinimized(false)}>
@@ -163,8 +162,7 @@ export function AIChat({ onClose }: AIChatProps) {
 
   const fullChatContent = (
     <>
-      {/* Enhanced backdrop to ensure visibility and focus */}
-      <div className="fixed inset-0 z-[9999] bg-black/10 backdrop-blur-[2px] pointer-events-none" />
+
       
       <div className="fixed bottom-4 right-4 z-[10000] w-96 h-[500px] bg-slate-900 rounded-lg shadow-2xl flex flex-col border-2 border-slate-700 transform transition-all duration-300 ease-out opacity-100 scale-100 ring-4 ring-blue-500/30 hover:ring-blue-400/40 outline outline-4 outline-red-500/50">
         {/* Header */}
