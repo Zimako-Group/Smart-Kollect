@@ -1,10 +1,9 @@
-import OpenAI from 'openai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
 import { NextRequest, NextResponse } from "next/server";
 
-// Create an OpenAI API client with fallback error handling
-const openai = new OpenAI({
-  apiKey: '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',
-});
+// Create Anthropic model instance
+const model = anthropic('claude-3-haiku-20240307');
 
 export const runtime = 'edge';
 
@@ -18,6 +17,27 @@ const fallbackResponses = [
 ];
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Check if Anthropic API key is configured
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('ANTHROPIC_API_KEY is not configured in environment variables');
+    return NextResponse.json({
+      id: `error-${Date.now()}`,
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: 'claude-3-haiku-20240307',
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: "I'm currently unavailable due to configuration issues. Please contact support.",
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+  }
+
   try {
     // Parse the request with error handling
     let messages;
@@ -29,62 +49,62 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       messages = [{ role: 'user', content: 'Hello' }];
     }
 
-    // Create the system message
-    const systemMessage = {
-      role: 'system',
-      content: `You are Zimako AI, a debt collection assistant. 
-      You help debt collectors analyze accounts, suggest collection strategies, 
-      and provide information about debtors. Be professional, concise, and helpful.
-      Focus on providing actionable insights and recommendations.`,
-    };
-
-    // Combine system message with user messages
-    const fullMessages = [systemMessage, ...messages];
+    // Prepare messages for Claude (Claude doesn't use system messages in the same way)
+    const systemPrompt = `You are Zimako AI, a professional debt collection assistant for SmartKollect. 
+You help debt collectors analyze accounts, suggest collection strategies, and provide information about debtors. 
+Be professional, concise, and helpful. Focus on providing actionable insights and recommendations for debt collection tasks.`;
+    
+    // Convert messages to Claude format
+    const claudeMessages = messages
+      .filter((msg: any) => msg.role !== 'system') // Remove system messages
+      .map((msg: any) => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      }));
 
     try {
-      // Make a request to the OpenAI API with timeout handling
-      const response = await Promise.race([
-        openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: fullMessages,
-          max_tokens: 500,
-          temperature: 0.7,
+      // Make a request to the Anthropic API using the AI SDK
+      const result = await Promise.race([
+        generateText({
+          model: model,
+          system: systemPrompt,
+          messages: claudeMessages,
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('OpenAI API request timeout')), 10000)
+          setTimeout(() => reject(new Error('Anthropic API request timeout')), 15000)
         )
       ]) as any;
 
-      // Format the response to match exactly what the Vercel AI SDK expects
+      // Format the response to match what the frontend expects
       return NextResponse.json({
-        id: response.id,
-        object: response.object,
-        created: response.created,
-        model: response.model,
+        id: `claude-${Date.now()}`,
+        object: 'chat.completion',
+        created: Math.floor(Date.now() / 1000),
+        model: 'claude-3-haiku-20240307',
         choices: [
           {
             index: 0,
             message: {
               role: 'assistant',
-              content: response.choices[0].message.content,
+              content: result.text,
             },
-            finish_reason: response.choices[0].finish_reason,
+            finish_reason: 'stop',
           },
         ],
       });
     } catch (apiError) {
       // Log the error but don't fail the request
-      console.error('OpenAI API error:', apiError);
+      console.error('Anthropic API error:', apiError);
       
       // Use a fallback response
       const fallbackResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
       
-      // Format the fallback response to match exactly what the Vercel AI SDK expects
+      // Format the fallback response
       return NextResponse.json({
         id: `fallback-${Date.now()}`,
         object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
-        model: 'gpt-4o-mini',
+        model: 'claude-3-haiku-20240307',
         choices: [
           {
             index: 0,
@@ -101,12 +121,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Catch-all error handler
     console.error('Unhandled error in AI route:', error);
     
-    // Format the error response to match exactly what the Vercel AI SDK expects
+    // Format the error response
     return NextResponse.json({
       id: `error-${Date.now()}`,
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: 'gpt-4o-mini',
+      model: 'claude-3-haiku-20240307',
       choices: [
         {
           index: 0,
