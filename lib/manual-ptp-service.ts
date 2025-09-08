@@ -2,7 +2,7 @@ import { supabase, supabaseAdmin } from './supabaseClient';
 import { formatDate } from './customer-service';
 import { createAccountActivity } from './account-activity-service';
 import { createActivityNotification } from './notification-service';
-import { sendSMS } from './services/infobip-service';
+import { mobileApiSMSService } from './sms-service';
 
 export interface ManualPTP {
   id: string;
@@ -185,20 +185,16 @@ export const createManualPTP = async (ptp: CreateManualPTPParams): Promise<Manua
               accountNumber
             });
             
-            // Send the SMS using Infobip
-            const smsResponse = await sendSMS({
-              to: phoneNumber,
-              text: smsMessage,
-              from: 'MahikengM' // 10 characters max for alphanumeric sender ID
-            });
+            // Send the SMS using MyMobileAPI
+            const smsResponse = await mobileApiSMSService.sendSMS(phoneNumber, smsMessage);
             
             console.log('SMS notification response:', smsResponse);
             
             // Add SMS details to the PTP metadata
-            if (smsResponse.success) {
-              console.log('SMS sent successfully with message ID:', smsResponse.messageId);
+            if (smsResponse.eventId) {
+              console.log('SMS sent successfully with event ID:', smsResponse.eventId);
             } else {
-              console.warn('SMS sending failed:', smsResponse.error);
+              console.warn('SMS sending may have failed - no event ID returned');
             }
           } catch (smsError) {
             console.error('Error sending PTP confirmation SMS:', smsError);

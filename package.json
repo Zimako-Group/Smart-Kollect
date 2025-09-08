@@ -7,7 +7,9 @@
     "dev:legacy": "next dev",
     "build": "npm install --legacy-peer-deps && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:sms": "node scripts/test-sms-send.js",
+    "test:sms-api": "node scripts/test-api-sms.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.3",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { infobipSMSService, type PTPSMSData } from '@/lib/sms-service';
+import { mobileApiSMSService, type PTPSMSData } from '@/lib/sms-service';
 
 interface SendPTPSMSRequest {
   customerName: string;
@@ -30,7 +30,7 @@ export async function POST(
     }
 
     // Validate phone number format
-    if (!infobipSMSService.isValidPhoneNumber(phoneNumber)) {
+    if (!mobileApiSMSService.isValidPhoneNumber(phoneNumber)) {
       return NextResponse.json(
         { 
           success: false, 
@@ -62,26 +62,27 @@ export async function POST(
     };
 
     // Send SMS
-    const result = await infobipSMSService.sendPTPConfirmationSMS(smsData);
+    const result = await mobileApiSMSService.sendPTPConfirmationSMS(smsData);
 
-    // Check if SMS was sent successfully
-    const message = result.messages[0];
-    const isSuccess = message.status.groupId === 1; // Group ID 1 means PENDING/DELIVERED
+    // Check if SMS was sent successfully (MyMobileAPI returns eventId and messages count)
+    const isSuccess = result.eventId && result.messages > 0;
 
     if (isSuccess) {
       return NextResponse.json({
         success: true,
         message: 'PTP confirmation SMS sent successfully',
-        messageId: message.messageId,
-        to: message.to,
-        status: message.status
+        eventId: result.eventId,
+        messages: result.messages,
+        cost: result.cost,
+        remainingBalance: result.remainingBalance,
+        sample: result.sample
       });
     } else {
       return NextResponse.json(
         {
           success: false,
-          error: `SMS failed to send: ${message.status.description}`,
-          status: message.status
+          error: `SMS failed to send`,
+          errorReport: result.errorReport
         },
         { status: 400 }
       );

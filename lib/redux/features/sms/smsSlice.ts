@@ -1,7 +1,16 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
-import { sendSMS as sendSMSViaInfobip } from '../../../services/infobip-service';
 import { SmsHistoryService } from '../../../services/sms-history-service';
+
+// Helper function for client-side phone number validation
+const isValidPhoneNumber = (phoneNumber: string): boolean => {
+  // Remove all non-numeric characters except +
+  const cleaned = phoneNumber.replace(/[^\d+]/g, '');
+  
+  // Check if it's a valid South African number (supports multiple formats)
+  const saNumberRegex = /^(\+27|27|0)[0-9]{9}$/;
+  return saNumberRegex.test(cleaned);
+};
 
 export interface SMSTemplate {
   id: string;
@@ -47,8 +56,7 @@ const initialState: SMSState = {
   accountNumber: '',
   message: '',
   templates: [
-    {
-      id: "t1",
+    {      id: "t1",
       name: "Payment Reminder",
       content: "Dear {name}, this is a friendly reminder that your payment of {amount} is due on {dueDate}. Please contact us if you need assistance.",
       category: "payment",
@@ -101,22 +109,36 @@ export const sendSMS = createAsyncThunk(
       }
       
       // Log the SMS sending attempt
-      console.log('Sending SMS:', { 
+      console.log('Sending SMS via API:', { 
         to: recipientPhone, 
-        message, 
+        message: message.substring(0, 50) + '...', 
         accountNumber 
       });
       
-      const response = await sendSMSViaInfobip({
-        to: recipientPhone,
-        text: message,
-        from: 'SmartColl'
+      // Call the server-side SMS API instead of direct service
+      const response = await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientPhone,
+          recipientName,
+          message,
+          accountNumber
+        })
       });
       
-      console.log('SMS API response:', response);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
       
-      const historyEntry: SMSHistory = {
-        id: response.messageId || Date.now().toString(),
+      const result = await response.json();
+      console.log('SMS API response:', result);
+      
+      const historyEntry: SMSHistory = result.historyEntry || {
+        id: result.result?.eventId?.toString() || Date.now().toString(),
         timestamp: Date.now(),
         recipientPhone,
         recipientName,
@@ -124,17 +146,6 @@ export const sendSMS = createAsyncThunk(
         status: 'sent',
         accountNumber
       };
-      
-      // Save to Supabase with explicit error handling
-      try {
-        const saveResult = await SmsHistoryService.saveSmsToHistory(historyEntry);
-        if (!saveResult) {
-          console.error('Failed to save SMS history to Supabase, but SMS was sent');
-        }
-      } catch (saveError) {
-        console.error('Error saving SMS history:', saveError);
-        // We don't reject here because the SMS was sent successfully
-      }
       
       return { success: true, historyEntry };
     } catch (error) {
@@ -192,23 +203,23 @@ export const smsSlice = createSlice({
       recipientName: string;
       accountNumber?: string;
     }>) => {
-      // Format and validate the phone number
+      // Format and validate the phone number for MyMobileAPI
       let formattedPhone = '';
       if (action.payload.recipientPhone) {
-        // First, clean the phone number (remove any non-digit characters except the leading +)
+        // Clean the phone number (remove any non-digit characters except the leading +)
         formattedPhone = action.payload.recipientPhone.replace(/[^\d+]/g, '');
         
-        // If it's not empty and doesn't have a country code, add the South African country code
-        if (formattedPhone && !formattedPhone.startsWith('+')) {
-          // If it starts with a 0, remove it before adding the country code
-          if (formattedPhone.startsWith('0')) {
-            formattedPhone = '+27' + formattedPhone.substring(1);
-          } else {
-            // If it doesn't start with 0, it might already be without the leading 0
-            // Check if it's likely a South African number without the leading 0
-            if (formattedPhone.length >= 9 && /^[6-8]/.test(formattedPhone)) {
-              formattedPhone = '+27' + formattedPhone;
-            }
+        // Format for MyMobileAPI (no + prefix, but with country code)
+        if (formattedPhone && formattedPhone.startsWith('+27')) {
+          // Remove the + prefix for MyMobileAPI
+          formattedPhone = formattedPhone.substring(1);
+        } else if (formattedPhone && formattedPhone.startsWith('0')) {
+          // Convert local format (0xxxxxxxxx) to international (27xxxxxxxxx)
+          formattedPhone = '27' + formattedPhone.substring(1);
+        } else if (formattedPhone && !formattedPhone.startsWith('27') && formattedPhone.length >= 9) {
+          // If it's likely a South African number without country code
+          if (/^[6-8]/.test(formattedPhone)) {
+            formattedPhone = '27' + formattedPhone;
           }
         }
       }

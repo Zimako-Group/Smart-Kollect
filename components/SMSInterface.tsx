@@ -1,4 +1,7 @@
 // components/SMSInterface.tsx
+// SMS Interface Component - Updated to use MyMobileAPI service
+// This component provides a dialog interface for sending SMS messages
+// and viewing SMS history, now integrated with MyMobileAPI instead of Infobip
 "use client";
 
 import React, { useState, useEffect } from "react";
