@@ -35,6 +35,7 @@ import {
   Trash,
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
+  Database,
 } from "lucide-react";
 import { supabase } from '@/lib/supabase';
 import { getAgents } from '@/lib/accounts-service';
@@ -57,6 +58,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateDisplay } from "@/components/DateDisplay";
 import { toast } from "sonner";
+import { CustomReportBuilder } from "@/components/CustomReportBuilder";
 import {
   Select,
   SelectContent,
@@ -107,6 +109,7 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [topPerformers, setTopPerformers] = useState<AgentPerformance[]>([]);
   const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+  const [showCustomReportBuilder, setShowCustomReportBuilder] = useState(false);
 
   // Effect to load data when component mounts or timeRange changes
   useEffect(() => {
@@ -685,22 +688,32 @@ export default function ReportsPage() {
                     <HighRiskAccountsCard />
                   </Suspense>
 
-                  {/* Report Card 6 */}
-                  <div className="bg-slate-800/40 rounded-lg border border-slate-700/40 p-4 hover:bg-slate-800/60 transition-colors cursor-pointer">
+                  {/* Custom Report Builder Card */}
+                  <div 
+                    className="bg-slate-800/40 rounded-lg border border-slate-700/40 p-4 hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                    onClick={() => setShowCustomReportBuilder(true)}
+                  >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="rounded-full bg-slate-700/50 p-2.5">
-                        <FileText className="h-5 w-5 text-slate-300" />
+                      <div className="rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-2.5 group-hover:from-purple-500/30 group-hover:to-blue-500/30 transition-all">
+                        <FileText className="h-5 w-5 text-purple-400 group-hover:text-purple-300" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-slate-200">Custom Report</h3>
-                        <p className="text-xs text-slate-400">Create a custom report</p>
+                        <h3 className="font-medium text-slate-200 group-hover:text-white transition-colors">Custom Report Builder</h3>
+                        <p className="text-xs text-slate-400 group-hover:text-slate-300">Advanced report creation with all data sources</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-center h-[72px]">
-                      <Plus className="h-8 w-8 text-slate-600" />
+                    <div className="flex items-center justify-center h-[72px] group-hover:scale-110 transition-transform">
+                      <div className="relative">
+                        <Plus className="h-8 w-8 text-slate-600 group-hover:text-purple-400 transition-colors" />
+                        <div className="absolute -inset-2 bg-purple-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+                      </div>
                     </div>
-                    <Button variant="outline" className="w-full border-slate-700 text-xs h-8">
-                      Create New Report
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-slate-700 text-xs h-8 group-hover:border-purple-500/50 group-hover:text-purple-300 transition-colors"
+                    >
+                      <Database className="h-3 w-3 mr-1" />
+                      Launch Report Builder
                     </Button>
                   </div>
                 </div>
@@ -996,6 +1009,12 @@ export default function ReportsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Custom Report Builder Dialog */}
+      <CustomReportBuilder 
+        isOpen={showCustomReportBuilder}
+        onClose={() => setShowCustomReportBuilder(false)}
+      />
     </div>
   );
 }
