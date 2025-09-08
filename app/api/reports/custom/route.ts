@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import type { FilterCondition } from '@/components/report-builder-types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,13 +32,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Start building the query
-    let query = supabase
+    let query: any = supabase
       .from(primaryTable)
       .select(selectFields);
 
     // Apply filters
     if (filters && filters.length > 0) {
-      filters.forEach((filter: any) => {
+      filters.forEach((filter: FilterCondition) => {
         if (filter.field && filter.value !== undefined && filter.value !== '') {
           switch (filter.operator) {
             case 'equals':
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // Apply ordering
     if (orderBy && orderBy.length > 0) {
-      orderBy.forEach((order: any) => {
+      orderBy.forEach((order: { field: string; direction: string }) => {
         query = query.order(order.field, { ascending: order.direction === 'asc' });
       });
     }
