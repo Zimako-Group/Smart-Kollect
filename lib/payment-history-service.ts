@@ -118,11 +118,16 @@ export async function processPaymentFileRecords(
   console.log(`Processing ${records.length} payment records for batch ${uploadBatchId}`);
   console.log('Note: PTP status updates will be automatically triggered by database triggers');
 
-  for (const record of records) {
-    try {
-      // Call the database function to process each record
-      // The auto_update_ptp_status trigger will automatically update PTPs when PaymentHistory records are inserted
-      const { data, error } = await supabaseAdmin.rpc('process_payment_file_record', {
+  // Process records in batches for better performance
+  const BATCH_SIZE = 500; // Process 500 records at a time
+  
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    console.log(`Processing batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(records.length/BATCH_SIZE)} (${batch.length} records)`);
+    
+    // Process batch in parallel
+    const batchPromises = batch.map(record => {
+      return supabaseAdmin.rpc('process_payment_file_record', {
         p_upload_batch_id: uploadBatchId,
         p_account_no: record.ACCOUNT_NO,
         p_account_holder_name: record.ACCOUNT_HOLDER_NAME,
@@ -133,22 +138,34 @@ export async function processPaymentFileRecords(
         p_last_payment_amount: record.LAST_PAYMENT_AMOUNT,
         p_last_payment_date: record.LAST_PAYMENT_DATE
       });
-
-      if (error) {
-        console.error(`Error processing record for account ${record.ACCOUNT_NO}:`, error);
-        results.failed++;
-        results.errors.push(`Account ${record.ACCOUNT_NO}: ${error.message}`);
-      } else if (data === true) {
-        results.successful++;
-        console.log(`Successfully processed payment for account ${record.ACCOUNT_NO} - PTPs will be auto-updated`);
-      } else {
-        results.failed++;
-        results.errors.push(`Account ${record.ACCOUNT_NO}: Debtor not found`);
-      }
+    });
+    
+    try {
+      // Execute all promises in the batch
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Process results
+      batchResults.forEach((result, index) => {
+        const record = batch[index];
+        if (result.error) {
+          console.error(`Error processing record for account ${record.ACCOUNT_NO}:`, result.error);
+          results.failed++;
+          results.errors.push(`Account ${record.ACCOUNT_NO}: ${result.error.message}`);
+        } else if (result.data === true) {
+          results.successful++;
+          console.log(`Successfully processed payment for account ${record.ACCOUNT_NO} - PTPs will be auto-updated`);
+        } else {
+          results.failed++;
+          results.errors.push(`Account ${record.ACCOUNT_NO}: Debtor not found`);
+        }
+      });
     } catch (error: any) {
-      console.error(`Error processing record for account ${record.ACCOUNT_NO}:`, error);
-      results.failed++;
-      results.errors.push(`Account ${record.ACCOUNT_NO}: ${error.message}`);
+      console.error(`Error processing batch starting at index ${i}:`, error);
+      // Mark all records in this batch as failed
+      batch.forEach(record => {
+        results.failed++;
+        results.errors.push(`Account ${record.ACCOUNT_NO}: Batch processing error - ${error.message}`);
+      });
     }
   }
 
