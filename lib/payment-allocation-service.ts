@@ -136,6 +136,73 @@ export async function getAllocationStats(paymentFileId: string) {
 }
 
 /**
+ * Get detailed allocation statistics including total record count
+ */
+export async function getDetailedAllocationStats(paymentFileId: string) {
+  try {
+    console.log(`Getting detailed allocation stats for file ID: ${paymentFileId}`);
+    
+    // Get all records count
+    const { count: totalRecords, error: countError } = await supabase
+      .from('payment_records')
+      .select('*', { count: 'exact', head: true })
+      .eq('payment_file_id', paymentFileId);
+      
+    if (countError) {
+      throw new Error(`Failed to get total record count: ${countError.message}`);
+    }
+
+    // Get processing status breakdown
+    const { data, error } = await supabase
+      .from('payment_records')
+      .select('processing_status, amount')
+      .eq('payment_file_id', paymentFileId);
+
+    if (error) {
+      throw new Error(`Failed to get allocation stats: ${error.message}`);
+    }
+
+    const stats = data.reduce((acc, record) => {
+      const amount = typeof record.amount === 'number' ? record.amount : 0;
+      
+      acc.total++;
+      acc.total_amount += amount;
+      
+      if (record.processing_status === 'processed') {
+        acc.allocated++;
+        acc.allocated_amount += amount;
+      } else if (record.processing_status === 'pending') {
+        acc.pending++;
+        acc.pending_amount += amount;
+      } else if (record.processing_status === 'failed') {
+        acc.failed++;
+        acc.failed_amount += amount;
+      }
+      return acc;
+    }, {
+      total: totalRecords || 0,
+      allocated: 0,
+      pending: 0,
+      failed: 0,
+      total_amount: 0,
+      allocated_amount: 0,
+      pending_amount: 0,
+      failed_amount: 0
+    });
+
+    console.log('Detailed allocation stats:', stats);
+    
+    return {
+      ...stats,
+      allocation_percentage: stats.total > 0 ? (stats.allocated / stats.total) * 100 : 0
+    };
+  } catch (error: any) {
+    console.error('Get detailed allocation stats error:', error);
+    throw new Error(`Failed to get detailed allocation statistics: ${error.message}`);
+  }
+}
+
+/**
  * Check if a payment file has any records ready for allocation
  */
 export async function canAllocatePayments(paymentFileId: string): Promise<boolean> {

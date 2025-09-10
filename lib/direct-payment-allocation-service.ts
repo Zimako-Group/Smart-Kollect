@@ -4,15 +4,6 @@ import { updateAgentPerformance, batchUpdateAgentPerformance, AgentPerformanceUp
 import { createPaymentFileUpload, processPaymentFileRecords } from './payment-history-service';
 import type { PaymentFileRecord } from './payment-history-service';
 
-// Constants for performance tuning
-const MAX_RETRIES = 3;      // Maximum number of retries for database operations
-const RETRY_DELAY_BASE = 1000; // Base delay in ms before retrying (will be multiplied by 2^retryCount)
-
-/**
- * Extracts the payment date from a payment record, looking in all possible locations
- * @param record The payment record from which to extract the payment date
- * @returns The extracted payment date or null if not found
- */
 /**
  * Extracts the payment date from a payment record
  * @param record The payment record from which to extract the payment date
@@ -110,6 +101,7 @@ export interface AllocationProgress {
     account_number: string;
     error: string;
   }>;
+  total?: number; // Add total for progress tracking
 }
 
 /**
@@ -175,6 +167,14 @@ interface DebtorRecord {
   created_at?: string;
 }
 
+// Constants for performance tuning
+const MAX_RETRIES = 3;      // Maximum number of retries for database operations
+const RETRY_DELAY_BASE = 1000; // Base delay in ms before retrying (will be multiplied by 2^retryCount)
+const BATCH_SIZE = 5000;    // Increased batch size for better performance
+const DEBTOR_UPDATE_CHUNK_SIZE = 500; // Larger chunks for debtor updates
+const PAYMENT_UPDATE_CHUNK_SIZE = 500; // Larger chunks for payment record updates
+const MAX_EXECUTION_TIME_MS = 3600000; // 1 hour timeout for very large files
+
 /**
  * Allocate payments directly using the Supabase client
  * This is an alternative to the Edge Function approach
@@ -195,22 +195,19 @@ export async function allocatePaymentsDirect(
     failed_allocations: 0,
     total_time_ms: 0,
     is_complete: false,
-    errors: []
+    errors: [],
+    current_offset: startOffset
   };
   
   const startTime = Date.now();
-  // Increased batch size to process more records at once
-  const BATCH_SIZE = 1000; 
-  // Set a much longer execution time (30 minutes) to process all records
-  const MAX_EXECUTION_TIME_MS = 1800000; // 30 minutes
   let offset = startOffset;
   let hasMore = true;
   let consecutiveErrorCount = 0;
-  const MAX_CONSECUTIVE_ERRORS = 3; // Maximum number of consecutive batch errors before aborting
+  const MAX_CONSECUTIVE_ERRORS = 5; // Increased maximum consecutive errors
   
   try {
     while (hasMore) {
-      // Check if we're approaching the timeout limit, but with a much higher threshold
+      // Check if we're approaching the timeout limit
       const currentExecutionTime = Date.now() - startTime;
       if (currentExecutionTime > MAX_EXECUTION_TIME_MS) {
         console.log(`Reached extended timeout limit (${currentExecutionTime}ms). Pausing execution.`);
@@ -230,7 +227,7 @@ export async function allocatePaymentsDirect(
         return progress;
       }
       
-      // Log progress periodically
+      // Log progress more frequently
       if (progress.total_processed > 0 && progress.total_processed % 1000 === 0) {
         console.log(`Processed ${progress.total_processed} records so far`);
         if (onProgress) {
@@ -238,6 +235,7 @@ export async function allocatePaymentsDirect(
           onProgress({ ...progress });
         }
       }
+      
       // Get a batch of pending payment records with retry logic for network issues
       let paymentRecords = null;
       let fetchError = null;
@@ -254,7 +252,7 @@ export async function allocatePaymentsDirect(
             .eq('payment_file_id', paymentFileId)
             .eq('processing_status', 'pending')
             .order('created_at', { ascending: true })
-            .limit(BATCH_SIZE);
+            .range(offset, offset + BATCH_SIZE - 1); // Use range for better pagination
           
           paymentRecords = response.data;
           fetchError = response.error;
@@ -278,13 +276,13 @@ export async function allocatePaymentsDirect(
           console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} - Error fetching payment records:`, fetchError);
           
           // Wait with exponential backoff before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_BASE * Math.pow(2, retryCount)));
           retryCount++;
           
         } catch (e) {
           console.error(`Unexpected error during fetch (attempt ${retryCount + 1}/${MAX_RETRIES}):`, e);
           fetchError = { message: e instanceof Error ? e.message : 'Unknown error during fetch' };
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_BASE * Math.pow(2, retryCount)));
           retryCount++;
         }
       }
@@ -479,16 +477,13 @@ export async function allocatePaymentsDirect(
         console.log(`Completed agent performance updates for ${agentPerformanceUpdates.length} payment records`);
       }
       
-      // Bulk update existing debtors
+      // Bulk update existing debtors using optimized chunking
       if (debtorsToUpdate.length > 0) {
         console.log(`Bulk updating ${debtorsToUpdate.length} debtors`);
         let updateRetryCount = 0;
         
-        // Process debtors in larger chunks for better performance
-        const DEBTOR_UPDATE_CHUNK_SIZE = 50;
+        // Split debtors into larger chunks for better performance
         const debtorChunks = [];
-        
-        // Split debtors into chunks
         for (let i = 0; i < debtorsToUpdate.length; i += DEBTOR_UPDATE_CHUNK_SIZE) {
           debtorChunks.push(debtorsToUpdate.slice(i, i + DEBTOR_UPDATE_CHUNK_SIZE));
         }
@@ -496,8 +491,8 @@ export async function allocatePaymentsDirect(
         console.log(`Processing ${debtorChunks.length} chunks of debtors`);
         
         // Track successful and failed updates
-        const successfulUpdates = [];
-        const failedUpdates = [];
+        const successfulUpdates: string[] = [];
+        const failedUpdates: { acc_number: string; error: string }[] = [];
         
         // Process each chunk
         for (let chunkIndex = 0; chunkIndex < debtorChunks.length; chunkIndex++) {
@@ -509,51 +504,42 @@ export async function allocatePaymentsDirect(
           
           while (updateRetryCount < MAX_RETRIES && !chunkSuccess) {
             try {
-              // Process each record in the chunk
-              let chunkHasErrors = false;
-              
-              // Process each debtor in the chunk individually
-              for (const debtor of chunk) {
-                // Define the update data for this debtor
+              // Use bulk update with upsert for better performance
+              const updatePromises = chunk.map(debtor => {
                 const updateData: any = {
                   outstanding_balance: debtor.outstanding_balance,
                   last_payment_amount: debtor.last_payment_amount,
                   updated_at: new Date().toISOString()
                 };
                 
-                // Only include last_payment_date if it exists and is valid to avoid SQL errors
+                // Only include last_payment_date if it exists and is valid
                 if (debtor.last_payment_date) {
                   updateData.last_payment_date = debtor.last_payment_date;
-                } else {
-                  console.log(`Skipping date update for ${debtor.acc_number} - null or invalid date`);
                 }
                 
-                try {
-                  const retryResult = await supabase
-                    .from('Debtors')
-                    .update(updateData)
-                    .eq('id', debtor.id);
-                    
-                  if (retryResult.error) {
-                    console.error(`Retry also failed for ${debtor.acc_number}:`, retryResult.error);
-                    failedUpdates.push({
-                      acc_number: debtor.acc_number,
-                      error: retryResult.error.message
-                    });
-                    chunkHasErrors = true;
-                  } else {
-                    console.log(`Successfully updated ${debtor.acc_number}`);
-                    successfulUpdates.push(debtor.acc_number);
-                  }
-                } catch (error) {
-                  // For other errors, add to errors list
+                return supabase
+                  .from('Debtors')
+                  .update(updateData)
+                  .eq('id', debtor.id);
+              });
+              
+              // Execute all updates in parallel
+              const results = await Promise.all(updatePromises);
+              
+              // Check for errors
+              let chunkHasErrors = false;
+              results.forEach((result, index) => {
+                if (result.error) {
+                  console.error(`Update failed for ${chunk[index].acc_number}:`, result.error);
                   failedUpdates.push({
-                    acc_number: debtor.acc_number,
-                    error: error instanceof Error ? error.message : 'Unknown error'
+                    acc_number: chunk[index].acc_number,
+                    error: result.error.message
                   });
                   chunkHasErrors = true;
+                } else {
+                  successfulUpdates.push(chunk[index].acc_number);
                 }
-              }
+              });
               
               // If no errors in this chunk, mark as successful
               if (!chunkHasErrors) {
@@ -723,20 +709,21 @@ export async function allocatePaymentsDirect(
         }
       }
       
-      // Mark processed records as processed - using smaller chunks to avoid CORS errors with long URLs
+      // Mark processed records as processed - using larger chunks for better performance
       if (processedRecordIds.length > 0) {
         console.log(`Marking ${processedRecordIds.length} records as processed`);
         
-        // Define chunk size for payment record updates to avoid CORS issues with long URLs
-        const PAYMENT_UPDATE_CHUNK_SIZE = 50;
+        // Split records into larger chunks
         const recordChunks = [];
-        
-        // Split records into smaller chunks
         for (let i = 0; i < processedRecordIds.length; i += PAYMENT_UPDATE_CHUNK_SIZE) {
           recordChunks.push(processedRecordIds.slice(i, i + PAYMENT_UPDATE_CHUNK_SIZE));
         }
         
         console.log(`Processing ${recordChunks.length} chunks of payment records`);
+        
+        // Track successful and failed updates
+        const successfulUpdates: string[] = [];
+        const failedUpdates: { id: string; error: string }[] = [];
         
         // Process each chunk of record IDs
         for (let chunkIndex = 0; chunkIndex < recordChunks.length; chunkIndex++) {
@@ -744,7 +731,7 @@ export async function allocatePaymentsDirect(
           console.log(`Processing payment record chunk ${chunkIndex + 1}/${recordChunks.length} with ${chunk.length} records`);
           
           // Retry logic for each chunk
-          let updateError = null;
+          let updateError: any = null;
           let retryCount = 0;
           let chunkSuccess = false;
           
@@ -763,10 +750,19 @@ export async function allocatePaymentsDirect(
               if (!updateError) {
                 chunkSuccess = true;
                 console.log(`Successfully updated chunk ${chunkIndex + 1}/${recordChunks.length}`);
+                // Add all IDs in this chunk to successful updates
+                successfulUpdates.push(...chunk);
                 break;
+              } else {
+                console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} - Error updating payment records chunk ${chunkIndex + 1}:`, updateError);
+                // Add all IDs in this chunk to failed updates
+                chunk.forEach(id => {
+                  failedUpdates.push({
+                    id,
+                    error: updateError.message
+                  });
+                });
               }
-              
-              console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} - Error updating payment records chunk ${chunkIndex + 1}:`, updateError);
               
               // Wait with exponential backoff before retrying
               await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_BASE * Math.pow(2, retryCount)));
@@ -775,6 +771,15 @@ export async function allocatePaymentsDirect(
             } catch (e) {
               console.error(`Unexpected error during update of chunk ${chunkIndex + 1} (attempt ${retryCount + 1}/${MAX_RETRIES}):`, e);
               updateError = { message: e instanceof Error ? e.message : 'Unknown error during update' };
+              
+              // Add all IDs in this chunk to failed updates
+              chunk.forEach(id => {
+                failedUpdates.push({
+                  id,
+                  error: updateError.message
+                });
+              });
+              
               await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_BASE * Math.pow(2, retryCount)));
               retryCount++;
             }
@@ -784,6 +789,17 @@ export async function allocatePaymentsDirect(
             console.error(`Failed to process payment record chunk ${chunkIndex + 1} after ${MAX_RETRIES} retries:`, updateError);
           }
         }
+        
+        // Update progress with results
+        console.log(`Successfully updated ${successfulUpdates.length} payment records, failed to update ${failedUpdates.length} records`);
+        
+        // Add failed updates to progress errors
+        failedUpdates.forEach(failure => {
+          progress.errors.push({
+            account_number: failure.id, // Using ID as account_number for error tracking
+            error: `Update failed: ${failure.error}`
+          });
+        });
       }
       
       // Update progress
@@ -868,7 +884,7 @@ export async function resetFailedPaymentRecords(paymentFileId: string): Promise<
 export async function processLargePaymentFile(
   paymentFileId: string,
   onProgress?: (progress: AllocationProgress) => void,
-  maxAttempts: number = 10 // Maximum number of resume attempts
+  maxAttempts: number = 15 // Increased maximum attempts
 ): Promise<AllocationProgress> {
   let currentProgress: AllocationProgress = {
     total_processed: 0,
@@ -883,6 +899,19 @@ export async function processLargePaymentFile(
   
   let attempts = 0;
   const startTime = Date.now();
+  let lastProgressUpdate = 0;
+  
+  // Get total records count for better progress tracking
+  let totalRecords = 0;
+  try {
+    const { count } = await supabase
+      .from('payment_records')
+      .select('*', { count: 'exact', head: true })
+      .eq('payment_file_id', paymentFileId);
+    totalRecords = count || 0;
+  } catch (error) {
+    console.warn('Could not fetch total record count for progress tracking');
+  }
   
   // Loop until processing is complete or we exceed max attempts
   while (!currentProgress.is_complete && attempts < maxAttempts) {
@@ -894,34 +923,42 @@ export async function processLargePaymentFile(
       undefined, 
       (progress) => {
         // Combine progress with previous runs
-        const combinedProgress = {
-          ...progress,
+        const combinedProgress: AllocationProgress = {
           total_processed: (currentProgress.total_processed || 0) + progress.total_processed,
           accounts_updated: (currentProgress.accounts_updated || 0) + progress.accounts_updated,
           accounts_created: (currentProgress.accounts_created || 0) + progress.accounts_created,
           failed_allocations: (currentProgress.failed_allocations || 0) + progress.failed_allocations,
-          errors: [...(currentProgress.errors || []), ...(progress.errors || [])],
-          total_time_ms: (Date.now() - startTime) // Overall time
+          total_time_ms: Date.now() - startTime, // Overall time
+          is_complete: progress.is_complete,
+          current_offset: progress.current_offset,
+          errors: [...(currentProgress.errors || []), ...(progress.errors || [])]
         };
         
-        if (onProgress) {
-          onProgress(combinedProgress);
+        // Update our tracking progress
+        currentProgress = { ...combinedProgress };
+        
+        // Throttle progress updates to avoid overwhelming the UI
+        const now = Date.now();
+        if (now - lastProgressUpdate > 500 || progress.is_complete) { // Update at most every 500ms
+          if (onProgress) {
+            onProgress({ ...combinedProgress, total: totalRecords });
+          }
+          lastProgressUpdate = now;
         }
       },
       currentProgress.current_offset || 0
     );
     
-    // Update our tracking progress
+    // Update our tracking progress with the final result of this attempt
     currentProgress = {
-      ...currentProgress,
       total_processed: (currentProgress.total_processed || 0) + attemptResult.total_processed,
       accounts_updated: (currentProgress.accounts_updated || 0) + attemptResult.accounts_updated,
       accounts_created: (currentProgress.accounts_created || 0) + attemptResult.accounts_created,
       failed_allocations: (currentProgress.failed_allocations || 0) + attemptResult.failed_allocations,
-      errors: [...(currentProgress.errors || []), ...(attemptResult.errors || [])],
+      total_time_ms: Date.now() - startTime,
       is_complete: attemptResult.is_complete,
       current_offset: attemptResult.current_offset || currentProgress.current_offset,
-      total_time_ms: (Date.now() - startTime)
+      errors: [...(currentProgress.errors || []), ...(attemptResult.errors || [])]
     };
     
     if (currentProgress.is_complete) {
@@ -933,11 +970,17 @@ export async function processLargePaymentFile(
     attempts++;
     
     // Add a short delay between attempts to avoid overloading the database
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // But make it shorter for better responsiveness
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
   
   if (!currentProgress.is_complete) {
     console.log(`Reached maximum processing attempts (${maxAttempts}). Some records may not have been processed.`);
+  }
+  
+  // Final progress update
+  if (onProgress) {
+    onProgress({ ...currentProgress, total: totalRecords });
   }
   
   return currentProgress;

@@ -504,28 +504,34 @@ export default function PaymentFileUploader({ onUploadComplete }: PaymentFileUpl
       const recordsProcessedSinceLastCheck = currentProcessed - lastProcessedCount;
       setLastProcessedCount(currentProcessed);
       
-      // Calculate processing rate (records per second)
+      // Calculate processing rate (records per second) with smoothing
       const rate = recordsProcessedSinceLastCheck;
-      setProcessingRate(rate);
+      // Apply exponential moving average for smoother rate calculation
+      const smoothedRate = processingRate > 0 
+        ? processingRate * 0.7 + rate * 0.3 
+        : rate;
+      setProcessingRate(smoothedRate);
       
-      // Calculate estimated time remaining
+      // Calculate estimated time remaining with better formatting
       const remainingRecords = allocationStats.total - currentProcessed;
-      if (rate > 0) {
-        const secondsRemaining = Math.ceil(remainingRecords / rate);
+      if (smoothedRate > 0) {
+        const secondsRemaining = Math.ceil(remainingRecords / smoothedRate);
         if (secondsRemaining < 60) {
           setEstimatedTimeRemaining(`${secondsRemaining} seconds`);
         } else if (secondsRemaining < 3600) {
           setEstimatedTimeRemaining(`${Math.ceil(secondsRemaining / 60)} minutes`);
         } else {
-          setEstimatedTimeRemaining(`${Math.floor(secondsRemaining / 3600)}h ${Math.ceil((secondsRemaining % 3600) / 60)}m`);
+          const hours = Math.floor(secondsRemaining / 3600);
+          const minutes = Math.ceil((secondsRemaining % 3600) / 60);
+          setEstimatedTimeRemaining(`${hours}h ${minutes}m`);
         }
       } else {
         setEstimatedTimeRemaining('calculating...');
       }
     }
-  }, 1000);
+  }, 1000); // Update every second for more responsive progress
 
-  // Handle payment allocation
+  // Handle payment allocation with improved error handling and progress tracking
   const handleAllocatePayments = async () => {
     if (!paymentFileMetadata?.id) {
       toast({
@@ -552,41 +558,46 @@ export default function PaymentFileUploader({ onUploadComplete }: PaymentFileUpl
       console.log('Starting direct payment allocation...');
       
       // Reset any records that might have been marked as failed
-      if (!allocationProgress) {
+      if (!allocationProgress || allocationProgress.total_processed === 0) {
         await resetFailedPaymentRecords(paymentFileMetadata.id);
       } else {
         console.log('Resuming previous allocation, skipping reset of failed records');
       }
       
-      // Set a client-side timeout for the entire operation (30 minutes)
-      const timeoutPromise = new Promise<AllocationProgress>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Client timeout: Operation taking too long'));
-        }, 1800000); // 30 minutes to match server-side timeout
-      });
+      // Use the robust large file processing method instead of timeout protection
+      const { processLargePaymentFile } = await import('@/lib/direct-payment-allocation-service');
       
-      // Use direct allocation method with timeout protection
-      const allocationPromise = allocatePaymentsDirect(
+      // Get detailed allocation stats for better progress tracking
+      const { getDetailedAllocationStats } = await import('@/lib/payment-allocation-service');
+      const detailedStats = await getDetailedAllocationStats(paymentFileMetadata.id);
+      setAllocationStats(detailedStats);
+      
+      // Process large payment file with automatic resuming
+      const progress = await processLargePaymentFile(
         paymentFileMetadata.id,
-        undefined, // batch_id
         (progressUpdate: AllocationProgress) => {
-          // Update progress in real-time
+          // Update progress in real-time with better tracking
           setAllocationProgress(progressUpdate);
-        }
+          
+          // Update UI with more detailed progress information
+          if (progressUpdate.total_processed > 0) {
+            const percentage = Math.min(100, Math.round((progressUpdate.total_processed / (detailedStats?.total || progressUpdate.total_processed)) * 100));
+            setProgressMessage(`Allocating payments: ${progressUpdate.total_processed}/${detailedStats?.total || 'unknown'} (${percentage}%)`);
+          }
+        },
+        20 // Increased max attempts for very large files
       );
-      
-      // Race between allocation and timeout
-      const progress = await Promise.race([allocationPromise, timeoutPromise]);
       
       // Set final progress
       setAllocationProgress(progress);
       setAllocationResult(progress);
       
       // Get updated allocation stats
-      const stats = await getAllocationStats(paymentFileMetadata.id);
+      const stats = await getDetailedAllocationStats(paymentFileMetadata.id);
       setAllocationStats(stats);
       
       // Check if more payments can be allocated
+      const { canAllocatePayments } = await import('@/lib/payment-allocation-service');
       const canStillAllocate = await canAllocatePayments(paymentFileMetadata.id);
       setCanAllocate(canStillAllocate);
 
