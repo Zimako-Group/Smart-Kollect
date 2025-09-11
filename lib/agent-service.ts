@@ -232,7 +232,7 @@ export async function executeAgent(agentId: string): Promise<AgentExecutionResul
     // Update agent metrics
     await updateAgentMetrics(agentId, result.success, duration);
     
-    // Update agent status
+    // Update agent status with lastRun timestamp
     await updateAgentStatus(agentId, 'sleeping', new Date().toISOString());
     
     return {
@@ -242,7 +242,7 @@ export async function executeAgent(agentId: string): Promise<AgentExecutionResul
   } catch (error) {
     const duration = Date.now() - startTime;
     
-    // Update agent with error
+    // Update agent with error and lastRun timestamp
     await updateAgentStatus(agentId, 'error', new Date().toISOString(), error instanceof Error ? error.message : String(error));
     
     // Update agent metrics
@@ -262,7 +262,7 @@ async function updateAgentStatus(agentId: string, status: Agent['status'], lastR
   const updateData: any = { status };
   
   if (lastRun) {
-    updateData.lastRun = lastRun;
+    updateData.lastrun = lastRun;
   }
   
   if (error) {
@@ -344,7 +344,23 @@ export async function getAllAgents(): Promise<Agent[]> {
       return [];
     }
     
-    return data || [];
+    // Map database column names to camelCase property names
+    const agents = (data || []).map(agent => ({
+      id: agent.id,
+      name: agent.name,
+      type: agent.type,
+      status: agent.status,
+      lastRun: agent.lastrun ?? undefined,
+      nextRun: agent.nextrun ?? undefined,
+      schedule: agent.schedule,
+      lastResult: agent.lastresult ?? undefined,
+      error: agent.error ?? undefined,
+      metrics: agent.metrics ?? undefined,
+      created_at: agent.created_at,
+      updated_at: agent.updated_at
+    }));
+    
+    return agents;
   } catch (error) {
     console.error('Error in getAllAgents:', error);
     return [];
@@ -367,7 +383,27 @@ export async function getAgentById(agentId: string): Promise<Agent | null> {
       return null;
     }
     
-    return data || null;
+    if (!data) {
+      return null;
+    }
+    
+    // Map database column names to camelCase property names
+    const agent: Agent = {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      status: data.status,
+      lastRun: data.lastrun ?? undefined,
+      nextRun: data.nextrun ?? undefined,
+      schedule: data.schedule,
+      lastResult: data.lastresult ?? undefined,
+      error: data.error ?? undefined,
+      metrics: data.metrics ?? undefined,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
+    
+    return agent;
   } catch (error) {
     console.error(`Error in getAgentById for ${agentId}:`, error);
     return null;

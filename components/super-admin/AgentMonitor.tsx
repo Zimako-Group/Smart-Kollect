@@ -33,6 +33,8 @@ interface Agent {
     failures: number;
     avgDuration: number;
   };
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function AgentMonitor() {
@@ -106,6 +108,26 @@ export default function AgentMonitor() {
       case 'error': return 'bg-red-500';
       case 'idle': return 'bg-gray-500';
       default: return 'bg-gray-500';
+    }
+  };
+
+  const getStatusLabel = (status: Agent['status']) => {
+    switch (status) {
+      case 'running': return 'Running';
+      case 'sleeping': return 'Sleeping';
+      case 'error': return 'Error';
+      case 'idle': return 'Idle';
+      default: return status;
+    }
+  };
+
+  const getStatusBadgeColor = (status: Agent['status']) => {
+    switch (status) {
+      case 'running': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'sleeping': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'error': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'idle': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -208,6 +230,9 @@ export default function AgentMonitor() {
                     <h3 className="font-semibold text-white">{agent.name}</h3>
                     <Badge className={`bg-gradient-to-r ${getTypeColor(agent.type)} text-white border-0`}>
                       {agent.type}
+                    </Badge>
+                    <Badge className={getStatusBadgeColor(agent.status)}>
+                      {getStatusLabel(agent.status)}
                     </Badge>
                   </div>
                   
