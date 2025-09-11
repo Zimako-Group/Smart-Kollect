@@ -33,8 +33,6 @@ interface Agent {
     failures: number;
     avgDuration: number;
   };
-  created_at?: string;
-  updated_at?: string;
 }
 
 export default function AgentMonitor() {

@@ -355,9 +355,7 @@ export async function getAllAgents(): Promise<Agent[]> {
       schedule: agent.schedule,
       lastResult: agent.lastresult ?? undefined,
       error: agent.error ?? undefined,
-      metrics: agent.metrics ?? undefined,
-      created_at: agent.created_at,
-      updated_at: agent.updated_at
+      metrics: agent.metrics ?? undefined
     }));
     
     return agents;
@@ -398,9 +396,7 @@ export async function getAgentById(agentId: string): Promise<Agent | null> {
       schedule: data.schedule,
       lastResult: data.lastresult ?? undefined,
       error: data.error ?? undefined,
-      metrics: data.metrics ?? undefined,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      metrics: data.metrics ?? undefined
     };
     
     return agent;
