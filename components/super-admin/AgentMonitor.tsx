@@ -10,9 +10,9 @@ import {
   CheckCircle,
   Clock,
   Activity,
-  BarChart3
+  BarChart3,
+  AlertTriangle
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -39,18 +39,25 @@ export default function AgentMonitor() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [executingAgent, setExecutingAgent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAgents = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const response = await fetch('/api/agents');
       const data = await response.json();
       
       if (data.success) {
         setAgents(data.agents);
+      } else {
+        setError(data.message || 'Failed to fetch agents');
+        console.error('API Error:', data.message);
       }
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      setError(`Error fetching agents: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Network Error:', error);
     } finally {
       setLoading(false);
     }
@@ -127,20 +134,46 @@ export default function AgentMonitor() {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
-            <Bot className="h-5 w-5 text-white" />
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700">
+      <div className="p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                <Bot className="h-5 w-5 text-white" />
+              </div>
+              Agent Status
+            </h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Real-time monitoring of your intelligent agents
+            </p>
           </div>
-          Intelligent Agents Monitor
-        </CardTitle>
-        <CardDescription className="text-gray-400">
-          Monitor and manage your automated system agents
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
+          <Button 
+            onClick={() => fetchAgents()} 
+            variant="outline" 
+            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            <RotateCcw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-6">
+        {error ? (
+          <div className="text-center py-8 text-red-400">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+            <p className="font-semibold">Error loading agents</p>
+            <p className="text-sm mt-1">{error}</p>
+            <Button 
+              onClick={() => fetchAgents()} 
+              className="mt-4 bg-gradient-to-r from-gray-600 to-slate-600 hover:from-gray-700 hover:to-slate-700"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        ) : loading ? (
           <div className="flex items-center justify-center py-8">
             <Activity className="h-6 w-6 animate-spin text-blue-400" />
             <span className="ml-2 text-gray-400">Loading agents...</span>
@@ -230,7 +263,7 @@ export default function AgentMonitor() {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
