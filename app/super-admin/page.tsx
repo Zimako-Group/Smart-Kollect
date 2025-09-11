@@ -24,79 +24,108 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-const stats = [
-  {
-    name: 'Total Tenants',
-    value: '2',
-    change: '0',
-    changeType: 'neutral',
-    icon: Building2,
-    color: 'from-purple-600 to-indigo-600',
-    bgColor: 'bg-purple-500/10',
-    iconColor: 'text-purple-600'
-  },
-  {
-    name: 'Active Users',
-    value: '25',
-    change: '+5',
-    changeType: 'increase',
-    icon: Users,
-    color: 'from-blue-600 to-cyan-600',
-    bgColor: 'bg-blue-500/10',
-    iconColor: 'text-blue-600'
-  },
-  {
-    name: 'Total Revenue',
-    value: 'R2.4M',
-    change: '+12%',
-    changeType: 'increase',
-    icon: DollarSign,
-    color: 'from-green-600 to-emerald-600',
-    bgColor: 'bg-green-500/10',
-    iconColor: 'text-green-600'
-  },
-  {
-    name: 'System Uptime',
-    value: '99.9%',
-    change: '0%',
-    changeType: 'neutral',
-    icon: Activity,
-    color: 'from-orange-600 to-red-600',
-    bgColor: 'bg-orange-500/10',
-    iconColor: 'text-orange-600'
-  }
-];
-
-const tenants = [
-  { 
-    id: 1, 
-    name: 'Mahikeng Municipality', 
-    subdomain: 'mahikeng',
-    users: 15, 
-    status: 'active',
-    revenue: 'R180K',
-    health: 98
-  },
-  { 
-    id: 2, 
-    name: 'TripleM Corporation', 
-    subdomain: 'triplem',
-    users: 10, 
-    status: 'active',
-    revenue: 'R120K',
-    health: 95
-  }
-];
-
-const systemMetrics = [
-  { name: 'Database Size', value: '45.2 GB', max: '100 GB', percentage: 45 },
-  { name: 'API Calls Today', value: '1.2M', max: '5M', percentage: 24 },
-  { name: 'Storage Used', value: '234 GB', max: '500 GB', percentage: 47 },
-  { name: 'Bandwidth Used', value: '780 GB', max: '1 TB', percentage: 78 }
-];
+import AgentMonitor from '@/components/super-admin/AgentMonitor';
 
 export default function SuperAdminDashboard() {
+  // Dashboard statistics
+  const stats = [
+    {
+      name: 'Total Tenants',
+      value: '12',
+      change: '+2.5%',
+      changeType: 'increase' as const,
+      icon: Building2,
+      bgColor: 'bg-blue-500/20',
+      iconColor: 'text-blue-400'
+    },
+    {
+      name: 'Active Users',
+      value: '1,247',
+      change: '+12.3%',
+      changeType: 'increase' as const,
+      icon: Users,
+      bgColor: 'bg-green-500/20',
+      iconColor: 'text-green-400'
+    },
+    {
+      name: 'Monthly Revenue',
+      value: 'R2.4M',
+      change: '+8.7%',
+      changeType: 'increase' as const,
+      icon: DollarSign,
+      bgColor: 'bg-yellow-500/20',
+      iconColor: 'text-yellow-400'
+    },
+    {
+      name: 'System Uptime',
+      value: '99.9%',
+      change: '0.0%',
+      changeType: 'stable' as const,
+      icon: Activity,
+      bgColor: 'bg-purple-500/20',
+      iconColor: 'text-purple-400'
+    }
+  ];
+
+  // Tenant data
+  const tenants = [
+    {
+      id: '1',
+      name: 'Mahikeng Municipality',
+      subdomain: 'mahikeng',
+      users: 45,
+      revenue: 'R125,000',
+      health: 98,
+      status: 'active' as const
+    },
+    {
+      id: '2',
+      name: 'Rustenburg Local',
+      subdomain: 'rustenburg',
+      users: 32,
+      revenue: 'R89,500',
+      health: 95,
+      status: 'active' as const
+    },
+    {
+      id: '3',
+      name: 'Potchefstroom City',
+      subdomain: 'potch',
+      users: 28,
+      revenue: 'R76,200',
+      health: 92,
+      status: 'active' as const
+    }
+  ];
+
+  // System metrics
+  const systemMetrics = [
+    {
+      name: 'CPU Usage',
+      value: '45%',
+      percentage: 45,
+      max: '100%'
+    },
+    {
+      name: 'Memory Usage',
+      value: '6.2GB',
+      percentage: 62,
+      max: '10GB'
+    },
+    {
+      name: 'Database Load',
+      value: '23%',
+      percentage: 23,
+      max: '100%'
+    },
+    {
+      name: 'API Response Time',
+      value: '120ms',
+      percentage: 12,
+      max: '1000ms'
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-950 p-6">
       {/* Header */}
@@ -131,7 +160,6 @@ export default function SuperAdminDashboard() {
                   }`}
                 >
                   {stat.changeType === 'increase' && <ArrowUp className="h-3 w-3 mr-1" />}
-                  {stat.changeType === 'decrease' && <ArrowDown className="h-3 w-3 mr-1" />}
                   {stat.change}
                 </Badge>
               </div>
@@ -242,7 +270,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800/30">
+      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800/30 mb-8">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Zap className="h-5 w-5 text-yellow-400" />
@@ -270,6 +298,10 @@ export default function SuperAdminDashboard() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Agent Monitor */}
+      <AgentMonitor />
+      
     </div>
   );
 }

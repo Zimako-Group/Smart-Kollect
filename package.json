@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:sms": "node scripts/test-sms-send.js",
-    "test:sms-api": "node scripts/test-api-sms.js"
+    "test:sms-api": "node scripts/test-api-sms.js",
+    "init:agents": "npx tsx scripts/initialize-agents.ts",
+    "start:scheduler": "npx tsx scripts/start-agent-scheduler.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.3",
@@ -58,6 +60,7 @@
     "@tanstack/react-query-devtools": "^5.81.2",
     "@types/file-saver": "^2.0.7",
     "@types/mermaid": "^9.1.0",
+    "@types/node-cron": "^3.0.11",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
     "@types/redis": "^4.0.10",
@@ -92,6 +95,7 @@
     "moment": "^2.30.1",
     "next": "^15.4.5",
     "next-themes": "^0.3.0",
+    "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "openai": "^4.91.0",
     "openai-edge": "^1.2.2",
@@ -123,6 +127,7 @@
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@types/papaparse": "^5.3.16",
-    "supabase": "^2.22.6"
+    "supabase": "^2.22.6",
+    "tsx": "^4.20.5"
   }
 }
