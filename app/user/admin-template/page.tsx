@@ -75,17 +75,19 @@ export default function AdminTemplatePage() {
       }
 
       // Insert the admin template record
+      const insertData = {
+        account_number: values.accountNumber || null,
+        date: values.date,
+        query_type: values.queryType,
+        description: values.description,
+        status: values.status,
+        escalated_department: values.escalatedDepartment || null,
+        agent_id: user.id,
+      };
+
       const { data, error } = await supabase
         .from("admin_templates")
-        .insert({
-          account_number: values.accountNumber || null,
-          date: values.date,
-          query_type: values.queryType,
-          description: values.description,
-          status: values.status,
-          escalated_department: values.escalatedDepartment || null,
-          agent_id: user.id,
-        });
+        .insert(insertData as any);
 
       if (error) {
         throw error;
