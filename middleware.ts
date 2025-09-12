@@ -285,6 +285,16 @@ export async function middleware(req: NextRequest) {
       response.headers.set('x-tenant-id', profile.tenant_id);
     }
     
+    // Set tenant context in Supabase for RLS
+    if (profile.tenant_id && subdomain) {
+      console.log('[RBAC-MIDDLEWARE] Setting tenant context for:', subdomain);
+      try {
+        await supabase.rpc('set_tenant_context', { tenant_subdomain: subdomain });
+      } catch (error) {
+        console.error('[RBAC-MIDDLEWARE] Error setting tenant context:', error);
+      }
+    }
+    
     console.log('[RBAC-MIDDLEWARE] Access granted for:', userRole, 'to', pathname);
     return response;
     

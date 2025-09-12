@@ -195,8 +195,11 @@ export function extractSubdomain(hostname: string): string | null {
   // Remove port if present
   const host = hostname.split(':')[0];
   
+  console.log('[TENANT-SERVICE] Extracting subdomain from host:', host);
+  
   // Handle localhost
   if (host === 'localhost' || host === '127.0.0.1') {
+    console.log('[TENANT-SERVICE] Localhost detected, using mahikeng as default tenant');
     return 'mahikeng'; // Default tenant for development
   }
   
@@ -205,6 +208,7 @@ export function extractSubdomain(hostname: string): string | null {
     const nonWwwHost = host.substring(4); // Remove 'www.'
     // If it's www.smartkollect.co.za, treat as main domain
     if (nonWwwHost === 'smartkollect.co.za') {
+      console.log('[TENANT-SERVICE] www.smartkollect.co.za detected, treating as main domain');
       return null;
     }
   }
@@ -214,6 +218,7 @@ export function extractSubdomain(hostname: string): string | null {
   
   // If it's just smartkollect.co.za (main domain), return null
   if (parts.length === 3 && parts[0] === 'smartkollect' && parts[1] === 'co' && parts[2] === 'za') {
+    console.log('[TENANT-SERVICE] Main domain smartkollect.co.za detected');
     return null;
   }
   
@@ -223,10 +228,15 @@ export function extractSubdomain(hostname: string): string | null {
     // Valid subdomains
     const validSubdomains = ['mahikeng', 'triplem', 'univen'];
     if (validSubdomains.includes(subdomain)) {
+      console.log('[TENANT-SERVICE] Valid subdomain detected:', subdomain);
       return subdomain;
+    } else {
+      console.log('[TENANT-SERVICE] Invalid subdomain detected:', subdomain);
+      return null;
     }
   }
   
+  console.log('[TENANT-SERVICE] No valid subdomain pattern detected for host:', host);
   return null;
 }
 
