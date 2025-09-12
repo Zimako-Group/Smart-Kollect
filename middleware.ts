@@ -168,10 +168,17 @@ export async function middleware(req: NextRequest) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(customerId)) {
           console.log(' [Middleware] Valid UUID detected, allowing normal processing:', customerId);
-          // Continue with normal processing
+          // Continue with normal processing - let the request proceed to the page
+          return NextResponse.next();
         } else {
           console.log(' [Middleware] Invalid UUID format for customer ID:', customerId);
+          // For invalid UUIDs, still allow processing but the page will handle the error
+          return NextResponse.next();
         }
+      } else {
+        // For sub-paths (like /edit, /notes, etc.), also allow normal processing
+        console.log(' [Middleware] Customer sub-path detected, allowing normal processing:', remainingPath);
+        return NextResponse.next();
       }
     } else {
       console.log(' [Middleware] Mahikeng customer path regex did not match:', pathname);
