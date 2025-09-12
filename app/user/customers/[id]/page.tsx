@@ -194,15 +194,30 @@ export default function CustomerProfilePage() {
         const customerData = await getCustomerById(customerId);
         
         if (!customerData) {
-          setError("Customer not found or you don't have permission to view this customer");
+          setError(`Customer with ID ${customerId} not found. This could mean:
+• The customer doesn't exist in the database
+• The customer is not associated with your tenant
+• You don't have permission to view this customer`);
+          toast.error(`Customer ${customerId} not found`);
         } else {
           setCustomer(customerData);
           setEditCustomer(customerData); // Sync editCustomer
           setOriginalAmount(customerData.outstanding_balance);
+          console.log("Customer loaded successfully:", customerData.acc_number);
         }
       } catch (err: any) {
         console.error("Error fetching customer:", err);
-        setError(err.message || "Failed to load customer details");
+        const errorMessage = err.message || "Failed to load customer details";
+        setError(errorMessage);
+        
+        // Provide more specific error messages based on common issues
+        if (errorMessage.includes('No tenant context found')) {
+          toast.error("Tenant context error. Please try logging out and back in.");
+        } else if (errorMessage.includes('invalid input syntax for type uuid')) {
+          toast.error("Invalid customer ID format");
+        } else {
+          toast.error("Failed to load customer details");
+        }
       } finally {
         setLoading(false);
       }
@@ -748,17 +763,39 @@ export default function CustomerProfilePage() {
   if (!customer) {
     return (
       <div className="container mx-auto py-12">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Customer Not Found</h2>
-          <p>The customer you are looking for does not exist or has been removed.</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => router.push('/user/customers')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
-          </Button>
+        <div className="text-center max-w-2xl mx-auto">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4 text-red-400">Customer Not Found</h2>
+          
+          {error ? (
+            <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4 mb-6">
+              <p className="text-red-300 whitespace-pre-line text-sm">{error}</p>
+            </div>
+          ) : (
+            <p className="text-slate-400 mb-6">
+              The customer you are looking for does not exist or has been removed.
+            </p>
+          )}
+          
+          <div className="space-y-4">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => router.push('/user/customers')}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Customers
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="w-full text-slate-400"
+              onClick={() => window.location.reload()}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );

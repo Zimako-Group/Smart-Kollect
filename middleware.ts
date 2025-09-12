@@ -158,9 +158,12 @@ export async function middleware(req: NextRequest) {
       
       // If it's the base customer page, ensure it uses the standard customer page
       if (remainingPath === '' || remainingPath === '/') {
-        const mahikengCustomerPath = `/user/customers/${customerId}`;
-        console.log('[RBAC-MIDDLEWARE] Ensuring Mahikeng customer uses standard page:', mahikengCustomerPath);
-        // No rewrite needed, just continue with normal processing
+        // Check if this is a UUID (customer ID) and not a special route like 'mahikeng'
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(customerId)) {
+          console.log('[RBAC-MIDDLEWARE] Mahikeng customer accessing standard page:', customerId);
+          // Continue with normal processing - the dynamic route [id]/page.tsx will handle it
+        }
       }
     }
   }
