@@ -1,0 +1,26 @@
+{
+  "name": "univen-data-import",
+  "version": "1.0.0",
+  "description": "Script to import University of Venda master file data into Supabase",
+  "main": "import-univen-master-file.js",
+  "scripts": {
+    "import": "node import-univen-master-file.js",
+    "import:custom": "node import-univen-master-file.js"
+  },
+  "keywords": [
+    "supabase",
+    "univen",
+    "data-import",
+    "excel"
+  ],
+  "author": "Smart-Kollect Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "xlsx": "^0.18.5",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

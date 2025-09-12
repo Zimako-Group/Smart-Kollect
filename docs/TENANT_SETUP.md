@@ -192,6 +192,33 @@ SELECT create_univen_demo_user(
 
 The full script is available at: `scripts/create-univen-demo-users.sql`
 
+## Importing University of Venda Master File Data
+
+To import the University of Venda master file data from Excel to the database:
+
+1. Ensure the Excel file is in your Downloads folder and named `univen_master_file.xlsx`
+2. Navigate to the scripts directory:
+   ```bash
+   cd c:\Users\tjmar\OneDrive\Documents\GitHub\Smart-Kollect\scripts
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Run the import script:
+   ```bash
+   npm run import
+   ```
+
+For custom file paths:
+```bash
+npm run import:custom "C:\path\to\your\file.xlsx"
+```
+
+The import script is available at: `scripts/import-univen-master-file.js`
+
+Documentation for the import process is available at: `scripts/README.md`
+
 ## Troubleshooting Subdomain Issues
 
 ### 1. Check Subdomain Extraction Logic
@@ -267,6 +294,96 @@ CREATE TABLE IF NOT EXISTS tenants (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
+
+### University of Venda Customers Table
+The University of Venda customers table contains all the fields from your Excel file:
+
+```sql
+-- Client Information
+"Client Reference" TEXT,
+"Interest rate" NUMERIC,
+"Interest date" DATE,
+"In Duplum" TEXT,
+"Masked Client Reference" TEXT,
+"Client" TEXT,
+"Client Group" TEXT,
+"Status" TEXT,
+"Status Date" DATE,
+"Debtor under DC?" TEXT,
+"Debtor Status Date" DATE,
+"Days Overdue" INTEGER,
+"Client Division" TEXT,
+"Old Client Ref" TEXT,
+"Client Profile Account" TEXT,
+"EasyPay Reference" TEXT,
+
+-- Financial Information
+"Original Cost" NUMERIC,
+"Capital on Default" NUMERIC,
+"Date Opened" DATE,
+"Hand Over Date" DATE,
+"Hand Over Amount" NUMERIC,
+"Payments To Date" NUMERIC,
+"Interest To Date" NUMERIC,
+"Adjustments To Date" NUMERIC,
+"Fees & Expenses" NUMERIC,
+"Collection Commission" NUMERIC,
+"FCC (excl VAT)" NUMERIC,
+"Current Balance" NUMERIC,
+"Capital Amount" NUMERIC,
+
+-- Payment Information
+"Last Payment Method" TEXT,
+"Days since Last Payment" INTEGER,
+"Last Payment Date" DATE,
+"Last Payment Amount" NUMERIC,
+
+-- Call Information
+"Outbound Phone Call Outcome" TEXT,
+"Outbound Phone Call Comment" TEXT,
+"Last Inbound Phone Call Date" DATE,
+"Inbound Phone Call Outcome" TEXT,
+
+-- Contact Information
+"Cellphone" TEXT,
+"Cellphone 2" TEXT,
+"Cellphone 3" TEXT,
+"Cellphone 4" TEXT,
+"Email" TEXT,
+"Email 2" TEXT,
+"Email 3" TEXT,
+
+-- Address Information
+"Street Address 1" TEXT,
+"Street Address 2" TEXT,
+"Street Address 3" TEXT,
+"Street Address 4" TEXT,
+"Street Code" TEXT,
+"Combined Street" TEXT,
+
+-- Personal Information
+"Gender" TEXT,
+"Occupation" TEXT,
+"Employer Name" TEXT,
+"Employer Contact" TEXT,
+"Last Contact" DATE,
+"ID Number" TEXT,
+"Title" TEXT,
+"Initials" TEXT,
+"First Name" TEXT,
+"Second Name" TEXT,
+"Surname" TEXT,
+
+-- Account Information
+"Account Load Date" DATE,
+"Debtor Flags" TEXT,
+"Account Flags" TEXT,
+"Linked Account" TEXT,
+"Bucket" TEXT,
+"Campaign Exclusions" TEXT,
+"Original Line" TEXT,
+"error" TEXT,
 ```
 
 ### Tenant ID Columns
