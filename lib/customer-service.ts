@@ -122,29 +122,51 @@ export async function getAllCustomers(
  * @returns Promise with customer data
  */
 export const getCustomerById = async (customerId: string): Promise<Customer | null> => {
+  console.log('🔍 [getCustomerById] Starting customer lookup:', { customerId });
+  
   try {
     // Get tenant context
+    console.log('🔍 [getCustomerById] Getting tenant context...');
     const tenantId = await getCurrentTenantId();
+    console.log('🔍 [getCustomerById] Tenant context result:', { tenantId });
+    
     if (!tenantId) {
+      console.error('❌ [getCustomerById] No tenant context found');
       throw new Error('No tenant context found');
     }
 
     // First try to fetch by id (UUID format) with tenant context
+    console.log('🔍 [getCustomerById] Attempting to fetch customer by UUID:', { customerId, tenantId });
     let { data, error } = await supabase
       .from('Debtors')
       .select('*')
       .eq('id', customerId)
       .eq('tenant_id', tenantId)
       .single();
+    
+    console.log('🔍 [getCustomerById] UUID fetch result:', { 
+      success: !error, 
+      error: error?.message, 
+      data: data ? 'Customer found' : 'No data', 
+      customerId: data?.id,
+      accNumber: data?.acc_number
+    });
 
     // If that fails, try to fetch by acc_number with tenant context
     if (error && error.message.includes('invalid input syntax for type uuid')) {
-      console.log('Trying to fetch by acc_number instead of id');
+      console.log('🔍 [getCustomerById] UUID format invalid, trying acc_number lookup:', { customerId, tenantId });
       const accNumberResult = await supabase
         .from('Debtors')
         .select('*')
         .eq('acc_number', customerId)
         .eq('tenant_id', tenantId);
+      
+      console.log('🔍 [getCustomerById] Acc_number fetch result:', { 
+        success: !accNumberResult.error, 
+        error: accNumberResult.error?.message, 
+        count: accNumberResult.data?.length || 0,
+        data: accNumberResult.data?.map(d => ({ id: d.id, acc_number: d.acc_number }))
+      });
       
       // Check if we got any results
       if (accNumberResult.data && accNumberResult.data.length > 0) {
@@ -153,7 +175,7 @@ export const getCustomerById = async (customerId: string): Promise<Customer | nu
         error = null;
       } else {
         // Try searching by phone numbers with tenant context
-        console.log('Trying to fetch by phone numbers');
+        console.log('🔍 [getCustomerById] No acc_number match, trying phone number lookup:', { customerId, tenantId });
         const phoneResult = await supabase
           .from('Debtors')
           .select('*')
@@ -169,11 +191,20 @@ export const getCustomerById = async (customerId: string): Promise<Customer | nu
             work_tel.eq."${customerId}"`
           );
         
+        console.log('🔍 [getCustomerById] Phone number fetch result:', { 
+          success: !phoneResult.error, 
+          error: phoneResult.error?.message, 
+          count: phoneResult.data?.length || 0,
+          data: phoneResult.data?.map(d => ({ id: d.id, acc_number: d.acc_number }))
+        });
+        
         if (phoneResult.data && phoneResult.data.length > 0) {
           // Use the first match if multiple results
           data = phoneResult.data[0];
           error = null;
+          console.log('🔍 [getCustomerById] Customer found via phone number lookup');
         } else {
+          console.log('🔍 [getCustomerById] No customer found via any lookup method');
           data = null;
           error = {
             message: 'No customer found with the provided identifier',
@@ -187,15 +218,28 @@ export const getCustomerById = async (customerId: string): Promise<Customer | nu
     }
 
     if (error) {
-      console.error('Error fetching customer:', error);
+      console.error('❌ [getCustomerById] Final error state:', { 
+        errorMessage: error.message, 
+        errorCode: error.code, 
+        customerId, 
+        tenantId 
+      });
       throw new Error(`Failed to fetch customer: ${error.message}`);
     }
 
     if (!data) {
+      console.log('🔍 [getCustomerById] No customer data found, returning null');
       return null;
     }
 
     // Process the customer data
+    console.log('🔍 [getCustomerById] Processing customer data:', { 
+      id: data.id, 
+      acc_number: data.acc_number, 
+      name: data.name, 
+      surname: data.surname_company_trust 
+    });
+    
     const customer: Customer = {
       id: data.id,
       acc_number: data.acc_number || 'N/A',
@@ -255,9 +299,19 @@ export const getCustomerById = async (customerId: string): Promise<Customer | nu
       created_at: data.created_at || null,
     };
 
+    console.log('✅ [getCustomerById] Successfully processed customer:', { 
+      customerId: customer.id, 
+      accNumber: customer.acc_number,
+      name: customer.name
+    });
+    
     return customer;
   } catch (error: any) {
-    console.error('Error in getCustomerById:', error);
+    console.error('❌ [getCustomerById] Unhandled error:', { 
+      errorMessage: error.message, 
+      errorStack: error.stack, 
+      customerId 
+    });
     throw new Error(`Failed to fetch customer: ${error.message}`);
   }
 };

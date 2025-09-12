@@ -9,12 +9,27 @@ export interface TenantContext {
 
 // Get current user's tenant context
 export async function getCurrentTenantContext(): Promise<TenantContext | null> {
+  console.log('🔍 [getCurrentTenantContext] Starting tenant context lookup...');
+  
   try {
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    console.log('🔍 [getCurrentTenantContext] Getting current user...');
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    console.log('🔍 [getCurrentTenantContext] User lookup result:', { 
+      userFound: !!user, 
+      userId: user?.id, 
+      userEmail: user?.email,
+      userError: userError?.message 
+    });
+    
+    if (!user) {
+      console.log('🔍 [getCurrentTenantContext] No user found, returning null');
+      return null;
+    }
 
     // Get user's profile with tenant info
+    console.log('🔍 [getCurrentTenantContext] Fetching profile with tenant info for user:', user.id);
     const { data: profile, error } = await supabase
       .from('profiles')
       .select(`
@@ -28,20 +43,45 @@ export async function getCurrentTenantContext(): Promise<TenantContext | null> {
       .eq('id', user.id)
       .single();
 
+    console.log('🔍 [getCurrentTenantContext] Profile lookup result:', { 
+      profileFound: !!profile, 
+      tenantId: profile?.tenant_id, 
+      error: error?.message,
+      errorCode: error?.code
+    });
+
     if (error || !profile) {
-      console.error('Error fetching tenant context:', error);
+      console.error('❌ [getCurrentTenantContext] Error fetching tenant context:', { 
+        error: error?.message, 
+        code: error?.code, 
+        details: error?.details,
+        hint: error?.hint 
+      });
       return null;
     }
 
     const tenant = Array.isArray(profile.tenants) ? profile.tenants[0] : profile.tenants;
     
-    return {
+    console.log('🔍 [getCurrentTenantContext] Tenant data extracted:', { 
+      tenantId: profile.tenant_id,
+      tenantSubdomain: tenant?.subdomain,
+      tenantName: tenant?.name,
+      tenantIsArray: Array.isArray(profile.tenants)
+    });
+    
+    const result = {
       tenantId: profile.tenant_id,
       subdomain: tenant.subdomain,
       name: tenant.name
     };
+    
+    console.log('✅ [getCurrentTenantContext] Successfully retrieved tenant context:', result);
+    return result;
   } catch (error) {
-    console.error('Error getting tenant context:', error);
+    console.error('❌ [getCurrentTenantContext] Unhandled error:', { 
+      errorMessage: (error as any)?.message, 
+      errorStack: (error as any)?.stack 
+    });
     return null;
   }
 }
@@ -53,6 +93,15 @@ export function addTenantFilter(query: any, tenantId: string) {
 
 // Get tenant ID from current user
 export async function getCurrentTenantId(): Promise<string | null> {
+  console.log('🔍 [getCurrentTenantId] Getting tenant ID...');
   const context = await getCurrentTenantContext();
-  return context?.tenantId || null;
+  const tenantId = context?.tenantId || null;
+  
+  console.log('🔍 [getCurrentTenantId] Result:', { 
+    tenantId, 
+    hasContext: !!context,
+    context: context ? 'Context found' : 'No context'
+  });
+  
+  return tenantId;
 }

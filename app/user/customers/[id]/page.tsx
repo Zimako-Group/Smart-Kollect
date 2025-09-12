@@ -181,7 +181,10 @@ export default function CustomerProfilePage() {
 
   useEffect(() => {
     const fetchCustomerDetails = async () => {
+      console.log('🚀 [CustomerPage] Starting customer details fetch...');
+      
       if (!params.id) {
+        console.error('❌ [CustomerPage] No customer ID provided in params');
         setError("No customer ID provided");
         setLoading(false);
         return;
@@ -189,40 +192,70 @@ export default function CustomerProfilePage() {
 
       try {
         const customerId = Array.isArray(params.id) ? params.id[0] : params.id;
-        console.log("Fetching customer with ID:", customerId);
+        console.log('🚀 [CustomerPage] Processing customer ID:', { 
+          rawParams: params.id, 
+          processedCustomerId: customerId,
+          isArray: Array.isArray(params.id)
+        });
         
+        console.log('🚀 [CustomerPage] Calling getCustomerById service...');
         const customerData = await getCustomerById(customerId);
         
+        console.log('🚀 [CustomerPage] getCustomerById result:', { 
+          customerFound: !!customerData,
+          customerId: customerData?.id,
+          customerAccNumber: customerData?.acc_number,
+          customerName: customerData?.name
+        });
+        
         if (!customerData) {
+          console.error('❌ [CustomerPage] Customer not found in service response');
           setError(`Customer with ID ${customerId} not found. This could mean:
 • The customer doesn't exist in the database
 • The customer is not associated with your tenant
 • You don't have permission to view this customer`);
           toast.error(`Customer ${customerId} not found`);
         } else {
+          console.log('✅ [CustomerPage] Customer data loaded successfully:', { 
+            id: customerData.id, 
+            accNumber: customerData.acc_number,
+            name: customerData.name,
+            outstandingBalance: customerData.outstanding_balance
+          });
           setCustomer(customerData);
           setEditCustomer(customerData); // Sync editCustomer
           setOriginalAmount(customerData.outstanding_balance);
-          console.log("Customer loaded successfully:", customerData.acc_number);
         }
       } catch (err: any) {
-        console.error("Error fetching customer:", err);
+        const customerId = Array.isArray(params.id) ? params.id[0] : params.id;
+        console.error('❌ [CustomerPage] Error in fetchCustomerDetails:', { 
+          errorMessage: err.message, 
+          errorStack: err.stack,
+          errorName: err.name,
+          customerId
+        });
+        
         const errorMessage = err.message || "Failed to load customer details";
         setError(errorMessage);
         
         // Provide more specific error messages based on common issues
         if (errorMessage.includes('No tenant context found')) {
+          console.error('❌ [CustomerPage] Tenant context error detected');
           toast.error("Tenant context error. Please try logging out and back in.");
         } else if (errorMessage.includes('invalid input syntax for type uuid')) {
+          console.error('❌ [CustomerPage] Invalid UUID format error');
           toast.error("Invalid customer ID format");
         } else {
+          console.error('❌ [CustomerPage] General customer fetch error');
           toast.error("Failed to load customer details");
         }
       } finally {
+        console.log('🚀 [CustomerPage] fetchCustomerDetails completed, loading:', false);
         setLoading(false);
       }
     };
 
+    console.log('🚀 [CustomerPage] Initiating fetchCustomerDetails call...');
     fetchCustomerDetails();
     
     // Add event listener for refreshing account history when a call note is saved

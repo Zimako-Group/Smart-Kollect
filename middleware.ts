@@ -148,7 +148,8 @@ export async function middleware(req: NextRequest) {
   
   // Special handling for Mahikeng subdomain
   if (subdomain === 'mahikeng' && pathname.startsWith('/user/customers/')) {
-    // Check if it's accessing a customer profile
+    console.log(' [Middleware] Mahikeng customer routing detected:', { pathname, subdomain });
+    
     const customerPathRegex = /^\/user\/customers\/([^\/]+)(\/.*)?$/;
     const match = pathname.match(customerPathRegex);
     
@@ -156,15 +157,24 @@ export async function middleware(req: NextRequest) {
       const customerId = match[1];
       const remainingPath = match[2] || '';
       
-      // If it's the base customer page, ensure it uses the standard customer page
+      console.log(' [Middleware] Mahikeng customer path parsed:', { 
+        customerId, 
+        remainingPath, 
+        fullMatch: match[0],
+        isUUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)
+      });
+      
       if (remainingPath === '' || remainingPath === '/') {
-        // Check if this is a UUID (customer ID) and not a special route like 'mahikeng'
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(customerId)) {
-          console.log('[RBAC-MIDDLEWARE] Mahikeng customer accessing standard page:', customerId);
-          // Continue with normal processing - the dynamic route [id]/page.tsx will handle it
+          console.log(' [Middleware] Valid UUID detected, allowing normal processing:', customerId);
+          // Continue with normal processing
+        } else {
+          console.log(' [Middleware] Invalid UUID format for customer ID:', customerId);
         }
       }
+    } else {
+      console.log(' [Middleware] Mahikeng customer path regex did not match:', pathname);
     }
   }
   
