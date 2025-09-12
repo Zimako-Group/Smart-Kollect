@@ -99,7 +99,7 @@ export async function POST(
         status: body.status,
         escalated_department: body.escalated_department || null,
         agent_id: userData.user.id,
-      })
+      } as Database["public"]["Tables"]["admin_templates"]["Insert"])
       .select();
 
     if (error) {
