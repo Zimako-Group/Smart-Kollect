@@ -17,5 +17,22 @@
       "path": "/api/trigger-agent?agentType=performance",
       "schedule": "0 1 1 * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/middleware"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Forwarded-Host",
+          "value": "mahikeng.smartkollect.co.za"
+        }
+      ]
+    }
   ]
 }

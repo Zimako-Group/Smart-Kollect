@@ -24,3 +24,41 @@
 
 [build.processing.images]
   compress = true
+
+# Wildcard domain configuration for subdomains
+[[redirects]]
+  from = "https://mahikeng.smartkollect.co.za/*"
+  to = "https://smartkollect.co.za/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "mahikeng.smartkollect.co.za"}
+
+[[redirects]]
+  from = "https://triplem.smartkollect.co.za/*"
+  to = "https://smartkollect.co.za/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "triplem.smartkollect.co.za"}
+
+[[redirects]]
+  from = "https://univen.smartkollect.co.za/*"
+  to = "https://smartkollect.co.za/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "univen.smartkollect.co.za"}
+
+# Handle www redirects for subdomains
+[[redirects]]
+  from = "https://www.mahikeng.smartkollect.co.za/*"
+  to = "https://mahikeng.smartkollect.co.za/:splat"
+  status = 301
+
+[[redirects]]
+  from = "https://www.triplem.smartkollect.co.za/*"
+  to = "https://triplem.smartkollect.co.za/:splat"
+  status = 301
+
+[[redirects]]
+  from = "https://www.univen.smartkollect.co.za/*"
+  to = "https://univen.smartkollect.co.za/:splat"
+  status = 301

@@ -91,7 +91,15 @@ import { extractSubdomain } from '@/lib/tenant-service';
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
-  const hostname = req.headers.get('host') || '';
+  
+  // Get hostname from headers, checking for forwarded host first
+  let hostname = req.headers.get('host') || '';
+  const forwardedHost = req.headers.get('x-forwarded-host');
+  
+  // Use forwarded host if available (for subdomain routing)
+  if (forwardedHost) {
+    hostname = forwardedHost;
+  }
   
   console.log('[RBAC-MIDDLEWARE] Processing:', {
     pathname,
