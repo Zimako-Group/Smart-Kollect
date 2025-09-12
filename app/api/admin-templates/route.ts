@@ -89,17 +89,19 @@ export async function POST(
     }
 
     // Insert the admin template
+    const insertData = {
+      account_number: body.account_number || null,
+      date: body.date,
+      query_type: body.query_type,
+      description: body.description,
+      status: body.status,
+      escalated_department: body.escalated_department || null,
+      agent_id: userData.user.id,
+    };
+
     const { data, error } = await supabase
       .from("admin_templates")
-      .insert({
-        account_number: body.account_number || null,
-        date: body.date,
-        query_type: body.query_type,
-        description: body.description,
-        status: body.status,
-        escalated_department: body.escalated_department || null,
-        agent_id: userData.user.id,
-      } as Database["public"]["Tables"]["admin_templates"]["Insert"])
+      .insert(insertData as any)
       .select();
 
     if (error) {
