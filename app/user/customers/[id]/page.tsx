@@ -209,7 +209,7 @@ export default function CustomerProfilePage() {
     };
 
     fetchCustomerDetails();
-  }, [params.id]);
+    
     // Add event listener for refreshing account history when a call note is saved
     const handleRefreshHistory = (event: any) => {
       console.log('Received refreshAccountHistory event:', event.detail);
@@ -227,7 +227,7 @@ export default function CustomerProfilePage() {
       window.removeEventListener('refreshAccountHistory', handleRefreshHistory);
     };
   }, [params.id]);
-  
+
   // Function to check if a table exists and what columns it has
   const checkTableSchema = async (tableName: string) => {
     try {
