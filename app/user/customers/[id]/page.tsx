@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+
+// Add server-side debugging
+console.log('🚀 [CustomerPage] PAGE COMPONENT LOADED - This should appear in browser console');
 import { toast } from "sonner";
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
