@@ -146,6 +146,25 @@ export async function middleware(req: NextRequest) {
     }
   }
   
+  // Special handling for Mahikeng subdomain
+  if (subdomain === 'mahikeng' && pathname.startsWith('/user/customers/')) {
+    // Check if it's accessing a customer profile
+    const customerPathRegex = /^\/user\/customers\/([^\/]+)(\/.*)?$/;
+    const match = pathname.match(customerPathRegex);
+    
+    if (match) {
+      const customerId = match[1];
+      const remainingPath = match[2] || '';
+      
+      // If it's the base customer page, ensure it uses the standard customer page
+      if (remainingPath === '' || remainingPath === '/') {
+        const mahikengCustomerPath = `/user/customers/${customerId}`;
+        console.log('[RBAC-MIDDLEWARE] Ensuring Mahikeng customer uses standard page:', mahikengCustomerPath);
+        // No rewrite needed, just continue with normal processing
+      }
+    }
+  }
+  
   // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all access without authentication
   if (isMainDomain) {
     console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing full access:', pathname);
