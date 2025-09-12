@@ -289,7 +289,11 @@ export async function middleware(req: NextRequest) {
     if (profile.tenant_id && subdomain) {
       console.log('[RBAC-MIDDLEWARE] Setting tenant context for:', subdomain);
       try {
+        // Set the tenant context for Row Level Security
         await supabase.rpc('set_tenant_context', { tenant_subdomain: subdomain });
+        
+        // Also set it as a response header for client-side access
+        response.headers.set('x-tenant-subdomain', subdomain);
       } catch (error) {
         console.error('[RBAC-MIDDLEWARE] Error setting tenant context:', error);
       }

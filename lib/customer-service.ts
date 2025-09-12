@@ -117,26 +117,34 @@ export async function getAllCustomers(
 }
 
 /**
- * Get a customer by ID
+ * Get a customer by ID with tenant context
  * @param customerId Customer ID
  * @returns Promise with customer data
  */
 export const getCustomerById = async (customerId: string): Promise<Customer | null> => {
   try {
-    // First try to fetch by id (UUID format)
+    // Get tenant context
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      throw new Error('No tenant context found');
+    }
+
+    // First try to fetch by id (UUID format) with tenant context
     let { data, error } = await supabase
       .from('Debtors')
       .select('*')
       .eq('id', customerId)
+      .eq('tenant_id', tenantId)
       .single();
 
-    // If that fails, try to fetch by acc_number
+    // If that fails, try to fetch by acc_number with tenant context
     if (error && error.message.includes('invalid input syntax for type uuid')) {
       console.log('Trying to fetch by acc_number instead of id');
       const accNumberResult = await supabase
         .from('Debtors')
         .select('*')
-        .eq('acc_number', customerId);
+        .eq('acc_number', customerId)
+        .eq('tenant_id', tenantId);
       
       // Check if we got any results
       if (accNumberResult.data && accNumberResult.data.length > 0) {
@@ -144,11 +152,12 @@ export const getCustomerById = async (customerId: string): Promise<Customer | nu
         data = accNumberResult.data[0];
         error = null;
       } else {
-        // Try searching by phone numbers
+        // Try searching by phone numbers with tenant context
         console.log('Trying to fetch by phone numbers');
         const phoneResult = await supabase
           .from('Debtors')
           .select('*')
+          .eq('tenant_id', tenantId)
           .or(
             `cell_number.eq."${customerId}",
             cell_number2.eq."${customerId}",
@@ -265,6 +274,11 @@ export async function searchCustomers(
   pageSize: number = 100
 ): Promise<{ customers: Customer[], totalCount: number, error: string | null }> {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return { customers: [], totalCount: 0, error: 'No tenant context found' };
+    }
+
     // Calculate the range for pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
@@ -273,6 +287,7 @@ export async function searchCustomers(
     const countQuery = supabase
       .from('Debtors')
       .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
       .or(`name.ilike.%${searchTerm}%,surname_company_trust.ilike.%${searchTerm}%,email_addr_1.ilike.%${searchTerm}%,cell_number.ilike.%${searchTerm}%,id_number_1.ilike.%${searchTerm}%,acc_number.ilike.%${searchTerm}%`);
     const { count, error: countError } = await countQuery;
       
@@ -285,6 +300,7 @@ export async function searchCustomers(
     const { data, error } = await supabase
       .from('Debtors')
       .select('*')
+      .eq('tenant_id', tenantId)
       .or(`name.ilike.%${searchTerm}%,surname_company_trust.ilike.%${searchTerm}%,email_addr_1.ilike.%${searchTerm}%,cell_number.ilike.%${searchTerm}%,id_number_1.ilike.%${searchTerm}%,acc_number.ilike.%${searchTerm}%`)
       .order('created_at', { ascending: false })
       .range(from, to);
@@ -313,11 +329,16 @@ export async function getCustomersByStatus(
   pageSize: number = 100
 ): Promise<{ customers: Customer[], totalCount: number, error: string | null }> {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return { customers: [], totalCount: 0, error: 'No tenant context found' };
+    }
+
     // Calculate the range for pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
     
-    let query = supabase.from('Debtors').select('*', { count: 'exact' });
+    let query = supabase.from('Debtors').select('*', { count: 'exact' }).eq('tenant_id', tenantId);
     
     // Filter based on UI status
     if (uiStatus === 'active') {

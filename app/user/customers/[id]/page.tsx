@@ -189,19 +189,19 @@ export default function CustomerProfilePage() {
 
       try {
         const customerId = Array.isArray(params.id) ? params.id[0] : params.id;
+        console.log("Fetching customer with ID:", customerId);
+        
         const customerData = await getCustomerById(customerId);
         
         if (!customerData) {
-          setError("Customer not found");
+          setError("Customer not found or you don't have permission to view this customer");
         } else {
           setCustomer(customerData);
           setEditCustomer(customerData); // Sync editCustomer
           setOriginalAmount(customerData.outstanding_balance);
-          
-          // Fetch account history after customer details are loaded
-          fetchAccountHistory(customerId);
         }
       } catch (err: any) {
+        console.error("Error fetching customer:", err);
         setError(err.message || "Failed to load customer details");
       } finally {
         setLoading(false);
@@ -209,7 +209,7 @@ export default function CustomerProfilePage() {
     };
 
     fetchCustomerDetails();
-    
+  }, [params.id]);
     // Add event listener for refreshing account history when a call note is saved
     const handleRefreshHistory = (event: any) => {
       console.log('Received refreshAccountHistory event:', event.detail);
