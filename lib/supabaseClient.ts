@@ -125,7 +125,8 @@ export const getSupabaseClient = (): SupabaseClient => {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storageKey: 'zimako-supabase-auth',
-        storage: customStorage
+        storage: customStorage,
+        flowType: 'pkce' // Use PKCE flow for better security
       }
     });
     

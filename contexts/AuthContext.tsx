@@ -221,11 +221,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const supabase = getSupabaseClient();
       await supabase.auth.signOut();
       
+      // Clear any existing auth state first to prevent conflicts
+      await supabase.auth.signOut();
+      
       // Attempt login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      // Force session refresh to ensure it's properly stored
+      if (data?.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
       
       if (error) {
         console.error('[AUTH] Login error:', error.message);
@@ -387,20 +398,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        const { data, error } = await supabase.auth.getUser();
+        // First try to get session from cookies/storage
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('[AUTH] Session error:', error.message);
-          // Only set user to null if it's a real auth error, not initialization issues
-          if (error.message !== 'Auth session missing!' || mounted) {
+        if (sessionError) {
+          console.error('[AUTH] Session error:', sessionError.message);
+          // Handle the specific "Auth session missing!" error by clearing local storage
+          if (sessionError.message === 'Auth session missing!') {
+            console.log('[AUTH] Clearing auth storage due to missing session');
+            // Clear any stale auth data
+            if (typeof localStorage !== 'undefined') {
+              const keysToRemove = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.includes('supabase')) {
+                  keysToRemove.push(key);
+                }
+              }
+              keysToRemove.forEach(key => localStorage.removeItem(key));
+            }
+          }
+          if (mounted) {
             setUser(null);
           }
           return;
         }
         
-        if (data.user) {
+        // If we have a session, get the user
+        if (sessionData.session?.user) {
           console.log('[AUTH] Active session found, fetching user profile');
-          const userProfile = await fetchUserProfile(data.user.id);
+          const userProfile = await fetchUserProfile(sessionData.session.user.id);
           
           if (mounted && userProfile) {
             console.log('[AUTH] Setting user from profile');
@@ -411,8 +438,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(null);
           }
         } else {
-          console.log('[AUTH] No active session found');
-          setUser(null);
+          // Try to get user directly as fallback
+          const { data, error } = await supabase.auth.getUser();
+          
+          if (error) {
+            console.error('[AUTH] User fetch error:', error.message);
+            if (mounted) {
+              setUser(null);
+            }
+            return;
+          }
+          
+          if (data.user) {
+            console.log('[AUTH] Active session found via direct user fetch, fetching user profile');
+            const userProfile = await fetchUserProfile(data.user.id);
+            
+            if (mounted && userProfile) {
+              console.log('[AUTH] Setting user from profile');
+              setUser(userProfile);
+              // Don't redirect during initialization - user is already on a page
+            } else {
+              console.log('[AUTH] No user profile found for session');
+              setUser(null);
+            }
+          } else {
+            console.log('[AUTH] No active session found');
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('[AUTH] Error initializing auth:', error);

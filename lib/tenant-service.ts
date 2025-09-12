@@ -221,7 +221,7 @@ export function extractSubdomain(hostname: string): string | null {
   if (parts.length === 4 && parts[1] === 'smartkollect' && parts[2] === 'co' && parts[3] === 'za') {
     const subdomain = parts[0];
     // Valid subdomains
-    const validSubdomains = ['mahikeng', 'triplem'];
+    const validSubdomains = ['mahikeng', 'triplem', 'univen'];
     if (validSubdomains.includes(subdomain)) {
       return subdomain;
     }

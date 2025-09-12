@@ -6,6 +6,7 @@ const nextConfig = {
         'smartkollect.co.za',
         'mahikeng.smartkollect.co.za',
         'triplem.smartkollect.co.za',
+        'univen.smartkollect.co.za',
         '*.smartkollect.co.za',
         'localhost:3000'
       ]
@@ -62,6 +63,17 @@ const nextConfig = {
           }
         ],
         destination: 'https://triplem.smartkollect.co.za/:path*',
+        permanent: true
+      },
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.univen.smartkollect.co.za'
+          }
+        ],
+        destination: 'https://univen.smartkollect.co.za/:path*',
         permanent: true
       }
     ];

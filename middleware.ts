@@ -119,6 +119,25 @@ export async function middleware(req: NextRequest) {
     pathname
   });
   
+  // Special handling for University of Venda subdomain
+  if (subdomain === 'univen' && pathname.startsWith('/user/customers/')) {
+    // Check if it's accessing a customer profile
+    const customerPathRegex = /^\/user\/customers\/([^\/]+)(\/.*)?$/;
+    const match = pathname.match(customerPathRegex);
+    
+    if (match) {
+      const customerId = match[1];
+      const remainingPath = match[2] || '';
+      
+      // If it's the base customer page, redirect to the University of Venda custom page
+      if (remainingPath === '' || remainingPath === '/') {
+        const univenCustomerPath = `/user/customers/univen/${customerId}`;
+        console.log('[RBAC-MIDDLEWARE] Redirecting University of Venda customer to custom page:', univenCustomerPath);
+        return NextResponse.rewrite(new URL(univenCustomerPath, req.url));
+      }
+    }
+  }
+  
   // If this is the main domain (smartkollect.co.za or www.smartkollect.co.za), allow all access without authentication
   if (isMainDomain) {
     console.log('[RBAC-MIDDLEWARE] Main domain detected, allowing full access:', pathname);
@@ -170,6 +189,21 @@ export async function middleware(req: NextRequest) {
       userId: session?.user?.id,
       userEmail: session?.user?.email
     });
+    
+    // If no session, try to refresh it
+    if (!session && !sessionError) {
+      console.log('[RBAC-MIDDLEWARE] No session found, attempting to refresh');
+      const { data: refreshedSession, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.log('[RBAC-MIDDLEWARE] Session refresh failed:', refreshError.message);
+      } else if (refreshedSession?.session) {
+        console.log('[RBAC-MIDDLEWARE] Session refreshed successfully');
+        // Continue with refreshed session
+      } else {
+        console.log('[RBAC-MIDDLEWARE] No session after refresh attempt');
+      }
+    }
     
     // If no session, redirect to login
     if (!session) {

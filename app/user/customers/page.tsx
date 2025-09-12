@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { getTenantFromRequest } from '@/lib/tenant-service';
 import { Customer, getAllCustomers, searchCustomers, getCustomersByStatus, getAccountsWithOldPayments, getTotalOutstandingForOldPayments, formatCurrency, getCustomersByAccountType } from "@/lib/customer-service";
 import dynamic from 'next/dynamic';
 
@@ -29,10 +32,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Phone, Mail, Eye, Filter, Users, AlertTriangle, CreditCard, CheckCircle, Banknote, Home, Building, Landmark, Hotel } from "lucide-react";
-import { useRouter } from 'next/navigation';
 
 export default function CustomersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +64,10 @@ export default function CustomersPage() {
   const totalOutstandingRef = useRef(0);
   
   const pageSize = 100; // Show 100 customers per page
+  
+  // Check if we're on the University of Venda subdomain
+  const isUnivenSubdomain = typeof window !== 'undefined' && 
+    window.location.hostname.includes('univen.smartkollect.co.za');
   
   // Function to handle search - defined early to avoid reference errors
   const handleSearch = useCallback(async () => {
@@ -360,6 +368,16 @@ export default function CustomersPage() {
     if (statusLower.includes('overdue')) return 'destructive';
     if (statusLower.includes('legal')) return 'outline'; // Using outline with custom styling
     return 'outline';
+  };
+  
+  const handleCustomerClick = (customer: any) => {
+    if (isUnivenSubdomain) {
+      // For University of Venda, use the custom customer page
+      router.push(`/user/customers/univen/${customer.id}`);
+    } else {
+      // For other tenants, use the standard customer page
+      router.push(`/user/customers/${customer.id}`);
+    }
   };
   
   return (
